@@ -1,0 +1,17 @@
+{
+  "name": "json-stream-lite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
+  }
+}
