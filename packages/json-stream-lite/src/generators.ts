@@ -1,8 +1,26 @@
-import { JsonKeyValuePair } from "./json-key-value-pair";
-import { JsonKeyValueParser } from "./json-parser";
+import { JsonKeyValuePair } from './json-key-value-pair'
+import { JsonKeyValueParser } from './json-parser'
 
-export function * jsonKeyValueParser(bytes: Iterable<number>): Generator<JsonKeyValuePair> {
+export function* jsonKeyValueParser(
+    ...bytes: number[]
+): Generator<JsonKeyValuePair> {
     const parser = new JsonKeyValueParser()
-    parser.feed(...bytes)
+
+    for (const byte of bytes) {
+        parser.feed(byte)
+    }
+
+    yield* parser.parseNext()
+}
+
+export async function* jsonKeyValueParserAsync(
+    bytes: Iterable<number> | AsyncIterable<number>,
+): AsyncGenerator<JsonKeyValuePair> {
+    const parser = new JsonKeyValueParser()
+
+    for await (const byte of bytes) {
+        parser.feed(byte)
+    }
+
     yield* parser.parseNext()
 }
