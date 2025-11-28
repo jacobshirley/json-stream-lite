@@ -1,20 +1,20 @@
 {
-  "name": "json-stream-lite",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "vitest run",
-    "test:unit": "vitest run test/unit",
-    "compile": "pnpm compile:validate && tsc -p tsconfig.prod.json",
-    "compile:validate": "tsc -p tsconfig.json --noEmit"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.14.0",
-  "devDependencies": {
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.14"
-  }
+    "name": "json-stream-lite",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "scripts": {
+        "test": "vitest run",
+        "test:unit": "vitest run test/unit",
+        "compile": "pnpm compile:validate && tsc -p tsconfig.prod.json",
+        "compile:validate": "tsc -p tsconfig.json --noEmit"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "packageManager": "pnpm@10.14.0",
+    "devDependencies": {
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.14"
+    }
 }

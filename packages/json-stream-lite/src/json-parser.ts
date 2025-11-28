@@ -145,9 +145,12 @@ export class JsonKeyValueParser extends IncrementalParser<
     nextKeyValue(): JsonKeyValuePair {
         this.skipWhitespace()
         const next = this.peek()
-        
+
         if (!this.stack.length) {
-            this.stack.push({ index: 0, type: next === BYTE_MAP.leftBrace ? 'object' : 'array' } )
+            this.stack.push({
+                index: 0,
+                type: next === BYTE_MAP.leftBrace ? 'object' : 'array',
+            })
         }
 
         const topOfStack = this.stack[this.stack.length - 1]
@@ -197,7 +200,9 @@ export class JsonKeyValueParser extends IncrementalParser<
                 this.skipWhitespace()
                 this.next() // consume :
                 this.stack.push({
-                    parent: topOfStack.parent ? `${topOfStack.parent}.${key}` : key,
+                    parent: topOfStack.parent
+                        ? `${topOfStack.parent}.${key}`
+                        : key,
                     type: 'object',
                     index: 0,
                 })

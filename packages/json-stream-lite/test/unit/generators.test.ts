@@ -1,5 +1,9 @@
-import { describe, expect, test } from "vitest";
-import { JsonKeyValuePair, jsonKeyValueParser, jsonKeyValueParserAsync } from "../../src";
+import { describe, expect, test } from 'vitest'
+import {
+    JsonKeyValuePair,
+    jsonKeyValueParser,
+    jsonKeyValueParserAsync,
+} from '../../src'
 
 describe('JSON streaming with generators', () => {
     test('should parse key-value pairs', () => {
@@ -20,11 +24,13 @@ describe('JSON streaming with generators', () => {
         const jsonString = '{"city":"Wonderland","population":1000}'
         const pairs: JsonKeyValuePair[] = []
 
-        for await (const jsonPair of jsonKeyValueParserAsync(async function* () {
-            for (const char of jsonString) {
-                yield char.charCodeAt(0)
-            }
-        }())) {
+        for await (const jsonPair of jsonKeyValueParserAsync(
+            (async function* () {
+                for (const char of jsonString) {
+                    yield char.charCodeAt(0)
+                }
+            })(),
+        )) {
             pairs.push(jsonPair)
         }
 
@@ -42,7 +48,7 @@ describe('JSON streaming with generators', () => {
                     controller.enqueue(char.charCodeAt(0))
                 }
                 controller.close()
-            }
+            },
         })
 
         const pairs: JsonKeyValuePair[] = []
