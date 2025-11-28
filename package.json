@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "compile": "pnpm -r run compile && pnpm compile:examples && pnpm compile:test",
+    "compile": "pnpm -r run compile",
     "compile:examples": "tsx ./scripts/build-examples.ts && prettier --write EXAMPLES.md",
     "compile:test": "tsc --noEmit",
     "prepublish": "pnpm -r run compile",
@@ -20,5 +20,10 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "packageManager": "pnpm@10.14.0"
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "@vitest/browser-playwright": "^4.0.14",
+    "@vitest/coverage-v8": "^4.0.14",
+    "playwright": "^1.57.0"
+  }
 }

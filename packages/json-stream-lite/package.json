@@ -2,11 +2,12 @@
   "name": "json-stream-lite",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
-    "compile": "tsc ."
+    "compile": "pnpm compile:validate && tsc -p tsconfig.prod.json",
+    "compile:validate": "tsc -p tsconfig.json --noEmit"
   },
   "keywords": [],
   "author": "",
