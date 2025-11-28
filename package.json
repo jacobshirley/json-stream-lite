@@ -4,7 +4,18 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "pnpm -r run compile && pnpm compile:examples && pnpm compile:test",
+    "compile:examples": "tsx ./scripts/build-examples.ts && prettier --write EXAMPLES.md",
+    "compile:test": "tsc --noEmit",
+    "prepublish": "pnpm -r run compile",
+    "test": "pnpm -r --no-sort run test",
+    "prepare": "husky || true",
+    "lint:staged": "lint-staged --allow-empty",
+    "lint:commit": "commitlint --edit $1",
+    "format": "prettier --write '**/*.{js,ts,json,md,yaml,yml}'",
+    "docs:gen": "sh -c 'pnpm docs:gen:md \"$@\" && pnpm docs:gen:html \"$@\"' --",
+    "docs:gen:md": "./scripts/gen-md-docs.sh",
+    "docs:gen:html": "./scripts/gen-html-docs.sh"
   },
   "keywords": [],
   "author": "",

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "compile": "tsc ."
   },
   "keywords": [],
   "author": "",
