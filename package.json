@@ -1,38 +1,43 @@
 {
-    "name": "json-stream-lite-monorepo",
-    "private": true,
-    "version": "1.0.0",
-    "description": "",
-    "scripts": {
-        "compile": "pnpm -r run compile",
-        "compile:examples": "tsx ./scripts/build-examples.ts && prettier --write EXAMPLES.md",
-        "compile:test": "tsc --noEmit",
-        "prepublish": "pnpm -r run compile",
-        "test": "pnpm -r --no-sort run test",
-        "prepare": "husky || true",
-        "lint:staged": "lint-staged --allow-empty",
-        "lint:commit": "commitlint --edit $1",
-        "format": "prettier --write '**/*.{js,ts,json,md,yaml,yml}'",
-        "docs:gen": "sh -c 'pnpm docs:gen:md \"$@\" && pnpm docs:gen:html \"$@\"' --",
-        "docs:gen:md": "./scripts/gen-md-docs.sh",
-        "docs:gen:html": "./scripts/gen-html-docs.sh"
-    },
-    "lint-staged": {
-        "*.{js,ts,json,md}": "pnpm format"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "MIT",
-    "packageManager": "pnpm@10.14.0",
-    "devDependencies": {
-        "@commitlint/cli": "^20.1.0",
-        "@commitlint/config-conventional": "^20.0.0",
-        "@types/node": "^24.10.1",
-        "@vitest/browser-playwright": "^4.0.14",
-        "@vitest/coverage-v8": "^4.0.14",
-        "husky": "^9.1.7",
-        "lint-staged": "^16.2.7",
-        "playwright": "^1.57.0",
-        "prettier": "^3.7.2"
-    }
+  "name": "json-stream-lite-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "scripts": {
+    "compile": "pnpm -r run compile",
+    "compile:examples": "tsx ./scripts/build-examples.ts && prettier --write EXAMPLES.md",
+    "compile:test": "tsc --noEmit",
+    "prepublish": "pnpm -r run compile",
+    "test": "pnpm -r --no-sort run test",
+    "prepare": "husky || true",
+    "lint:staged": "lint-staged --allow-empty",
+    "lint:commit": "commitlint --edit $1",
+    "format": "prettier --write '**/*.{js,ts,json,md,yaml,yml}'",
+    "docs:gen": "sh -c 'pnpm docs:gen:md \"$@\" && pnpm docs:gen:html \"$@\"' --",
+    "docs:gen:md": "./scripts/gen-md-docs.sh",
+    "docs:gen:html": "./scripts/gen-html-docs.sh"
+  },
+  "lint-staged": {
+    "*.{js,ts,json,md}": "pnpm format"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@types/node": "^24.10.1",
+    "@vitest/browser-playwright": "^4.0.14",
+    "@vitest/coverage-v8": "^4.0.14",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "playwright": "^1.57.0",
+    "prettier": "^3.7.2",
+    "tsx": "^4.20.6"
+  },
+  "dependencies": {
+    "json-stream-lite": "workspace:*"
+  }
 }

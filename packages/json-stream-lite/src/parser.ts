@@ -6,17 +6,17 @@
  * @typeParam O - The output item type
  */
 export abstract class Parser<I, O> {
-    /**
-     * Feeds input items to the parser.
-     *
-     * @param input - Input items to process
-     */
-    abstract feed(...input: I[]): void
+  /**
+   * Feeds input items to the parser.
+   *
+   * @param input - Input items to process
+   */
+  abstract feed(...input: I[]): void;
 
-    /**
-     * Generates output items from the fed input.
-     *
-     * @returns A generator yielding output items
-     */
-    abstract parseNext(): Generator<O>
+  /**
+   * Generates output items from the fed input.
+   *
+   * @returns A generator yielding output items
+   */
+  abstract parseNext(): Generator<O>;
 }
