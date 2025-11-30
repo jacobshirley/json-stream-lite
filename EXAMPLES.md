@@ -490,7 +490,12 @@ const transformed = Array.from(jsonStreamStringify(numbers, replacer, 2)).join(
     '',
 )
 console.log(transformed)
-// Output: {"a":2,"b":4,"c":6}
+// Output:
+// {
+//   "a": 2,
+//   "b": 4,
+//   "c": 6
+// }
 
 // Example 5: Stringify to bytes
 console.log('\n=== Example 5: Stringify to Bytes ===')
