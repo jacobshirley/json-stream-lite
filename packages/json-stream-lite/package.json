@@ -4,6 +4,14 @@
     "description": "A lightweight, memory-efficient, zero-dependency streaming JSON parser and stringifier for JavaScript and TypeScript. It works in both Node.js and browser environments.",
     "main": "dist/index.js",
     "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/jacobshirley/json-stream-lite.git"
+    },
+    "homepage": "https://jacobshirley.github.io/json-stream-lite/v1",
+    "bugs": {
+        "url": "https://github.com/jacobshirley/json-stream-lite/issues"
+    },
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
@@ -23,8 +31,28 @@
         "watch:all": "tsc -watch -p tsconfig.json",
         "prepack": "cp ../../README.md . && cp ../../EXAMPLES.md ."
     },
-    "keywords": [],
-    "author": "",
+    "keywords": [
+        "json",
+        "stream",
+        "streaming",
+        "parser",
+        "stringify",
+        "parse",
+        "incremental",
+        "async",
+        "memory-efficient",
+        "low-memory",
+        "large-files",
+        "json-parser",
+        "json-stream",
+        "streaming-json",
+        "lightweight",
+        "zero-dependencies",
+        "typescript",
+        "browser",
+        "nodejs"
+    ],
+    "author": "Jacob Shirley",
     "license": "MIT",
     "packageManager": "pnpm@10.14.0",
     "devDependencies": {
@@ -36,6 +64,8 @@
         "playwright": "^1.57.0"
     },
     "files": [
-        "dist/"
+        "dist",
+        "!**/*.tsbuildinfo",
+        "EXAMPLES.md"
     ]
 }
