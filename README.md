@@ -1,3 +1,5 @@
+**[Examples](./EXAMPLES.md)** | **[Documentation](https://jacobshirley.github.io/json-stream-lite/v1)**
+
 # json-stream-lite
 
 A lightweight, memory-efficient streaming JSON parser and stringifier for JavaScript and TypeScript. Process large JSON files without loading them entirely into memory.
