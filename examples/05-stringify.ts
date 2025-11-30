@@ -62,27 +62,34 @@ const nestedJson = Array.from(jsonStreamStringify(nested, null, 2)).join('')
 console.log(nestedJson)
 
 // Example 4: Using a replacer function
+// Note: The replacer function is called on each value (with the key parameter, which is '' for the root) during stringification.
 console.log('\n=== Example 4: With Replacer Function ===')
-const withSecrets = {
-    username: 'alice',
-    password: 'secret123',
-    apiKey: 'key-12345',
-    public: 'visible data',
-}
+const numbers = { a: 1, b: 2, c: 3 }
 
 const replacer = (key: string, value: any) => {
-    if (key === 'password' || key === 'apiKey') {
-        return '***REDACTED***'
+    // Transform objects by doubling all number values
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        const transformed: Record<string, any> = {}
+        for (const [k, v] of Object.entries(value)) {
+            transformed[k] = typeof v === 'number' ? v * 2 : v
+        }
+        return transformed
     }
     return value
 }
 
-console.log('Original object:', withSecrets)
-console.log('Stringified with replacer:')
-const redacted = Array.from(jsonStreamStringify(withSecrets, replacer, 2)).join(
+console.log('Original object:', numbers)
+console.log('Stringified with replacer (numbers doubled):')
+const transformed = Array.from(jsonStreamStringify(numbers, replacer, 2)).join(
     '',
 )
-console.log(redacted)
+console.log(transformed)
+// Output:
+// {
+//   "a": 2,
+//   "b": 4,
+//   "c": 6
+// }
 
 // Example 5: Stringify to bytes
 console.log('\n=== Example 5: Stringify to Bytes ===')
