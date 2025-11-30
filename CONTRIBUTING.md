@@ -27,6 +27,13 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - `test:` Tests
 - `refactor:` Refactoring
 - `chore:` Maintenance
+- `ci:` Continuous integration changes
+- `bump:` Version bumps
+- `perf:` Performance improvements
+- `security:` Security fixes
+- `release:` Release-related changes
+- `revert:` Revert previous commits
+- `style:` Code style changes (formatting, missing semi colons, etc.)
 
 ## Pull Requests
 
