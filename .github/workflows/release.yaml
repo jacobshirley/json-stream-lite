@@ -1,80 +1,80 @@
 name: Release
 
 on:
-    push:
-        branches:
-            - 'master'
+  push:
+    branches:
+      - "master"
 
-    # Manual trigger
-    workflow_dispatch:
+  # Manual trigger
+  workflow_dispatch:
 permissions:
-    contents: read
+  contents: read
 
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        name: Publish to npm
-        permissions:
-            contents: write
-            id-token: write
-        if: github.event_name == 'workflow_dispatch' || contains( github.event.head_commit.message, 'release' )
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
-            - name: Set up pnpm
-              uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
-              with:
-                  run_install: true
-            - name: Set up Node.js
-              uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
-              with:
-                  node-version: '24'
-                  cache: 'pnpm'
-            - name: Get release version
-              id: get_release_version
-              run: echo "version=$(jq -r .version ./package.json)" >> $GITHUB_OUTPUT
-            - name: Compile
-              run: pnpm compile
-            - name: Publish packages
-              run: pnpm -r publish --tag=latest --provenance
-            - name: Tag version
-              run: |
-                  git config --global user.name "github-actions[bot]"
-                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
-                  git tag v${{ steps.get_release_version.outputs.version }} --force
-                  MAJOR_VERSION=$(echo ${{ steps.get_release_version.outputs.version }} | cut -d. -f1)
-                  git tag v${MAJOR_VERSION} --force
-                  git tag latest --force
-                  git push origin v${{ steps.get_release_version.outputs.version }} --force
-                  git push origin v${MAJOR_VERSION} --force
-                  git push origin latest --force
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Pack
-              run: pnpm -r pack
-            - name: Push artifacts
-              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-              with:
-                  name: json-stream-lite-${{ steps.get_release_version.outputs.version }}
-                  path: ./*.tgz
-    github-release:
-        runs-on: ubuntu-latest
-        name: Create GitHub Release
-        needs: publish
-        permissions:
-            contents: write
-        steps:
-            - name: Download artifacts
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-            - name: Get release version
-              id: get_release_version
-              run: VERSION_FILE=$(ls *.tgz | head -n 1) && echo "version=$(echo $VERSION_FILE | sed -E 's/^json-stream-lite-(.*)\.tgz$/\1/')" >> $GITHUB_OUTPUT
-            - name: Create Release
-              id: create_release
-              uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2
-              with:
-                  draft: false
-                  prerelease: ${{ contains(steps.get_release_version.outputs.version, '-') }}
-                  generate_release_notes: true
-                  tag_name: v${{ steps.get_release_version.outputs.version }}
-                  files: './*.tgz'
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish to npm
+    permissions:
+      contents: write
+      id-token: write
+    if: github.event_name == 'workflow_dispatch' || contains( github.event.head_commit.message, 'release' )
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+      - name: Set up pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+        with:
+          run_install: true
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - name: Get release version
+        id: get_release_version
+        run: echo "version=$(jq -r .version ./package.json)" >> $GITHUB_OUTPUT
+      - name: Compile
+        run: pnpm compile
+      - name: Publish packages
+        run: pnpm -r publish --tag=latest --provenance
+      - name: Tag version
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag v${{ steps.get_release_version.outputs.version }} --force
+          MAJOR_VERSION=$(echo ${{ steps.get_release_version.outputs.version }} | cut -d. -f1)
+          git tag v${MAJOR_VERSION} --force
+          git tag latest --force
+          git push origin v${{ steps.get_release_version.outputs.version }} --force
+          git push origin v${MAJOR_VERSION} --force
+          git push origin latest --force
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pack
+        run: pnpm -r pack
+      - name: Push artifacts
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: json-stream-lite-${{ steps.get_release_version.outputs.version }}
+          path: ./*.tgz
+  github-release:
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    needs: publish
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - name: Get release version
+        id: get_release_version
+        run: VERSION_FILE=$(ls *.tgz | head -n 1) && echo "version=$(echo $VERSION_FILE | sed -E 's/^json-stream-lite-(.*)\.tgz$/\1/')" >> $GITHUB_OUTPUT
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2
+        with:
+          draft: false
+          prerelease: ${{ contains(steps.get_release_version.outputs.version, '-') }}
+          generate_release_notes: true
+          tag_name: v${{ steps.get_release_version.outputs.version }}
+          files: "./*.tgz"
