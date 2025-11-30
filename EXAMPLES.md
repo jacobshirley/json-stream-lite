@@ -468,7 +468,7 @@ const nestedJson = Array.from(jsonStreamStringify(nested, null, 2)).join('')
 console.log(nestedJson)
 
 // Example 4: Using a replacer function
-// Note: The replacer function transforms the root value before stringification
+// Note: The replacer is called on each value (with its key) during stringification
 console.log('\n=== Example 4: With Replacer Function ===')
 const numbers = { a: 1, b: 2, c: 3 }
 
