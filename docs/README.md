@@ -329,7 +329,7 @@ interface JsonStreamStringifyOptions {
 **Parameters:**
 
 - `value`: The value to stringify
-- `replacer`: Optional replacer function that transforms the root value before stringification
+- `replacer`: Optional replacer function called on each value (with empty key at the root) during stringification
 - `indent`: Number of spaces for indentation (0 for compact)
 - `options.stringChunkSize`: Maximum size of string chunks in bytes
 
