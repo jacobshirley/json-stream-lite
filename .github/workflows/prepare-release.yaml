@@ -1,39 +1,39 @@
 name: Prepare Release
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to prepare as (e.g. patch, minor, major)"
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
-          - prepatch
-          - preminor
-          - premajor
-          - prerelease
-        required: true
-      preid:
-        description: "Prerelease identifier (e.g. alpha, beta, rc). Only used if version is a prerelease type"
-        type: choice
-        required: false
-        options:
-          - alpha
-          - beta
-          - rc
-      force:
-        description: "Force prepare even if no changes detected"
-        required: false
-        type: boolean
-  push:
-    branches:
-      - release/**
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Version to prepare as (e.g. patch, minor, major)'
+                type: choice
+                options:
+                    - patch
+                    - minor
+                    - major
+                    - prepatch
+                    - preminor
+                    - premajor
+                    - prerelease
+                required: true
+            preid:
+                description: 'Prerelease identifier (e.g. alpha, beta, rc). Only used if version is a prerelease type'
+                type: choice
+                required: false
+                options:
+                    - alpha
+                    - beta
+                    - rc
+            force:
+                description: 'Force prepare even if no changes detected'
+                required: false
+                type: boolean
+    push:
+        branches:
+            - release/**
 permissions:
-  actions: write
-  checks: write
-  contents: write
-  pull-requests: write
+    actions: write
+    checks: write
+    contents: write
+    pull-requests: write
 jobs:
     prepare-release:
         runs-on: ubuntu-latest
