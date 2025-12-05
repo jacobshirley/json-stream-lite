@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { JsonArray, JsonKeyValueParser, JsonObject, JsonValue } from '../../src'
-import { stringToBytes } from '../../src/utils'
-import { ByteBuffer } from '../../src/byte-buffer'
+import {
+    JsonArray,
+    JsonKeyValueParser,
+    JsonObject,
+    JsonValue,
+} from '../../src/index.js'
+import { stringToBytes } from '../../src/utils.js'
+import { ByteBuffer } from '../../src/byte-buffer.js'
 
 type KeyValue = { key: string; value: any }
 
