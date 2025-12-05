@@ -1,6 +1,6 @@
 import { stringToBytes } from './utils'
 
-type JsonStreamStringifyOptions = {
+export type JsonStreamStringifyOptions = {
     stringChunkSize?: number
 }
 
