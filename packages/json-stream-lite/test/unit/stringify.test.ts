@@ -146,6 +146,19 @@ describe('JSON stream stringify', () => {
         expect(result).toBe(expected)
     })
 
+    it('should ignore functions in objects', () => {
+        const obj: any = {
+            a: 1,
+            b: function () {
+                return 'I am a function'
+            },
+            c: 3,
+        }
+        const result = Array.from(jsonStreamStringify(obj)).join('')
+        const expected = JSON.stringify({ a: 1, c: 3 })
+        expect(result).toBe(expected)
+    })
+
     it(
         'should handle extremely large objects that might fail with standard JSON.stringify',
         { timeout: 60000 },

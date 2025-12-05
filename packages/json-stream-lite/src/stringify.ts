@@ -25,6 +25,10 @@ function* formatString(
     }
 }
 
+function shouldIgnore(value: unknown): boolean {
+    return typeof value === 'function' || value === undefined
+}
+
 function* jsonStreamStringifyWithDepth(
     value: unknown,
     replacer?: any,
@@ -61,7 +65,7 @@ function* jsonStreamStringifyWithDepth(
                 yield '\n' + ' '.repeat(valueIndent)
             }
 
-            if (next === undefined) {
+            if (shouldIgnore(next)) {
                 yield 'null'
                 continue
             }
@@ -92,7 +96,8 @@ function* jsonStreamStringifyWithDepth(
             const key = keys[i]
 
             const next = (value as Record<string, unknown>)[key]
-            if (next === undefined) {
+
+            if (shouldIgnore(next)) {
                 continue
             }
 
