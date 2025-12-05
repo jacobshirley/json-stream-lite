@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { JsonArray, jsonStreamStringifyBytes } from '../../src'
+import { JsonArray, jsonStreamStringifyBytes } from '../../src/index.js'
 
 describe('JSON stream end-to-end tests', () => {
     test('should chunk and parse large JSON data correctly', async () => {

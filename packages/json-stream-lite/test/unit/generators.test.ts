@@ -3,8 +3,8 @@ import {
     JsonKeyValuePair,
     jsonKeyValueParser,
     jsonKeyValueParserAsync,
-} from '../../src'
-import { stringToBytes } from '../../src/utils'
+} from '../../src/index.js'
+import { stringToBytes } from '../../src/utils.js'
 
 describe('JSON streaming with generators', () => {
     test('should parse key-value pairs', () => {

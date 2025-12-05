@@ -1,4 +1,4 @@
-import { stringToBytes } from './utils'
+import { stringToBytes } from './utils.js'
 
 export type JsonStreamStringifyOptions = {
     stringChunkSize?: number

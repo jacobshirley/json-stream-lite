@@ -1,5 +1,5 @@
-import { ByteBuffer, NoMoreTokensError } from './byte-buffer.js'
-import { ByteStream, JsonKeyValuePair, JsonPrimitive } from './types.js'
+import { ByteBuffer } from './byte-buffer.js'
+import { ByteStream, JsonKeyValuePair } from './types.js'
 import { bytesToNumber, bytesToString } from './utils.js'
 
 const BYTE_MAP = {

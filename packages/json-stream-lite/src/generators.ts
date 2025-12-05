@@ -1,6 +1,6 @@
-import { JsonKeyValuePair } from './types'
-import { JsonKeyValueParser } from './parser'
-import { stringToBytes } from './utils'
+import { JsonKeyValuePair } from './types.js'
+import { JsonKeyValueParser } from './parser.js'
+import { stringToBytes } from './utils.js'
 
 export function* jsonKeyValueParser(
     bytes: Iterable<number> | string,

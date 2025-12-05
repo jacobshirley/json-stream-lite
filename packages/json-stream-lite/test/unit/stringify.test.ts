@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jsonStreamStringify } from '../../src/stringify'
+import { jsonStreamStringify } from '../../src/index.js'
 
 describe('JSON stream stringify', () => {
     it('should stringify a simple object', () => {

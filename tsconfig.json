@@ -15,7 +15,8 @@
         "lib": ["DOM", "ESNext"],
         "allowJs": true,
         "incremental": true,
-        "allowArbitraryExtensions": true,
+        "allowArbitraryExtensions": false,
+        "allowImportingTsExtensions": false,
         "erasableSyntaxOnly": true
     },
     "include": ["examples/**/*", "scripts/**/*"]

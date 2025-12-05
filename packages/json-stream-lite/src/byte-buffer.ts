@@ -1,5 +1,5 @@
-import { ByteStream } from './types'
-import { bytesToString } from './utils'
+import { ByteStream } from './types.js'
+import { bytesToString } from './utils.js'
 
 export class NoMoreTokensError extends Error {}
 export class EofReachedError extends Error {}
