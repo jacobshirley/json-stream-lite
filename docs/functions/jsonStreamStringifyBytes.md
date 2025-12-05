@@ -24,7 +24,7 @@
 
 ### options?
 
-`JsonStreamStringifyOptions`
+[`JsonStreamStringifyOptions`](../type-aliases/JsonStreamStringifyOptions.md)
 
 ## Returns
 
