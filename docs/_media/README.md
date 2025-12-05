@@ -368,3 +368,5 @@ Contributions welcome! Please ensure:
 - All tests pass: `pnpm test`
 - Code compiles: `pnpm compile`
 - Coverage maintained: `pnpm test -- --coverage`
+
+For more details, see [CONTRIBUTING.md](./CONTRIBUTING.md).
