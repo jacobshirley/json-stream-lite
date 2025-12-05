@@ -368,9 +368,3 @@ Contributions welcome! Please ensure:
 - All tests pass: `pnpm test`
 - Code compiles: `pnpm compile`
 - Coverage maintained: `pnpm test -- --coverage`
-
-## Related Projects
-
-- [json-stream](https://www.npmjs.com/package/json-stream) - Alternative streaming JSON parser
-- [stream-json](https://www.npmjs.com/package/stream-json) - Node.js streaming JSON parser
-- [jsonparse](https://www.npmjs.com/package/jsonparse) - Pure JavaScript streaming JSON parser
