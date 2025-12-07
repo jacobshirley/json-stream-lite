@@ -8,19 +8,36 @@ function* chunkStream(
     iterable: Iterable<string>,
     chunkSize: number,
 ): Generator<string> {
-    let buffer = ''
+    let parts: string[] = []
+    let currentSize = 0
 
     for (const chunk of iterable) {
-        buffer += chunk
+        if (currentSize + chunk.length < chunkSize) {
+            parts.push(chunk)
+            currentSize += chunk.length
+        } else {
+            // Only concatenate when we need to yield
+            const buffer = parts.join('') + chunk
+            parts = []
 
-        while (buffer.length >= chunkSize) {
-            yield buffer.slice(0, chunkSize)
-            buffer = buffer.slice(chunkSize)
+            let offset = 0
+            while (offset + chunkSize <= buffer.length) {
+                yield buffer.slice(offset, offset + chunkSize)
+                offset += chunkSize
+            }
+
+            const remainder = buffer.slice(offset)
+            if (remainder) {
+                parts = [remainder]
+                currentSize = remainder.length
+            } else {
+                currentSize = 0
+            }
         }
     }
 
-    if (buffer.length > 0) {
-        yield buffer
+    if (parts.length > 0) {
+        yield parts.join('')
     }
 }
 
