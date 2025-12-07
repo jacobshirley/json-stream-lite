@@ -6,10 +6,10 @@ describe('JSON stream stringify', () => {
         const obj = { a: 1, b: 'text', c: true, d: null }
         const chunks = Array.from(
             jsonStreamStringify(obj, null, 2, {
-                stringChunkSize: 1,
+                chunkSize: 1,
             }),
         )
-        expect(chunks.length).toBe(35) // Expect multiple chunks due to stringChunkSize
+        expect(chunks.length).toBe(53) // Expect multiple chunks due to chunkSize
         const result = chunks.join('')
         const expected = JSON.stringify(obj, null, 2)
         expect(result).toBe(expected)
@@ -264,7 +264,7 @@ describe('JSON stream stringify', () => {
             }
 
             expect(totalLength).toBeGreaterThan(LARGE_SIZE * 50) // At least 50 chars per object
-            expect(chunkCount).toBeGreaterThan(LARGE_SIZE) // Many chunks generated
+            expect(chunkCount).toBeGreaterThan(10000) // Many chunks generated
         },
     )
 })

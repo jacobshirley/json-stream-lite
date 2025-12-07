@@ -1,28 +1,31 @@
-import { stringToBytes } from './utils.js'
+const DEFAULT_CHUNK_SIZE = 1024 * 16 // 16KB
 
 export type JsonStreamStringifyOptions = {
-    stringChunkSize?: number
+    chunkSize?: number
 }
 
-function* formatString(
-    str: string,
-    chunkSize: number = 1024,
-): Iterable<string> {
-    const formatted = `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')}"`
+function* chunkStream(
+    iterable: Iterable<string>,
+    chunkSize: number,
+): Generator<string> {
+    let buffer = ''
 
-    let i = 0
-    const len = formatted.length
+    for (const chunk of iterable) {
+        buffer += chunk
 
-    if (len === 0) {
-        yield '""'
-        return
+        while (buffer.length >= chunkSize) {
+            yield buffer.slice(0, chunkSize)
+            buffer = buffer.slice(chunkSize)
+        }
     }
 
-    while (i < len) {
-        const chunk = formatted.slice(i, i + chunkSize)
-        yield chunk
-        i += chunkSize
+    if (buffer.length > 0) {
+        yield buffer
     }
+}
+
+function formatString(str: string): string {
+    return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')}"`
 }
 
 function shouldIgnore(value: unknown): boolean {
@@ -50,7 +53,6 @@ function* jsonStreamStringifyWithDepth(
     replacer?: any,
     indent: number = 0,
     currentDepth: number = 0,
-    options?: JsonStreamStringifyOptions,
 ): Generator<string> {
     if (replacer) {
         value = replacer('', value)
@@ -71,7 +73,7 @@ function* jsonStreamStringifyWithDepth(
     } else if (typeof value === 'number') {
         yield Number.isFinite(value) ? value.toString() : 'null'
     } else if (typeof value === 'string') {
-        yield* formatString(value, options?.stringChunkSize)
+        yield formatString(value)
     } else if (Array.isArray(value)) {
         yield '['
 
@@ -99,7 +101,6 @@ function* jsonStreamStringifyWithDepth(
                 replacer,
                 indent > 0 ? indent : 0,
                 currentDepth + 1,
-                options,
             )
         }
 
@@ -133,14 +134,13 @@ function* jsonStreamStringifyWithDepth(
                 yield '\n' + ' '.repeat(valueIndent)
             }
 
-            yield* formatString(key, options?.stringChunkSize)
+            yield formatString(key)
             yield `:${indent > 0 ? ' ' : ''}`
             yield* jsonStreamStringifyWithDepth(
                 next,
                 replacer,
                 indent > 0 ? indent : 0,
                 currentDepth + 1,
-                options,
             )
 
             count++
@@ -160,7 +160,10 @@ export function jsonStreamStringify(
     indent: number = 0,
     options?: JsonStreamStringifyOptions,
 ): Generator<string> {
-    return jsonStreamStringifyWithDepth(value, replacer, indent, 0, options)
+    return chunkStream(
+        jsonStreamStringifyWithDepth(value, replacer, indent, 0),
+        options?.chunkSize ?? DEFAULT_CHUNK_SIZE,
+    )
 }
 
 export function* jsonStreamStringifyBytes(
@@ -176,7 +179,8 @@ export function* jsonStreamStringifyBytes(
         options,
     )
 
+    const encoder = new TextEncoder()
     for (const chunk of stringGenerator) {
-        yield stringToBytes(chunk)
+        yield encoder.encode(chunk)
     }
 }

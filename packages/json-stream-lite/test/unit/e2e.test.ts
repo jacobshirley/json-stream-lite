@@ -13,7 +13,7 @@ describe('JSON stream end-to-end tests', () => {
 
         async function* byteStream() {
             yield* jsonStreamStringifyBytes(veryLargeArray, null, 0, {
-                stringChunkSize: 1024, // 1 KB chunks
+                chunkSize: 1024, // 1 KB chunks
             })
         }
 
