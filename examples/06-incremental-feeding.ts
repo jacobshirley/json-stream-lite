@@ -57,7 +57,7 @@ const parser3 = new JsonObject()
 parser3.feed(...stringToBytes(json3))
 
 console.log('Parsing members after feeding:')
-for (const [keyEntity, valueEntity] of parser3.members()) {
+for (const { key: keyEntity, value: valueEntity } of parser3.members()) {
     const key = keyEntity.read()
     const value = valueEntity.read().read()
     console.log(`  ${key}: ${value}`)

@@ -19,7 +19,7 @@ const userParser = new JsonObject()
 userParser.feed(...stringToBytes(userJson))
 
 console.log('Processing members one by one:')
-for (const [keyEntity, valueEntity] of userParser.members()) {
+for (const { key: keyEntity, value: valueEntity } of userParser.members()) {
     const key = keyEntity.read()
     const value = valueEntity.read().read()
     console.log(`  ${key}: ${value} (${typeof value})`)
@@ -50,7 +50,7 @@ const dataParser = new JsonObject()
 dataParser.feed(...stringToBytes(dataJson))
 
 console.log('Only processing the "data" field:')
-for (const [keyEntity, valueEntity] of dataParser.members()) {
+for (const { key: keyEntity, value: valueEntity } of dataParser.members()) {
     const key = keyEntity.read()
 
     if (key === 'data') {
@@ -76,7 +76,7 @@ const searchParser = new JsonObject()
 searchParser.feed(...stringToBytes(largeJson))
 
 console.log('Searching for "target" field:')
-for (const [keyEntity, valueEntity] of searchParser.members()) {
+for (const { key: keyEntity, value: valueEntity } of searchParser.members()) {
     const key = keyEntity.read()
 
     if (key === 'target') {
