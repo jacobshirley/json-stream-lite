@@ -63,7 +63,8 @@ function hasCustomToStringFunction(
     return (
         'toString' in value &&
         typeof (value as any).toString === 'function' &&
-        (value as any).toString !== Object.prototype.toString
+        (value as any).toString !== Object.prototype.toString &&
+        (value as any).toString !== Array.prototype.toString
     )
 }
 
@@ -78,7 +79,7 @@ function* jsonStreamStringifyWithDepth(
         value = replacer('', value)
     }
 
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (value && typeof value === 'object') {
         if (hasCustomToJsonFunction(value)) {
             value = value.toJSON()
         } else if (hasCustomToStringFunction(value)) {
