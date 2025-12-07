@@ -159,6 +159,85 @@ describe('JSON stream stringify', () => {
         expect(result).toBe(expected)
     })
 
+    it('should use toJSON method if available', () => {
+        const obj = {
+            a: 1,
+            b: 2,
+            toJSON() {
+                return { a: this.a }
+            },
+        }
+        const result = Array.from(jsonStreamStringify(obj)).join('')
+        const expected = JSON.stringify(obj)
+        expect(result).toBe(expected)
+    })
+
+    it('should use custom toString methods', () => {
+        const obj = {
+            a: 1,
+            b: {
+                toString: () => {
+                    return 'customString'
+                },
+            },
+        }
+        const result = Array.from(jsonStreamStringify(obj)).join('')
+        const expected = JSON.stringify({
+            a: 1,
+            b: 'customString',
+        })
+        expect(result).toBe(expected)
+    })
+
+    it('should use both toJSON and toString methods correctly', () => {
+        const obj = {
+            a: 1,
+            b: {
+                toJSON() {
+                    return { nested: 'value' }
+                },
+                toString() {
+                    return 'shouldNotBeUsed'
+                },
+            },
+        }
+        const result = Array.from(jsonStreamStringify(obj)).join('')
+        const expected = JSON.stringify({
+            a: 1,
+            b: { nested: 'value' },
+        })
+        expect(result).toBe(expected)
+    })
+
+    it('should use toString inside toJSON', () => {
+        const obj = {
+            a: 1,
+            b: {
+                toJSON() {
+                    return {
+                        nested: {
+                            toString: () => 'valueFromToString',
+                        },
+                    }
+                },
+            },
+        }
+        const result = Array.from(jsonStreamStringify(obj)).join('')
+        const expected = JSON.stringify({
+            a: 1,
+            b: { nested: 'valueFromToString' },
+        })
+        expect(result).toBe(expected)
+    })
+
+    it('should handle Date objects correctly', () => {
+        const date = new Date('2024-01-01T00:00:00Z')
+        const obj = { event: 'New Year', date }
+        const result = Array.from(jsonStreamStringify(obj)).join('')
+        const expected = JSON.stringify(obj)
+        expect(result).toBe(expected)
+    })
+
     it(
         'should handle extremely large objects that might fail with standard JSON.stringify',
         { timeout: 60000 },

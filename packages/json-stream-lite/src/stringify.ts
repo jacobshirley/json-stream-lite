@@ -29,6 +29,22 @@ function shouldIgnore(value: unknown): boolean {
     return typeof value === 'function' || value === undefined
 }
 
+function hasCustomToJsonFunction(
+    value: object,
+): value is { toJSON: () => unknown } {
+    return 'toJSON' in value && typeof (value as any).toJSON === 'function'
+}
+
+function hasCustomToStringFunction(
+    value: object,
+): value is { toString: () => string } {
+    return (
+        'toString' in value &&
+        typeof (value as any).toString === 'function' &&
+        (value as any).toString !== Object.prototype.toString
+    )
+}
+
 function* jsonStreamStringifyWithDepth(
     value: unknown,
     replacer?: any,
@@ -38,6 +54,14 @@ function* jsonStreamStringifyWithDepth(
 ): Generator<string> {
     if (replacer) {
         value = replacer('', value)
+    }
+
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        if (hasCustomToJsonFunction(value)) {
+            value = value.toJSON()
+        } else if (hasCustomToStringFunction(value)) {
+            value = value.toString()
+        }
     }
 
     if (value === null) {
