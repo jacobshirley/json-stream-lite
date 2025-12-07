@@ -6,15 +6,37 @@ function* formatString(
     str: string,
     chunkSize: number = 1024,
 ): Iterable<string> {
-    const formatted = `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')}"`
-
-    let i = 0
-    const len = formatted.length
-
-    if (len === 0) {
+    if (str.length === 0) {
         yield '""'
         return
     }
+    const parts = ['"']
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i]
+        switch (char) {
+            case '\\':
+                parts.push('\\\\')
+                break
+            case '"':
+                parts.push('\\"')
+                break
+            case '\n':
+                parts.push('\\n')
+                break
+            case '\r':
+                parts.push('\\r')
+                break
+            case '\t':
+                parts.push('\\t')
+                break
+            default:
+                parts.push(char)
+        }
+    }
+    parts.push('"')
+    const formatted = parts.join('')
+    let i = 0
+    const len = formatted.length
 
     while (i < len) {
         const chunk = formatted.slice(i, i + chunkSize)
@@ -39,7 +61,8 @@ function hasCustomToStringFunction(
     return (
         'toString' in value &&
         typeof (value as any).toString === 'function' &&
-        (value as any).toString !== Object.prototype.toString
+        (value as any).toString !== Object.prototype.toString &&
+        (value as any).toString !== Array.prototype.toString
     )
 }
 
@@ -54,7 +77,7 @@ function* jsonStreamStringifyWithDepth(
         value = replacer('', value)
     }
 
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (value && typeof value === 'object') {
         if (hasCustomToJsonFunction(value)) {
             value = value.toJSON()
         } else if (hasCustomToStringFunction(value)) {
