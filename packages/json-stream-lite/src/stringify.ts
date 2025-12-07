@@ -8,15 +8,37 @@ function* formatString(
     str: string,
     chunkSize: number = 1024,
 ): Iterable<string> {
-    const formatted = `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')}"`
-
-    let i = 0
-    const len = formatted.length
-
-    if (len === 0) {
+    if (str.length === 0) {
         yield '""'
         return
     }
+    const parts = ['"']
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i]
+        switch (char) {
+            case '\\':
+                parts.push('\\\\')
+                break
+            case '"':
+                parts.push('\\"')
+                break
+            case '\n':
+                parts.push('\\n')
+                break
+            case '\r':
+                parts.push('\\r')
+                break
+            case '\t':
+                parts.push('\\t')
+                break
+            default:
+                parts.push(char)
+        }
+    }
+    parts.push('"')
+    const formatted = parts.join('')
+    let i = 0
+    const len = formatted.length
 
     while (i < len) {
         const chunk = formatted.slice(i, i + chunkSize)
