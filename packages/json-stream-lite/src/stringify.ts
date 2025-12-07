@@ -12,31 +12,31 @@ function* formatString(
         yield '""'
         return
     }
-    let formatted = '"'
+    const parts = ['"']
     for (let i = 0; i < str.length; i++) {
         const char = str[i]
         switch (char) {
             case '\\':
-                formatted += '\\\\'
+                parts.push('\\\\')
                 break
             case '"':
-                formatted += '\\"'
+                parts.push('\\"')
                 break
             case '\n':
-                formatted += '\\n'
+                parts.push('\\n')
                 break
             case '\r':
-                formatted += '\\r'
+                parts.push('\\r')
                 break
             case '\t':
-                formatted += '\\t'
+                parts.push('\\t')
                 break
             default:
-                formatted += char
+                parts.push(char)
         }
     }
-    formatted += '"'
-
+    parts.push('"')
+    const formatted = parts.join('')
     let i = 0
     const len = formatted.length
 
