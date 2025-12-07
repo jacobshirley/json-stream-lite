@@ -33,7 +33,7 @@ const objWithLargeString = { data: largeString }
 console.log('Object with 100-char string, chunked at 30 bytes:')
 let chunkCount = 0
 for (const chunk of jsonStreamStringify(objWithLargeString, null, 0, {
-    stringChunkSize: 30,
+    chunkSize: 30,
 })) {
     console.log(
         `  Chunk ${++chunkCount}: "${chunk.substring(0, 40)}${chunk.length > 40 ? '...' : ''}" (${chunk.length} chars)`,
