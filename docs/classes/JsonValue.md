@@ -4,17 +4,27 @@
 
 [json-stream-lite](../packages.md) / JsonValue
 
-# Class: JsonValue
+# Class: JsonValue\<T, K\>
 
 ## Extends
 
-- [`JsonEntity`](JsonEntity.md)\<[`JsonValueType`](../type-aliases/JsonValueType.md)\>
+- [`JsonEntity`](JsonEntity.md)\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
+
+## Type Parameters
+
+### T
+
+`T` _extends_ `unknown` = `unknown`
+
+### K
+
+`K` _extends_ `string` = `string`
 
 ## Constructors
 
 ### Constructor
 
-> **new JsonValue**(`buffer?`, `key?`): `JsonValue`
+> **new JsonValue**\<`T`, `K`\>(`buffer?`, `key?`): `JsonValue`\<`T`, `K`\>
 
 #### Parameters
 
@@ -24,11 +34,11 @@
 
 ##### key?
 
-[`JsonString`](JsonString.md)
+[`JsonString`](JsonString.md)\<`K`\>
 
 #### Returns
 
-`JsonValue`
+`JsonValue`\<`T`, `K`\>
 
 #### Overrides
 
@@ -160,11 +170,11 @@
 
 ### parse()
 
-> `protected` **parse**(): [`JsonValueType`](../type-aliases/JsonValueType.md)
+> `protected` **parse**(): [`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
 
 #### Returns
 
-[`JsonValueType`](../type-aliases/JsonValueType.md)
+[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
 
 #### Overrides
 
@@ -174,11 +184,11 @@
 
 ### read()
 
-> **read**(): [`JsonValueType`](../type-aliases/JsonValueType.md)
+> **read**(): [`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
 
 #### Returns
 
-[`JsonValueType`](../type-aliases/JsonValueType.md)
+[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
 
 #### Overrides
 
@@ -188,11 +198,11 @@
 
 ### readAsync()
 
-> **readAsync**(): `Promise`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\>
+> **readAsync**(): `Promise`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
 
 #### Returns
 
-`Promise`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\>
+`Promise`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
 
 #### Overrides
 
@@ -242,7 +252,7 @@
 
 ##### T
 
-`T` = `JsonValue`
+`T` = `JsonValue`\<`T`, `K`\>
 
 #### Parameters
 

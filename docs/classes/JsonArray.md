@@ -114,21 +114,21 @@
 
 ### \[asyncIterator\]()
 
-> **\[asyncIterator\]**(): `AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md), `any`, `any`\>
+> **\[asyncIterator\]**(): `AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
 
 #### Returns
 
-`AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md), `any`, `any`\>
+`AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
 
 ---
 
 ### \[iterator\]()
 
-> **\[iterator\]**(): `Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md), `any`, `any`\>
+> **\[iterator\]**(): `Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
 
 #### Returns
 
-`Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md), `any`, `any`\>
+`Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
 
 ---
 
@@ -182,21 +182,21 @@
 
 ### items()
 
-> **items**(): `Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\>
+> **items**(): `Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
 
 #### Returns
 
-`Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\>
+`Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
 
 ---
 
 ### itemsAsync()
 
-> **itemsAsync**(): `AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\>
+> **itemsAsync**(): `AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
 
 #### Returns
 
-`AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\>
+`AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
 
 ---
 

@@ -4,17 +4,23 @@
 
 [json-stream-lite](../packages.md) / JsonString
 
-# Class: JsonString
+# Class: JsonString\<T\>
 
 ## Extends
 
-- [`JsonEntity`](JsonEntity.md)\<`string`\>
+- [`JsonEntity`](JsonEntity.md)\<`T`\>
+
+## Type Parameters
+
+### T
+
+`T` _extends_ `string` = `string`
 
 ## Constructors
 
 ### Constructor
 
-> **new JsonString**(`buffer?`): `JsonString`
+> **new JsonString**\<`T`\>(`buffer?`): `JsonString`\<`T`\>
 
 #### Parameters
 
@@ -24,7 +30,7 @@
 
 #### Returns
 
-`JsonString`
+`JsonString`\<`T`\>
 
 #### Inherited from
 
@@ -156,11 +162,11 @@
 
 ### parse()
 
-> `protected` **parse**(): `string`
+> `protected` **parse**(): `T`
 
 #### Returns
 
-`string`
+`T`
 
 #### Overrides
 
@@ -170,11 +176,11 @@
 
 ### read()
 
-> **read**(): `string`
+> **read**(): `T`
 
 #### Returns
 
-`string`
+`T`
 
 #### Inherited from
 
@@ -184,11 +190,11 @@
 
 ### readAsync()
 
-> **readAsync**(): `Promise`\<`string`\>
+> **readAsync**(): `Promise`\<`T`\>
 
 #### Returns
 
-`Promise`\<`string`\>
+`Promise`\<`T`\>
 
 #### Inherited from
 
@@ -218,7 +224,7 @@
 
 ##### T
 
-`T` = `JsonString`
+`T` = `JsonString`\<`T`\>
 
 #### Parameters
 

@@ -4,17 +4,23 @@
 
 [json-stream-lite](../packages.md) / JsonNumber
 
-# Class: JsonNumber
+# Class: JsonNumber\<T\>
 
 ## Extends
 
-- [`JsonEntity`](JsonEntity.md)\<`number`\>
+- [`JsonEntity`](JsonEntity.md)\<`T`\>
+
+## Type Parameters
+
+### T
+
+`T` _extends_ `number` = `number`
 
 ## Constructors
 
 ### Constructor
 
-> **new JsonNumber**(`buffer?`): `JsonNumber`
+> **new JsonNumber**\<`T`\>(`buffer?`): `JsonNumber`\<`T`\>
 
 #### Parameters
 
@@ -24,7 +30,7 @@
 
 #### Returns
 
-`JsonNumber`
+`JsonNumber`\<`T`\>
 
 #### Inherited from
 
@@ -156,11 +162,11 @@
 
 ### parse()
 
-> `protected` **parse**(): `number`
+> `protected` **parse**(): `T`
 
 #### Returns
 
-`number`
+`T`
 
 #### Overrides
 
@@ -170,11 +176,11 @@
 
 ### read()
 
-> **read**(): `number`
+> **read**(): `T`
 
 #### Returns
 
-`number`
+`T`
 
 #### Inherited from
 
@@ -184,11 +190,11 @@
 
 ### readAsync()
 
-> **readAsync**(): `Promise`\<`number`\>
+> **readAsync**(): `Promise`\<`T`\>
 
 #### Returns
 
-`Promise`\<`number`\>
+`Promise`\<`T`\>
 
 #### Inherited from
 
@@ -218,7 +224,7 @@
 
 ##### T
 
-`T` = `JsonNumber`
+`T` = `JsonNumber`\<`T`\>
 
 #### Parameters
 
