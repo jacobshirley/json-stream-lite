@@ -1,5 +1,3 @@
-import { stringToBytes } from './utils.js'
-
 export type JsonStreamStringifyOptions = {
     stringChunkSize?: number
 }
@@ -186,6 +184,8 @@ export function jsonStreamStringify(
     return jsonStreamStringifyWithDepth(value, replacer, indent, 0, options)
 }
 
+const TEXT_ENCODER = new TextEncoder()
+
 export function* jsonStreamStringifyBytes(
     value: unknown,
     replacer?: any,
@@ -200,6 +200,6 @@ export function* jsonStreamStringifyBytes(
     )
 
     for (const chunk of stringGenerator) {
-        yield stringToBytes(chunk)
+        yield TEXT_ENCODER.encode(chunk)
     }
 }
