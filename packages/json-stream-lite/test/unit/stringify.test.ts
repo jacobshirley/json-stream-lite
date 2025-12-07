@@ -209,6 +209,26 @@ describe('JSON stream stringify', () => {
         expect(result).toBe(expected)
     })
 
+    it('should allow custom toJSON on an array', () => {
+        const arr: any = [1, 2, 3]
+        arr.toJSON = function () {
+            return ['a', 'b', 'c']
+        }
+        const result = Array.from(jsonStreamStringify(arr)).join('')
+        const expected = JSON.stringify(arr)
+        expect(result).toBe(expected)
+    })
+
+    it('should allow custom toString on an array', () => {
+        const arr: any = [1, 2, 3]
+        arr.toString = function () {
+            return 'customArrayString'
+        }
+        const result = Array.from(jsonStreamStringify(arr)).join('')
+        const expected = JSON.stringify('customArrayString')
+        expect(result).toBe(expected)
+    })
+
     it('should use toString inside toJSON', () => {
         const obj = {
             a: 1,
