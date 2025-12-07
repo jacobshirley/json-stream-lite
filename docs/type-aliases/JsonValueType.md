@@ -4,6 +4,12 @@
 
 [json-stream-lite](../packages.md) / JsonValueType
 
-# Type Alias: JsonValueType
+# Type Alias: JsonValueType\<T\>
 
-> **JsonValueType** = [`JsonPrimitiveType`](JsonPrimitiveType.md) \| [`JsonObject`](../classes/JsonObject.md) \| [`JsonArray`](../classes/JsonArray.md)
+> **JsonValueType**\<`T`\> = [`JsonPrimitiveType`](JsonPrimitiveType.md) \| [`JsonObject`](../classes/JsonObject.md)\<`T`\> \| [`JsonArray`](../classes/JsonArray.md)\<`T`\>
+
+## Type Parameters
+
+### T
+
+`T` = `unknown`

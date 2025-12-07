@@ -4,17 +4,23 @@
 
 [json-stream-lite](../packages.md) / JsonBoolean
 
-# Class: JsonBoolean
+# Class: JsonBoolean\<T\>
 
 ## Extends
 
-- [`JsonEntity`](JsonEntity.md)\<`boolean`\>
+- [`JsonEntity`](JsonEntity.md)\<`T`\>
+
+## Type Parameters
+
+### T
+
+`T` _extends_ `boolean` = `boolean`
 
 ## Constructors
 
 ### Constructor
 
-> **new JsonBoolean**(`buffer?`): `JsonBoolean`
+> **new JsonBoolean**\<`T`\>(`buffer?`): `JsonBoolean`\<`T`\>
 
 #### Parameters
 
@@ -24,7 +30,7 @@
 
 #### Returns
 
-`JsonBoolean`
+`JsonBoolean`\<`T`\>
 
 #### Inherited from
 
@@ -156,11 +162,11 @@
 
 ### parse()
 
-> `protected` **parse**(): `boolean`
+> `protected` **parse**(): `T`
 
 #### Returns
 
-`boolean`
+`T`
 
 #### Overrides
 
@@ -170,11 +176,11 @@
 
 ### read()
 
-> **read**(): `boolean`
+> **read**(): `T`
 
 #### Returns
 
-`boolean`
+`T`
 
 #### Inherited from
 
@@ -184,11 +190,11 @@
 
 ### readAsync()
 
-> **readAsync**(): `Promise`\<`boolean`\>
+> **readAsync**(): `Promise`\<`T`\>
 
 #### Returns
 
-`Promise`\<`boolean`\>
+`Promise`\<`T`\>
 
 #### Inherited from
 
@@ -218,7 +224,7 @@
 
 ##### T
 
-`T` = `JsonBoolean`
+`T` = `JsonBoolean`\<`T`\>
 
 #### Parameters
 

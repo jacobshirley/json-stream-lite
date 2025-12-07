@@ -114,21 +114,21 @@
 
 ### \[asyncIterator\]()
 
-> **\[asyncIterator\]**(): `AsyncGenerator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\], `any`, `any`\>
+> **\[asyncIterator\]**(): `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
 
 #### Returns
 
-`AsyncGenerator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\], `any`, `any`\>
+`AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
 
 ---
 
 ### \[iterator\]()
 
-> **\[iterator\]**(): `Generator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\], `any`, `any`\>
+> **\[iterator\]**(): `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
 
 #### Returns
 
-`Generator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\], `any`, `any`\>
+`Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
 
 ---
 
@@ -182,21 +182,21 @@
 
 ### members()
 
-> **members**(): `Generator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\]\>
+> **members**(): `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
 
 #### Returns
 
-`Generator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\]\>
+`Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
 
 ---
 
 ### membersAsync()
 
-> **membersAsync**(): `AsyncGenerator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\]\>
+> **membersAsync**(): `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
 
 #### Returns
 
-`AsyncGenerator`\<\[[`JsonString`](JsonString.md), [`JsonValue`](JsonValue.md)\]\>
+`AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
 
 ---
 
