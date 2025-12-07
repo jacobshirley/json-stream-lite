@@ -60,7 +60,7 @@ const userParser = new JsonObject()
 userParser.feed(...stringToBytes(userJson))
 
 console.log('Processing members one by one:')
-for (const [keyEntity, valueEntity] of userParser.members()) {
+for (const { key: keyEntity, value: valueEntity } of userParser.members()) {
     const key = keyEntity.read()
     const value = valueEntity.read().read()
     console.log(`  ${key}: ${value} (${typeof value})`)
@@ -91,7 +91,7 @@ const dataParser = new JsonObject()
 dataParser.feed(...stringToBytes(dataJson))
 
 console.log('Only processing the "data" field:')
-for (const [keyEntity, valueEntity] of dataParser.members()) {
+for (const { key: keyEntity, value: valueEntity } of dataParser.members()) {
     const key = keyEntity.read()
 
     if (key === 'data') {
@@ -117,7 +117,7 @@ const searchParser = new JsonObject()
 searchParser.feed(...stringToBytes(largeJson))
 
 console.log('Searching for "target" field:')
-for (const [keyEntity, valueEntity] of searchParser.members()) {
+for (const { key: keyEntity, value: valueEntity } of searchParser.members()) {
     const key = keyEntity.read()
 
     if (key === 'target') {
@@ -267,7 +267,7 @@ async function parseAsyncObject() {
     const parser = new JsonObject(stream)
 
     console.log('Streaming members asynchronously:')
-    for await (const [keyEntity, valueEntity] of parser) {
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
         const key = keyEntity.read()
         const value = await valueEntity.readValueAsync()
         console.log(`  ${key}: ${value}`)
@@ -338,7 +338,7 @@ async function processHttpResponse() {
     const parser = new JsonObject(stream)
 
     console.log('Processing HTTP response:')
-    for await (const [keyEntity, valueEntity] of parser) {
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
         const key = keyEntity.read()
 
         if (key === 'data') {
@@ -346,7 +346,10 @@ async function processHttpResponse() {
             const dataValue = await valueEntity.readAsync()
             const dataObj = dataValue as JsonObject
 
-            for await (const [dataKey, dataValueEntity] of dataObj) {
+            for await (const {
+                key: dataKey,
+                value: dataValueEntity,
+            } of dataObj) {
                 const dataKeyStr = dataKey.read()
                 if (dataKeyStr === 'users') {
                     console.log(`    Found users array:`)
@@ -387,7 +390,7 @@ async function processLargeDataset() {
     let recordCount = 0
     let totalValue = 0
 
-    for await (const [keyEntity, valueEntity] of parser) {
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
         const key = keyEntity.read()
 
         if (key === 'records') {
@@ -621,7 +624,7 @@ const parser3 = new JsonObject()
 parser3.feed(...stringToBytes(json3))
 
 console.log('Parsing members after feeding:')
-for (const [keyEntity, valueEntity] of parser3.members()) {
+for (const { key: keyEntity, value: valueEntity } of parser3.members()) {
     const key = keyEntity.read()
     const value = valueEntity.read().read()
     console.log(`  ${key}: ${value}`)
@@ -797,7 +800,7 @@ function analyzeLogEntries() {
     const stats = { ERROR: 0, INFO: 0, WARN: 0 }
 
     console.log('Analyzing log entries:')
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'logs') {
@@ -844,15 +847,15 @@ function transformApiResponse() {
     const transformedUsers: any[] = []
 
     console.log('Transforming API response:')
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'data') {
             const dataValue = valueEntity.read() as JsonObject
-            for (const [
-                dataKeyEntity,
-                dataValueEntity,
-            ] of dataValue.members()) {
+            for (const {
+                key: dataKeyEntity,
+                value: dataValueEntity,
+            } of dataValue.members()) {
                 const dataKey = dataKeyEntity.read()
 
                 if (dataKey === 'users') {
@@ -894,7 +897,7 @@ function validateData() {
     const errors: string[] = []
 
     console.log('Validating user data:')
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'users') {
@@ -1010,7 +1013,7 @@ function generateReport() {
 
     console.log('Sales Report:')
 
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'period') {

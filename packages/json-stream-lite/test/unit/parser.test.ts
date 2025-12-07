@@ -19,7 +19,7 @@ describe('JSON object parsing', () => {
 
         const pairs: KeyValue[] = []
 
-        for (const [keyEntity, valueEntity] of object.members()) {
+        for (const { key: keyEntity, value: valueEntity } of object.members()) {
             const key = keyEntity.read()
             const value = valueEntity.read().read()
 
@@ -37,7 +37,7 @@ describe('JSON object parsing', () => {
         object.feed(...stringToBytes(json))
         const keyValuePairs: KeyValue[] = []
 
-        for (const [keyEntity, valueEntity] of object.members()) {
+        for (const { key: keyEntity, value: valueEntity } of object.members()) {
             const key = keyEntity.read()
             const value = valueEntity.read().read()
 
@@ -71,7 +71,7 @@ describe('JSON object parsing', () => {
         object.feed(...stringToBytes(json))
         const keyValuePairs: KeyValue[] = []
 
-        for (const [keyEntity, valueEntity] of object.members()) {
+        for (const { key: keyEntity, value: valueEntity } of object.members()) {
             const key = keyEntity.read()
             const value = valueEntity.read().read()
 
@@ -91,7 +91,7 @@ describe('JSON object parsing', () => {
         object.feed(...stringToBytes(json))
         const keyValuePairs: KeyValue[] = []
 
-        for (const [keyEntity, valueEntity] of object.members()) {
+        for (const { key: keyEntity, value: valueEntity } of object.members()) {
             const key = keyEntity.read()
             const value = valueEntity.read().read()
 
@@ -108,7 +108,7 @@ describe('JSON object parsing', () => {
         object.feed(...stringToBytes(json))
         const keyValuePairs: KeyValue[] = []
 
-        for (const [keyEntity, valueEntity] of object.members()) {
+        for (const { key: keyEntity, value: valueEntity } of object.members()) {
             const key = keyEntity.read()
             const value = valueEntity.read().read()
 
@@ -136,7 +136,10 @@ describe('JSON object parsing', () => {
                 if (!(jsonObject instanceof JsonObject))
                     throw new Error('Not a JSON object')
 
-                for (const [keyEntity, valueEntity] of jsonObject.members()) {
+                for (const {
+                    key: keyEntity,
+                    value: valueEntity,
+                } of jsonObject.members()) {
                     const key = keyEntity.read()
                     const value = valueEntity.read()
 
@@ -169,12 +172,12 @@ describe('JSON object parsing', () => {
         object.feed(...stringToBytes(json))
         const keyValuePairs: KeyValue[] = []
 
-        for (const [key, value] of object) {
+        for (const { key, value } of object) {
             const keyString = key.read()
             const valueObj = value.read()
 
             if (valueObj instanceof JsonObject) {
-                for (const [key, value] of valueObj) {
+                for (const { key, value } of valueObj) {
                     keyValuePairs.push({
                         key: key.read(),
                         value: value.readValue(),
@@ -239,7 +242,7 @@ describe('JSON object parsing', () => {
         object.maxBufferSize = 2 // Small buffer to force chunked processing
 
         let output: any
-        for await (const [key, value] of object) {
+        for await (const { key, value } of object) {
             const keyv = await key.readAsync()
             const valuev = await value.readValueAsync()
 
@@ -293,7 +296,7 @@ describe('JSON object parsing', () => {
         object.maxBufferSize = 2 // Small buffer to force chunked processing
         let output: any
 
-        for await (const [key, value] of object) {
+        for await (const { key, value } of object) {
             const keyv = await key.readAsync()
             const valuev = await (await value.readAsync()).readAsync()
 
@@ -323,17 +326,25 @@ describe('JSON object parsing', () => {
             }
         })()
 
-        const object = new JsonObject(stream)
+        const object = new JsonObject<{
+            country: string
+            arr: { key: string } | number
+        }>(stream)
         object.maxBufferSize = 2 // Small buffer to force chunked processing
         let output: any = []
 
-        for await (const [key, value] of object) {
+        for await (const { key, value } of object) {
             const keyv = await key.readAsync()
-            const valuev = await value.readAsync()
 
-            if (keyv === 'arr' && valuev instanceof JsonArray) {
-                for await (const item of valuev) {
-                    output.push(await item.readAsync())
+            //@ts-expect-error Confirm that the type narrowing works correctly
+            keyv === 'something_else'
+
+            if (keyv === 'arr') {
+                const valuev = await value.readAsync()
+                if (valuev instanceof JsonArray) {
+                    for await (const item of valuev) {
+                        output.push(await item.readAsync())
+                    }
                 }
             }
         }
@@ -367,7 +378,7 @@ describe('JSON object parsing', () => {
 
             object.feed(byte)
             object.tryParse(() => {
-                for (const [keyEntity, valueEntity] of object) {
+                for (const { key: keyEntity, value: valueEntity } of object) {
                     const key = keyEntity.read()
                     const value = valueEntity.read()
 

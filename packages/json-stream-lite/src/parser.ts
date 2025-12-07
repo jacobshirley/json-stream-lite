@@ -158,8 +158,8 @@ export abstract class JsonEntity<T> {
     }
 }
 
-export class JsonString extends JsonEntity<string> {
-    protected parse(): string {
+export class JsonString<T extends string = string> extends JsonEntity<T> {
+    protected parse(): T {
         const bytes: number[] = []
 
         this.buffer.next() // consume opening quotes
@@ -171,12 +171,12 @@ export class JsonString extends JsonEntity<string> {
         this.buffer.next() // consume closing quotes
 
         const result = bytesToString(new Uint8Array(bytes))
-        return result
+        return result as T
     }
 }
 
-export class JsonNumber extends JsonEntity<number> {
-    protected parse(): number {
+export class JsonNumber<T extends number = number> extends JsonEntity<T> {
+    protected parse(): T {
         const numberBytes: number[] = []
 
         while (isNumeric(this.buffer.peek())) {
@@ -184,25 +184,25 @@ export class JsonNumber extends JsonEntity<number> {
         }
 
         const result = bytesToNumber(new Uint8Array(numberBytes))
-        return result
+        return result as T
     }
 }
 
-export class JsonBoolean extends JsonEntity<boolean> {
-    protected parse(): boolean {
+export class JsonBoolean<T extends boolean = boolean> extends JsonEntity<T> {
+    protected parse(): T {
         const next = this.buffer.next()
 
         if (next === BYTE_MAP.t) {
             this.buffer.expect(BYTE_MAP.r) // r
             this.buffer.expect(BYTE_MAP.u) // u
             this.buffer.expect(BYTE_MAP.e) // e
-            return true
+            return true as T
         } else {
             this.buffer.expect(BYTE_MAP.a) // a
             this.buffer.expect(BYTE_MAP.l) // l
             this.buffer.expect(BYTE_MAP.s) // s
             this.buffer.expect(BYTE_MAP.e) // e
-            return false
+            return false as T
         }
     }
 }
@@ -218,18 +218,24 @@ export class JsonNull extends JsonEntity<null> {
 }
 
 export type JsonPrimitiveType = JsonString | JsonNumber | JsonBoolean | JsonNull
-export type JsonValueType = JsonPrimitiveType | JsonObject | JsonArray
+export type JsonValueType<T = unknown> =
+    | JsonPrimitiveType
+    | JsonObject<T>
+    | JsonArray<T>
 
-export class JsonValue extends JsonEntity<JsonValueType> {
-    private key?: JsonString
-    private value?: JsonValueType
+export class JsonValue<
+    T extends unknown = unknown,
+    K extends string = string,
+> extends JsonEntity<JsonValueType<T>> {
+    private key?: JsonString<K>
+    private value?: JsonValueType<T>
 
-    constructor(buffer?: ByteBuffer | ByteStream, key?: JsonString) {
+    constructor(buffer?: ByteBuffer | ByteStream, key?: JsonString<K>) {
         super(buffer)
         this.key = key
     }
 
-    protected parse(): JsonValueType {
+    protected parse(): JsonValueType<T> {
         this.key?.consume()
 
         this.skipWhitespace()
@@ -254,9 +260,9 @@ export class JsonValue extends JsonEntity<JsonValueType> {
         } else if (next === BYTE_MAP.n) {
             return new JsonNull(this.buffer)
         } else if (next === BYTE_MAP.leftBrace) {
-            return new JsonObject(this.buffer)
+            return new JsonObject<T>(this.buffer)
         } else if (next === BYTE_MAP.leftSquare) {
-            return new JsonArray(this.buffer)
+            return new JsonArray<T>(this.buffer)
         } else {
             throw new Error(
                 'Unexpected token while parsing JSON value: ' +
@@ -265,7 +271,7 @@ export class JsonValue extends JsonEntity<JsonValueType> {
         }
     }
 
-    read(): JsonValueType {
+    read(): JsonValueType<T> {
         if (this.value) {
             return this.value
         }
@@ -285,7 +291,7 @@ export class JsonValue extends JsonEntity<JsonValueType> {
         return await value.readAsync()
     }
 
-    async readAsync(): Promise<JsonValueType> {
+    async readAsync(): Promise<JsonValueType<T>> {
         if (this.value) {
             return this.value
         }
@@ -313,7 +319,10 @@ export class JsonValue extends JsonEntity<JsonValueType> {
 }
 
 export class JsonObject<T = unknown> extends JsonEntity<T> {
-    *members(): Generator<[JsonString, JsonValue]> {
+    *members(): Generator<{
+        key: JsonString<Extract<keyof T, string>>
+        value: JsonValue<T>
+    }> {
         this.skipWhitespace()
 
         if (this.buffer.peek() === BYTE_MAP.leftBrace) {
@@ -335,10 +344,10 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
                 this.skipWhitespace()
             }
 
-            const key = new JsonString(this.buffer)
-            const value = new JsonValue(this.buffer, key)
+            const key = new JsonString<Extract<keyof T, string>>(this.buffer)
+            const value = new JsonValue<T>(this.buffer, key)
 
-            yield [key, value]
+            yield { key, value }
 
             key.consume()
             value.consume()
@@ -355,13 +364,19 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
         this.consumed = true
     }
 
-    async *membersAsync(): AsyncGenerator<[JsonString, JsonValue]> {
+    async *membersAsync(): AsyncGenerator<{
+        key: JsonString<Extract<keyof T, string>>
+        value: JsonValue<T>
+    }> {
         while (!this.buffer.atEof()) {
             await this.buffer.readStream()
 
             const memberGen = this.members()
             let currentMember:
-                | IteratorResult<[JsonString, JsonValue]>
+                | IteratorResult<{
+                      key: JsonString<Extract<keyof T, string>>
+                      value: JsonValue<T>
+                  }>
                 | undefined = undefined
 
             while (true) {
@@ -375,8 +390,8 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
                 yield currentMember.value
 
                 // Make sure to consume the key and value asynchronously
-                await currentMember.value[0].consumeAsync()
-                await currentMember.value[1].consumeAsync()
+                await currentMember.value.key.consumeAsync()
+                await currentMember.value.value.consumeAsync()
             }
         }
     }
@@ -392,7 +407,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
     protected parse(): T {
         const obj: any = {}
 
-        for (const [key, value] of this.members()) {
+        for (const { key, value } of this.members()) {
             obj[key.read()] = value.read().read()
         }
 
@@ -401,7 +416,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
 }
 
 export class JsonArray<T = unknown> extends JsonEntity<T[]> {
-    *items(): Generator<JsonValueType> {
+    *items(): Generator<JsonValueType<T>> {
         this.skipWhitespace()
         if (this.buffer.peek() === BYTE_MAP.leftSquare) {
             this.buffer.next() // consume [
@@ -420,7 +435,7 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
                 this.skipWhitespace()
             }
 
-            const value = new JsonValue(this.buffer).read()
+            const value = new JsonValue<T>(this.buffer).read()
             yield value
 
             if (!value.consumed) value.read()
@@ -431,16 +446,17 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
         this.consumed = true
     }
 
-    async *itemsAsync(): AsyncGenerator<JsonValueType> {
+    async *itemsAsync(): AsyncGenerator<JsonValueType<T>> {
         while (!this.buffer.atEof()) {
             await this.buffer.readStream()
 
             const itemGen = this.items()
-            let currentItem: IteratorResult<JsonValueType> | undefined =
+            let currentItem: IteratorResult<JsonValueType<T>> | undefined =
                 undefined
 
             while (true) {
                 currentItem = this.tryParse(() => itemGen.next())
+
                 if (currentItem === undefined) {
                     break // Need more data
                 }
@@ -465,7 +481,7 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
     protected parse(): T[] {
         const values: T[] = []
 
-        for (const value of this.items()) {
+        for (const value of this) {
             values.push(value.read() as T)
         }
 
@@ -491,7 +507,8 @@ export class JsonKeyValueParser extends JsonEntity<
 
     *parse(): Generator<JsonKeyValuePair> {
         if (this.container instanceof JsonObject) {
-            for (const [keyEntity, valueEntity] of this.container) {
+            for (const { key: keyEntity, value: valueEntity } of this
+                .container) {
                 const key = keyEntity.read()
                 const value = valueEntity.read()
 
