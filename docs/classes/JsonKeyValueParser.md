@@ -24,7 +24,7 @@
 
 ##### container?
 
-[`JsonValue`](JsonValue.md) | [`JsonObject`](JsonObject.md)\<`unknown`\> | [`JsonArray`](JsonArray.md)\<`unknown`\>
+[`JsonObject`](JsonObject.md)\<`unknown`\> | [`JsonArray`](JsonArray.md)\<`unknown`\> | [`JsonValue`](JsonValue.md)\<`unknown`, `string`\>
 
 ##### parentKey?
 

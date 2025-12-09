@@ -1,6 +1,6 @@
 {
     "name": "json-stream-lite",
-    "version": "1.0.6",
+    "version": "1.0.8",
     "description": "A lightweight, memory-efficient, zero-dependency streaming JSON parser and stringifier for JavaScript and TypeScript. It works in both Node.js and browser environments.",
     "main": "dist/index.js",
     "type": "module",

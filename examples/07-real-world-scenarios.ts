@@ -80,7 +80,7 @@ function analyzeLogEntries() {
     const stats = { ERROR: 0, INFO: 0, WARN: 0 }
 
     console.log('Analyzing log entries:')
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'logs') {
@@ -127,15 +127,15 @@ function transformApiResponse() {
     const transformedUsers: any[] = []
 
     console.log('Transforming API response:')
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'data') {
             const dataValue = valueEntity.read() as JsonObject
-            for (const [
-                dataKeyEntity,
-                dataValueEntity,
-            ] of dataValue.members()) {
+            for (const {
+                key: dataKeyEntity,
+                value: dataValueEntity,
+            } of dataValue.members()) {
                 const dataKey = dataKeyEntity.read()
 
                 if (dataKey === 'users') {
@@ -177,7 +177,7 @@ function validateData() {
     const errors: string[] = []
 
     console.log('Validating user data:')
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'users') {
@@ -293,7 +293,7 @@ function generateReport() {
 
     console.log('Sales Report:')
 
-    for (const [keyEntity, valueEntity] of parser.members()) {
+    for (const { key: keyEntity, value: valueEntity } of parser.members()) {
         const key = keyEntity.read()
 
         if (key === 'period') {

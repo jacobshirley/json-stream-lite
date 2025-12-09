@@ -36,7 +36,7 @@ async function parseAsyncObject() {
     const parser = new JsonObject(stream)
 
     console.log('Streaming members asynchronously:')
-    for await (const [keyEntity, valueEntity] of parser) {
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
         const key = keyEntity.read()
         const value = await valueEntity.readValueAsync()
         console.log(`  ${key}: ${value}`)
@@ -107,7 +107,7 @@ async function processHttpResponse() {
     const parser = new JsonObject(stream)
 
     console.log('Processing HTTP response:')
-    for await (const [keyEntity, valueEntity] of parser) {
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
         const key = keyEntity.read()
 
         if (key === 'data') {
@@ -115,7 +115,10 @@ async function processHttpResponse() {
             const dataValue = await valueEntity.readAsync()
             const dataObj = dataValue as JsonObject
 
-            for await (const [dataKey, dataValueEntity] of dataObj) {
+            for await (const {
+                key: dataKey,
+                value: dataValueEntity,
+            } of dataObj) {
                 const dataKeyStr = dataKey.read()
                 if (dataKeyStr === 'users') {
                     console.log(`    Found users array:`)
@@ -156,7 +159,7 @@ async function processLargeDataset() {
     let recordCount = 0
     let totalValue = 0
 
-    for await (const [keyEntity, valueEntity] of parser) {
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
         const key = keyEntity.read()
 
         if (key === 'records') {

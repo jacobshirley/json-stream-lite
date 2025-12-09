@@ -2,7 +2,7 @@
 
 # json-stream-lite
 
-A lightweight, memory-efficient streaming JSON parser and stringifier for JavaScript and TypeScript. Process large JSON files without loading them entirely into memory.
+A lightweight, memory-efficient streaming JSON parser and stringifier written in TypeScript. Process large JSON files without loading them entirely into memory.
 
 ## Features
 
