@@ -1,6 +1,5 @@
+// Streaming Object Members Example
 /**
- * Streaming Object Members Example
- *
  * This example shows how to iterate through object members without loading
  * the entire object into memory at once.
  */

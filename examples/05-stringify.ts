@@ -1,6 +1,5 @@
+// JSON Stringify Example
 /**
- * JSON Stringify Example
- *
  * This example demonstrates how to convert JavaScript objects to JSON
  * in a streaming fashion, which is useful for large objects.
  */

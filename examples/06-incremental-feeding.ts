@@ -1,6 +1,5 @@
+// Incremental Feeding Example
 /**
- * Incremental Feeding Example
- *
  * This example shows how to feed bytes into the parser incrementally,
  * which is useful when receiving data in chunks from a network or file.
  */

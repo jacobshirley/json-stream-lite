@@ -1,6 +1,5 @@
+// Real-World Scenarios Example
 /**
- * Real-World Scenarios Example
- *
  * This example demonstrates practical use cases for json-stream-lite
  * in real-world applications.
  */

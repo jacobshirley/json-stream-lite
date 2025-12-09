@@ -2,9 +2,16 @@
 
 This directory contains example scripts demonstrating how to use the JSON-Stream-Lite library.
 
-## Helper to convert string to bytes
+## Basic JSON Parsing Example
 
 ```typescript
+/**
+ * This example demonstrates how to parse a simple JSON object using json-stream-lite.
+ */
+
+import { JsonObject, JsonArray, JsonValue } from 'json-stream-lite'
+
+// Helper to convert string to bytes
 function stringToBytes(str: string): number[] {
     return Array.from(new TextEncoder().encode(str))
 }
@@ -50,9 +57,21 @@ const value = valueEntity.read()
 console.log('Result:', value)
 ```
 
-## Example 1: Stream through object members
+## Streaming Object Members Example
 
 ```typescript
+/**
+ * This example shows how to iterate through object members without loading
+ * the entire object into memory at once.
+ */
+
+import { JsonObject } from 'json-stream-lite'
+
+function stringToBytes(str: string): number[] {
+    return Array.from(new TextEncoder().encode(str))
+}
+
+// Example 1: Stream through object members
 console.log('=== Example 1: Stream Object Members ===')
 const userJson =
     '{"id": 123, "name": "Alice", "email": "alice@example.com", "age": 30}'
@@ -132,9 +151,17 @@ for (const { key: keyEntity, value: valueEntity } of searchParser.members()) {
 console.log("Early exit - didn't process remaining fields")
 ```
 
-## Example 1: Flatten a simple nested object
+## Key-Value Extraction Example
 
 ```typescript
+/**
+ * This example demonstrates how to flatten nested JSON structures into
+ * key-value pairs using dot notation and array indices.
+ */
+
+import { jsonKeyValueParser } from 'json-stream-lite'
+
+// Example 1: Flatten a simple nested object
 console.log('=== Example 1: Simple Nested Object ===')
 const simpleNested = '{"user": {"name": "Alice", "age": 30}}'
 
@@ -240,9 +267,21 @@ for (const [key, value] of jsonKeyValueParser(arrayStructure)) {
 //   [2][1] = 6
 ```
 
-## Helper to simulate an async byte stream
+## Async Streaming Example
 
 ```typescript
+/**
+ * This example demonstrates how to process JSON from async sources
+ * like streams, fetch responses, or async iterables.
+ */
+
+import {
+    JsonObject,
+    JsonArray,
+    jsonKeyValueParserAsync,
+} from 'json-stream-lite'
+
+// Helper to simulate an async byte stream
 async function* createAsyncByteStream(
     json: string,
     chunkSize: number = 10,
@@ -414,9 +453,17 @@ await processLargeDataset()
 console.log('\n=== All async examples completed ===')
 ```
 
-## Example 1: Basic stringify
+## JSON Stringify Example
 
 ```typescript
+/**
+ * This example demonstrates how to convert JavaScript objects to JSON
+ * in a streaming fashion, which is useful for large objects.
+ */
+
+import { jsonStreamStringify, jsonStreamStringifyBytes } from 'json-stream-lite'
+
+// Example 1: Basic stringify
 console.log('=== Example 1: Basic Stringify ===')
 const simpleObj = {
     name: 'Alice',
@@ -576,9 +623,21 @@ console.log('Output matches JSON.stringify:', streamResult === standardResult)
 console.log('Stream result:', streamResult)
 ```
 
-## Example 1: Feed bytes one at a time
+## Incremental Feeding Example
 
 ```typescript
+/**
+ * This example shows how to feed bytes into the parser incrementally,
+ * which is useful when receiving data in chunks from a network or file.
+ */
+
+import { JsonObject, JsonArray } from 'json-stream-lite'
+
+function stringToBytes(str: string): number[] {
+    return Array.from(new TextEncoder().encode(str))
+}
+
+// Example 1: Feed bytes one at a time
 console.log('=== Example 1: Feed Bytes One at a Time ===')
 const json1 = '{"name": "Alice"}'
 const parser1 = new JsonObject()
@@ -729,9 +788,21 @@ console.log('Result:', result7)
 console.log('Note: Can feed bytes individually, as arrays, or spread arrays')
 ```
 
-## Scenario 1: Processing a configuration file
+## Real-World Scenarios Example
 
 ```typescript
+/**
+ * This example demonstrates practical use cases for json-stream-lite
+ * in real-world applications.
+ */
+
+import { JsonObject, JsonArray, jsonKeyValueParser } from 'json-stream-lite'
+
+function stringToBytes(str: string): number[] {
+    return Array.from(new TextEncoder().encode(str))
+}
+
+// Scenario 1: Processing a configuration file
 console.log('=== Scenario 1: Configuration File Processing ===')
 function processConfig() {
     const configJson = JSON.stringify({

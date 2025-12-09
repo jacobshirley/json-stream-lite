@@ -1,6 +1,5 @@
+// Key-Value Extraction Example
 /**
- * Key-Value Extraction Example
- *
  * This example demonstrates how to flatten nested JSON structures into
  * key-value pairs using dot notation and array indices.
  */

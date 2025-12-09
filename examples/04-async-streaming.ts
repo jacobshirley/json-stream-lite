@@ -1,6 +1,5 @@
+// Async Streaming Example
 /**
- * Async Streaming Example
- *
  * This example demonstrates how to process JSON from async sources
  * like streams, fetch responses, or async iterables.
  */

@@ -1,6 +1,5 @@
+// Basic JSON Parsing Example
 /**
- * Basic JSON Parsing Example
- *
  * This example demonstrates how to parse a simple JSON object using json-stream-lite.
  */
 
