@@ -2,7 +2,7 @@
 
 # json-stream-lite
 
-A lightweight, memory-efficient streaming JSON parser and stringifier for JavaScript and TypeScript. Process large JSON files without loading them entirely into memory.
+A lightweight, memory-efficient, zero-dependency streaming JSON parser and stringifier written in TypeScript. Process large JSON files without loading them entirely into memory.
 
 ## Features
 
@@ -58,7 +58,7 @@ const parser = new JsonObject()
 parser.feed(...new TextEncoder().encode(json))
 
 // Iterate through key-value pairs without loading the entire object
-for (const [keyEntity, valueEntity] of parser.members()) {
+for (const { key: keyEntity, value: valueEntity } of parser) {
     const key = keyEntity.read()
     const value = valueEntity.read().read()
     console.log(`${key}: ${value}`)
@@ -96,8 +96,9 @@ async function processStream(stream: ReadableStream<Uint8Array>) {
     const parser = new JsonObject(stream)
 
     // Asynchronously iterate through members
-    for await (const [keyEntity, valueEntity] of parser.membersAsync()) {
-        const key = keyEntity.read()
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
+        // If you want to read the key, make sure you call .read() before you read the value
+        const key = await keyEntity.readAsync()
         const value = await valueEntity.readValueAsync()
         console.log(`${key}: ${value}`)
     }
@@ -202,8 +203,8 @@ async function processLargeFile(filePath: string) {
     const stream = createReadStream(filePath)
     const parser = new JsonObject(stream)
 
-    for await (const [keyEntity, valueEntity] of parser) {
-        const key = keyEntity.read()
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
+        const key = await keyEntity.readAsync()
         const value = await valueEntity.readValueAsync()
 
         // Process each key-value pair without loading entire file
@@ -221,7 +222,7 @@ const json = '{"users": [{"name": "Alice"}, {"name": "Bob"}]}'
 const parser = new JsonObject()
 parser.feed(...new TextEncoder().encode(json))
 
-for (const [keyEntity, valueEntity] of parser) {
+for (const { key: keyEntity, value: valueEntity } of parser) {
     const key = keyEntity.read()
     const value = valueEntity.read()
 
@@ -260,8 +261,8 @@ async function processApiResponse(url: string) {
     const response = await fetch(url)
     const parser = new JsonObject(response.body!)
 
-    for await (const [keyEntity, valueEntity] of parser.membersAsync()) {
-        const key = keyEntity.read()
+    for await (const { key: keyEntity, value: valueEntity } of parser) {
+        const key = await keyEntity.readAsync()
         const value = await valueEntity.readValueAsync()
         console.log(`Processing ${key}:`, value)
     }
