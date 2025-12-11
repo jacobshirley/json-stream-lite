@@ -1,4 +1,8 @@
+/**
+ * Options for JSON streaming stringification.
+ */
 export type JsonStreamStringifyOptions = {
+    /** Maximum size of string chunks when yielding formatted strings */
     stringChunkSize?: number
 }
 
@@ -241,6 +245,9 @@ export function jsonStreamStringify(
     return jsonStreamStringifyWithDepth(value, replacer, indent, 0, options)
 }
 
+/**
+ * Shared TextEncoder instance for converting strings to UTF-8 bytes.
+ */
 const TEXT_ENCODER = new TextEncoder()
 
 /**

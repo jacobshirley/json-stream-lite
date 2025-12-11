@@ -2,6 +2,10 @@ import { ByteBuffer } from './byte-buffer.js'
 import { ByteStream, JsonKeyValuePair } from './types.js'
 import { bytesToNumber, bytesToString } from './utils.js'
 
+/**
+ * Map of character names to their byte values for JSON parsing.
+ * Contains commonly used characters in JSON syntax.
+ */
 const BYTE_MAP = {
     quotes: 34,
     a: 97,
@@ -346,7 +350,16 @@ export class JsonNull extends JsonEntity<null> {
     }
 }
 
+/**
+ * Union type representing all JSON primitive entity types.
+ */
 export type JsonPrimitiveType = JsonString | JsonNumber | JsonBoolean | JsonNull
+
+/**
+ * Union type representing any JSON value entity type (primitive, object, or array).
+ *
+ * @typeParam T - The expected type of the value
+ */
 export type JsonValueType<T = unknown> =
     | JsonPrimitiveType
     | JsonObject<T>
