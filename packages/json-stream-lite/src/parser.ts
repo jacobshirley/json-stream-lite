@@ -31,6 +31,12 @@ const BYTE_MAP = {
     colon: 58,
 }
 
+/**
+ * Checks if a byte represents a whitespace character.
+ *
+ * @param byte - The byte to check
+ * @returns True if the byte is a space, tab, carriage return, or line feed
+ */
 const isWhitespace = (byte: number | null): boolean => {
     return (
         byte === BYTE_MAP.space ||
@@ -40,10 +46,22 @@ const isWhitespace = (byte: number | null): boolean => {
     )
 }
 
+/**
+ * Checks if a byte represents a digit (0-9).
+ *
+ * @param byte - The byte to check
+ * @returns True if the byte is a digit
+ */
 const isDigit = (byte: number | null): boolean => {
     return byte !== null && byte >= BYTE_MAP.zero && byte <= BYTE_MAP.nine
 }
 
+/**
+ * Checks if a byte can start a JSON number (digit or minus sign).
+ *
+ * @param byte - The byte to check
+ * @returns True if the byte can start a number
+ */
 const isNumberStart = (byte: number | null): boolean => {
     return (
         byte === BYTE_MAP.minus ||
@@ -51,6 +69,12 @@ const isNumberStart = (byte: number | null): boolean => {
     )
 }
 
+/**
+ * Checks if a byte is part of a numeric value (digit, dot, e, E, minus, or plus).
+ *
+ * @param byte - The byte to check
+ * @returns True if the byte is part of a numeric representation
+ */
 const isNumeric = (byte: number | null): boolean => {
     return (
         isDigit(byte) ||
@@ -62,42 +86,87 @@ const isNumeric = (byte: number | null): boolean => {
     )
 }
 
+/**
+ * Abstract base class for all JSON entities.
+ * Provides common functionality for parsing, reading, and consuming JSON values.
+ *
+ * @typeParam T - The type of value this entity represents
+ */
 export abstract class JsonEntity<T> {
     consumed: boolean = false
 
     protected buffer: ByteBuffer
 
+    /**
+     * Creates a new JSON entity.
+     *
+     * @param buffer - Optional ByteBuffer or ByteStream to read from
+     */
     constructor(buffer?: ByteBuffer | ByteStream) {
         this.buffer =
             buffer instanceof ByteBuffer ? buffer : new ByteBuffer(buffer)
     }
 
+    /**
+     * Gets the type name of this entity.
+     *
+     * @returns The constructor name of this entity
+     */
     get entityType() {
         return this.constructor.name
     }
 
+    /**
+     * Sets the maximum buffer size before compaction occurs.
+     *
+     * @param size - The maximum buffer size in bytes
+     */
     set maxBufferSize(size: number) {
         this.buffer.maxBufferSize = size
     }
 
+    /**
+     * Gets the current length of the buffer.
+     *
+     * @returns The number of bytes in the buffer
+     */
     get bufferLength(): number {
         return this.buffer.length
     }
 
+    /**
+     * Feeds input data into the buffer.
+     *
+     * @param input - One or more numbers or arrays of numbers to add to the buffer
+     */
     feed(...input: (number | number[])[]): void {
         for (const item of input) {
             this.buffer.feed(item)
         }
     }
 
+    /**
+     * Abstract method that subclasses must implement to parse their specific type.
+     *
+     * @returns The parsed value of type T
+     */
     protected abstract parse(): T
 
+    /**
+     * Skips whitespace characters in the buffer.
+     */
     protected skipWhitespace(): void {
         while (isWhitespace(this.buffer.peek())) {
             this.buffer.next()
         }
     }
 
+    /**
+     * Reads and parses the entity, consuming it in the process.
+     *
+     * @returns The parsed value
+     * @throws Error if the entity has already been consumed
+     */
     read(): T {
         if (this.consumed) {
             throw new Error('JSON entity has already been consumed.')
@@ -111,6 +180,12 @@ export abstract class JsonEntity<T> {
         return read
     }
 
+    /**
+     * Asynchronously reads and parses the entity from a stream.
+     *
+     * @returns A promise that resolves to the parsed value
+     * @throws Error if the entity has already been consumed
+     */
     async readAsync(): Promise<T> {
         if (this.consumed) {
             throw new Error('JSON entity has already been consumed.')
@@ -127,18 +202,32 @@ export abstract class JsonEntity<T> {
         return this.read()
     }
 
+    /**
+     * Consumes the entity by reading it if not already consumed.
+     */
     consume(): void {
         if (!this.consumed) {
             this.read()
         }
     }
 
+    /**
+     * Asynchronously consumes the entity by reading it if not already consumed.
+     */
     async consumeAsync(): Promise<void> {
         if (!this.consumed) {
             await this.readAsync()
         }
     }
 
+    /**
+     * Attempts to parse by executing a callback, reverting buffer state on failure.
+     *
+     * @typeParam T - The return type of the callback
+     * @param cb - The callback function to execute
+     * @returns The result of the callback, or undefined if parsing needs more data
+     * @throws Error if the entity has already been consumed
+     */
     tryParse<T = this>(cb: (entity: this) => T): T | undefined {
         if (this.consumed) {
             throw new Error('JSON entity has already been consumed.')
@@ -158,7 +247,18 @@ export abstract class JsonEntity<T> {
     }
 }
 
+/**
+ * Represents a JSON string value.
+ * Parses and stores string data from the buffer.
+ *
+ * @typeParam T - The specific string type (defaults to string)
+ */
 export class JsonString<T extends string = string> extends JsonEntity<T> {
+    /**
+     * Parses a JSON string from the buffer.
+     *
+     * @returns The parsed string value
+     */
     protected parse(): T {
         const bytes: number[] = []
 
@@ -175,7 +275,18 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
     }
 }
 
+/**
+ * Represents a JSON number value.
+ * Parses numeric data including integers, floats, and scientific notation.
+ *
+ * @typeParam T - The specific number type (defaults to number)
+ */
 export class JsonNumber<T extends number = number> extends JsonEntity<T> {
+    /**
+     * Parses a JSON number from the buffer.
+     *
+     * @returns The parsed number value
+     */
     protected parse(): T {
         const numberBytes: number[] = []
 
@@ -188,7 +299,17 @@ export class JsonNumber<T extends number = number> extends JsonEntity<T> {
     }
 }
 
+/**
+ * Represents a JSON boolean value (true or false).
+ *
+ * @typeParam T - The specific boolean type (defaults to boolean)
+ */
 export class JsonBoolean<T extends boolean = boolean> extends JsonEntity<T> {
+    /**
+     * Parses a JSON boolean from the buffer.
+     *
+     * @returns The parsed boolean value (true or false)
+     */
     protected parse(): T {
         const next = this.buffer.next()
 
@@ -207,7 +328,15 @@ export class JsonBoolean<T extends boolean = boolean> extends JsonEntity<T> {
     }
 }
 
+/**
+ * Represents a JSON null value.
+ */
 export class JsonNull extends JsonEntity<null> {
+    /**
+     * Parses a JSON null from the buffer.
+     *
+     * @returns null
+     */
     protected parse(): null {
         this.buffer.expect(BYTE_MAP.n) // n
         this.buffer.expect(BYTE_MAP.u) // u
@@ -223,6 +352,13 @@ export type JsonValueType<T = unknown> =
     | JsonObject<T>
     | JsonArray<T>
 
+/**
+ * Represents any JSON value (primitive, object, or array).
+ * Provides lazy evaluation and type detection for JSON values.
+ *
+ * @typeParam T - The expected type of the value
+ * @typeParam K - The key type for object properties (defaults to string)
+ */
 export class JsonValue<
     T extends unknown = unknown,
     K extends string = string,
@@ -230,11 +366,22 @@ export class JsonValue<
     private key?: JsonString<K>
     private value?: JsonValueType<T>
 
+    /**
+     * Creates a new JsonValue entity.
+     *
+     * @param buffer - Optional ByteBuffer or ByteStream to read from
+     * @param key - Optional key associated with this value (for object members)
+     */
     constructor(buffer?: ByteBuffer | ByteStream, key?: JsonString<K>) {
         super(buffer)
         this.key = key
     }
 
+    /**
+     * Parses the value, determining its type and creating the appropriate entity.
+     *
+     * @returns The parsed JSON entity (primitive, object, or array)
+     */
     protected parse(): JsonValueType<T> {
         this.key?.consume()
 
@@ -271,6 +418,12 @@ export class JsonValue<
         }
     }
 
+    /**
+     * Reads the value entity without reading its contents.
+     * Allows for lazy evaluation of the actual value.
+     *
+     * @returns The JSON entity representing this value
+     */
     read(): JsonValueType<T> {
         if (this.value) {
             return this.value
@@ -281,16 +434,31 @@ export class JsonValue<
         return this.value
     }
 
+    /**
+     * Reads and fully evaluates the value.
+     *
+     * @returns The actual JavaScript value (string, number, boolean, null, object, or array)
+     */
     readValue(): unknown {
         const value = this.read()
         return value.read()
     }
 
+    /**
+     * Asynchronously reads and fully evaluates the value.
+     *
+     * @returns A promise that resolves to the actual JavaScript value
+     */
     async readValueAsync(): Promise<unknown> {
         const value = await this.readAsync()
         return await value.readAsync()
     }
 
+    /**
+     * Asynchronously reads the value entity from a stream.
+     *
+     * @returns A promise that resolves to the JSON entity representing this value
+     */
     async readAsync(): Promise<JsonValueType<T>> {
         if (this.value) {
             return this.value
@@ -301,6 +469,9 @@ export class JsonValue<
         return this.value
     }
 
+    /**
+     * Consumes the value, ensuring it is fully read.
+     */
     consume(): void {
         if (this.value && !this.value.consumed) {
             this.value.consume()
@@ -309,6 +480,9 @@ export class JsonValue<
         }
     }
 
+    /**
+     * Asynchronously consumes the value, ensuring it is fully read.
+     */
     async consumeAsync(): Promise<void> {
         if (this.value && !this.value.consumed) {
             await this.value.consumeAsync()
@@ -318,7 +492,19 @@ export class JsonValue<
     }
 }
 
+/**
+ * Represents a JSON object.
+ * Provides streaming access to object members (key-value pairs).
+ *
+ * @typeParam T - The expected type of the object
+ */
 export class JsonObject<T = unknown> extends JsonEntity<T> {
+    /**
+     * Generator that yields object members as key-value pairs.
+     * Allows for streaming/incremental processing of large objects.
+     *
+     * @yields Object containing the key and value entities for each member
+     */
     *members(): Generator<{
         key: JsonString<Extract<keyof T, string>>
         value: JsonValue<T>
@@ -364,6 +550,12 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
         this.consumed = true
     }
 
+    /**
+     * Async generator that yields object members from a stream.
+     * Allows for asynchronous streaming/incremental processing.
+     *
+     * @yields Object containing the key and value entities for each member
+     */
     async *membersAsync(): AsyncGenerator<{
         key: JsonString<Extract<keyof T, string>>
         value: JsonValue<T>
@@ -396,14 +588,27 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
         }
     }
 
+    /**
+     * Returns an iterator for object members.
+     * Enables use of for...of loops on JsonObject.
+     */
     [Symbol.iterator]() {
         return this.members()
     }
 
+    /**
+     * Returns an async iterator for object members.
+     * Enables use of for await...of loops on JsonObject.
+     */
     [Symbol.asyncIterator]() {
         return this.membersAsync()
     }
 
+    /**
+     * Parses the entire object into a JavaScript object.
+     *
+     * @returns The parsed object
+     */
     protected parse(): T {
         const obj: any = {}
 
@@ -415,7 +620,19 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
     }
 }
 
+/**
+ * Represents a JSON array.
+ * Provides streaming access to array items.
+ *
+ * @typeParam T - The expected type of array elements
+ */
 export class JsonArray<T = unknown> extends JsonEntity<T[]> {
+    /**
+     * Generator that yields array items.
+     * Allows for streaming/incremental processing of large arrays.
+     *
+     * @yields Each item entity in the array
+     */
     *items(): Generator<JsonValueType<T>> {
         this.skipWhitespace()
         if (this.buffer.peek() === BYTE_MAP.leftSquare) {
@@ -446,6 +663,12 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
         this.consumed = true
     }
 
+    /**
+     * Async generator that yields array items from a stream.
+     * Allows for asynchronous streaming/incremental processing.
+     *
+     * @yields Each item entity in the array
+     */
     async *itemsAsync(): AsyncGenerator<JsonValueType<T>> {
         while (!this.buffer.atEof()) {
             await this.buffer.readStream()
@@ -470,14 +693,27 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
         }
     }
 
+    /**
+     * Returns an iterator for array items.
+     * Enables use of for...of loops on JsonArray.
+     */
     [Symbol.iterator]() {
         return this.items()
     }
 
+    /**
+     * Returns an async iterator for array items.
+     * Enables use of for await...of loops on JsonArray.
+     */
     [Symbol.asyncIterator]() {
         return this.itemsAsync()
     }
 
+    /**
+     * Parses the entire array into a JavaScript array.
+     *
+     * @returns The parsed array
+     */
     protected parse(): T[] {
         const values: T[] = []
 
@@ -489,12 +725,23 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
     }
 }
 
+/**
+ * Parser that flattens nested JSON structures into key-value pairs.
+ * Useful for extracting specific values from complex JSON without parsing the entire structure.
+ */
 export class JsonKeyValueParser extends JsonEntity<
     Generator<JsonKeyValuePair>
 > {
     private container: JsonObject | JsonArray | JsonValue
     private parentKey?: string
 
+    /**
+     * Creates a new key-value parser.
+     *
+     * @param buffer - Optional ByteBuffer or ByteStream to read from
+     * @param container - The JSON container to parse (object, array, or value)
+     * @param parentKey - The parent key for nested structures (used for dot notation)
+     */
     constructor(
         buffer?: ByteBuffer | ByteStream,
         container?: JsonObject | JsonArray | JsonValue,
@@ -505,6 +752,12 @@ export class JsonKeyValueParser extends JsonEntity<
         this.parentKey = parentKey
     }
 
+    /**
+     * Generator that yields key-value pairs from the JSON structure.
+     * Flattens nested objects and arrays using dot notation and array indices.
+     *
+     * @yields Key-value pairs as [key, value] tuples
+     */
     *parse(): Generator<JsonKeyValuePair> {
         if (this.container instanceof JsonObject) {
             for (const { key: keyEntity, value: valueEntity } of this
@@ -566,6 +819,11 @@ export class JsonKeyValueParser extends JsonEntity<
         }
     }
 
+    /**
+     * Async generator that yields key-value pairs from a stream.
+     *
+     * @yields Key-value pairs as [key, value] tuples
+     */
     async *parseAsync(): AsyncGenerator<JsonKeyValuePair> {
         while (!this.buffer.atEof()) {
             await this.buffer.readStream()
@@ -587,10 +845,18 @@ export class JsonKeyValueParser extends JsonEntity<
         }
     }
 
+    /**
+     * Returns an iterator for key-value pairs.
+     * Enables use of for...of loops on JsonKeyValueParser.
+     */
     [Symbol.iterator]() {
         return this.parse()
     }
 
+    /**
+     * Returns an async iterator for key-value pairs.
+     * Enables use of for await...of loops on JsonKeyValueParser.
+     */
     [Symbol.asyncIterator]() {
         return this.parseAsync()
     }

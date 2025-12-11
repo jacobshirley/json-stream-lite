@@ -1,9 +1,20 @@
 import { ByteStream } from './types.js'
 import { bytesToString } from './utils.js'
 
+/**
+ * Error thrown when the buffer is empty and more input is needed.
+ */
 export class NoMoreTokensError extends Error {}
+
+/**
+ * Error thrown when the end of file has been reached and no more items are available.
+ */
 export class EofReachedError extends Error {}
 
+/**
+ * A buffer for managing byte-level input with support for async streams.
+ * Provides lookahead, consumption tracking, and buffer compaction capabilities.
+ */
 export class ByteBuffer {
     /** Maximum size of the buffer before compaction */
     maxBufferSize: number = 1000
@@ -22,10 +33,19 @@ export class ByteBuffer {
     /** Optional async iterable input source */
     protected asyncIterable?: ByteStream
 
+    /**
+     * Creates a new ByteBuffer instance.
+     *
+     * @param asyncIterable - Optional async iterable source for streaming input
+     */
     constructor(asyncIterable?: ByteStream) {
         this.asyncIterable = asyncIterable
     }
 
+    /**
+     * Reads data from the async stream into the buffer.
+     * Reads up to maxBufferSize bytes at a time.
+     */
     async readStream(): Promise<void> {
         if (!this.asyncIterable) {
             return
@@ -45,6 +65,11 @@ export class ByteBuffer {
         }
     }
 
+    /**
+     * Gets the current length of the buffer.
+     *
+     * @returns The number of bytes in the buffer
+     */
     get length(): number {
         return this.buffer.length
     }
@@ -155,6 +180,15 @@ export class ByteBuffer {
         return this.bufferIndex > this.maxBufferSize
     }
 
+    /**
+     * Attempts to execute a function, resetting buffer position on failure.
+     * Useful for speculative parsing attempts that may need to be retried.
+     *
+     * @typeParam T - The return type of the try function
+     * @param tryFn - Function to attempt execution
+     * @param onFail - Optional callback invoked on failure
+     * @returns The result of tryFn if successful, undefined if NoMoreTokensError thrown
+     */
     resetOnFail<T>(tryFn: () => T, onFail?: (e: Error) => void): T | undefined {
         const bufferIndex = this.bufferIndex
         try {
@@ -175,6 +209,11 @@ export class ByteBuffer {
         return undefined
     }
 
+    /**
+     * Returns a string representation of the buffer state for debugging.
+     *
+     * @returns A formatted string showing buffer contents and state
+     */
     toString(): string {
         return [
             'ByteBuffer {',
