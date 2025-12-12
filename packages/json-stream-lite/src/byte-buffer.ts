@@ -1,6 +1,8 @@
 import type { ByteStream, JsonStreamInput } from './types.js'
 import { bytesToString } from './utils.js'
 
+const textEncoder = new TextEncoder()
+
 export class NoMoreTokensError extends Error {}
 export class EofReachedError extends Error {}
 
@@ -58,8 +60,6 @@ export class ByteBuffer {
      * @param input - Input items to add to the buffer
      */
     feed(...input: JsonStreamInput[]): void {
-        const textEncoder = new TextEncoder()
-
         for (const item of input) {
             if (Array.isArray(item)) {
                 for (const subItem of item) {
