@@ -53,19 +53,54 @@ export class ByteBuffer {
     }
 
     /**
-     * Reads data from the async stream into the buffer.
+     * Reads data from the stream into the buffer.
      * Reads up to maxBufferSize bytes at a time.
      */
-    async readStream(): Promise<void> {
-        if (!this.asyncIterable) {
+    readStream(): boolean {
+        if (!this.asyncIterable || !(Symbol.iterator in this.asyncIterable)) {
+            return false
+        }
+
+        let i = 0
+
+        const iterator = this.asyncIterable[Symbol.iterator]()
+
+        while (i < this.maxBufferSize) {
+            const nextByte = iterator.next()
+
+            if (nextByte.done) {
+                this.eof = true
+                return false
+            }
+
+            const value = nextByte.value
+            this.feed(value)
+            i++
+        }
+
+        return true
+    }
+
+    /**
+     * Reads data from the sync or async stream into the buffer.
+     * Reads up to maxBufferSize bytes at a time.
+     */
+    async readStreamAsync(): Promise<void> {
+        this.readStream()
+
+        if (
+            !this.asyncIterable ||
+            !(Symbol.asyncIterator in this.asyncIterable)
+        ) {
             return
         }
 
         let i = 0
 
+        const iterator = this.asyncIterable[Symbol.asyncIterator]()
+
         while (i < this.maxBufferSize) {
-            const nextByte =
-                await this.asyncIterable[Symbol.asyncIterator]().next()
+            const nextByte = await iterator.next()
 
             if (nextByte.done) {
                 this.eof = true
@@ -139,7 +174,11 @@ export class ByteBuffer {
         const index = this.bufferIndex + ahead
         if (index >= this.buffer.length) {
             if (!this.eof) {
-                throw new NoMoreTokensError('Buffer empty')
+                if (!this.readStream()) {
+                    throw new NoMoreTokensError('No more items available')
+                } else {
+                    return this.peek(ahead)
+                }
             }
             return null
         }
@@ -156,7 +195,11 @@ export class ByteBuffer {
     next(): number {
         if (this.bufferIndex >= this.buffer.length) {
             if (!this.eof) {
-                throw new NoMoreTokensError('No more items available')
+                if (!this.readStream()) {
+                    throw new NoMoreTokensError('No more items available')
+                } else {
+                    return this.next()
+                }
             }
             throw new EofReachedError('End of file reached')
         }

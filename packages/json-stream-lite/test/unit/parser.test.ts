@@ -413,6 +413,28 @@ describe('JSON parsing', () => {
 
         expect(value).toBe('Hello, World!')
     })
+
+    it('should support a standard Iterable as a byte stream', () => {
+        function* byteStream() {
+            const json = '{"key": "value"}'
+            for (const byte of stringToBytes(json)) {
+                yield byte
+            }
+        }
+
+        const object = new JsonObject(byteStream())
+        object.maxBufferSize = 2 // Small buffer to force chunked processing
+        const keyValuePairs: KeyValue[] = []
+
+        for (const { key: keyEntity, value: valueEntity } of object) {
+            const key = keyEntity.read()
+            const value = valueEntity.read().read()
+
+            keyValuePairs.push({ key, value })
+        }
+
+        expect(keyValuePairs).toEqual([{ key: 'key', value: 'value' }])
+    })
 })
 
 describe('JSON key value parser', () => {
