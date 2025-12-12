@@ -1,6 +1,9 @@
 import type { ByteStream, JsonStreamInput } from './types.js'
 import { bytesToString } from './utils.js'
 
+/**
+ * Shared TextEncoder instance for converting strings to UTF-8 bytes.
+ */
 const textEncoder = new TextEncoder()
 
 /**
