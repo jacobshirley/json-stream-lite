@@ -1,6 +1,7 @@
-import { ByteStream } from './types.js'
+import type { ByteStream, JsonStreamInput } from './types.js'
 import { bytesToString } from './utils.js'
 
+const textEncoder = new TextEncoder()
 const DEFAULT_MAX_BUFFER_SIZE = 1024 * 100 // 100 KB
 
 export class NoMoreTokensError extends Error {}
@@ -34,15 +35,18 @@ export class ByteBuffer {
         }
 
         let i = 0
+
         while (i < this.maxBufferSize) {
             const nextByte =
                 await this.asyncIterable[Symbol.asyncIterator]().next()
+
             if (nextByte.done) {
                 this.eof = true
                 break
             }
 
-            this.feed(nextByte.value)
+            const value = nextByte.value
+            this.feed(value)
             i++
         }
     }
@@ -56,7 +60,7 @@ export class ByteBuffer {
      *
      * @param input - Input items to add to the buffer
      */
-    feed(...input: (number | number[] | Uint8Array)[]): void {
+    feed(...input: JsonStreamInput[]): void {
         for (const item of input) {
             if (Array.isArray(item)) {
                 for (const subItem of item) {
@@ -67,6 +71,13 @@ export class ByteBuffer {
             } else if (item instanceof Uint8Array) {
                 for (const subItem of item) {
                     this.buffer.push(subItem)
+                }
+
+                continue
+            } else if (typeof item === 'string') {
+                const encoded = textEncoder.encode(item)
+                for (const byte of encoded) {
+                    this.buffer.push(byte)
                 }
 
                 continue
