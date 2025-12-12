@@ -4,8 +4,8 @@
 export type JsonStreamInput = string | number | number[] | Uint8Array
 
 /**
- * An async iterable stream of bytes that can be consumed incrementally.
- * Supports individual bytes, byte arrays, or Uint8Arrays.
+ * An async iterable stream of JSON input that can be consumed incrementally.
+ * Supports strings, numbers, arrays of numbers, or Uint8Arrays as stream items.
  */
 export type ByteStream = AsyncIterable<JsonStreamInput>
 
