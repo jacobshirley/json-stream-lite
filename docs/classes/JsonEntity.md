@@ -123,7 +123,7 @@
 
 ##### input
 
-...(`number` \| `number`[])[]
+...[`JsonStreamInput`](../type-aliases/JsonStreamInput.md)[]
 
 #### Returns
 
