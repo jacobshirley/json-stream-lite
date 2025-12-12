@@ -6,6 +6,9 @@
 
 # Class: JsonKeyValueParser
 
+Parser that flattens nested JSON structures into key-value pairs.
+Useful for extracting specific values from complex JSON without parsing the entire structure.
+
 ## Extends
 
 - [`JsonEntity`](JsonEntity.md)\<`Generator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md)\>\>
@@ -16,19 +19,27 @@
 
 > **new JsonKeyValueParser**(`buffer?`, `container?`, `parentKey?`): `JsonKeyValueParser`
 
+Creates a new key-value parser.
+
 #### Parameters
 
 ##### buffer?
 
+Optional ByteBuffer or ByteStream to read from
+
 [`ByteStream`](../type-aliases/ByteStream.md) | `ByteBuffer`
 
 ##### container?
+
+The JSON container to parse (object, array, or value)
 
 [`JsonObject`](JsonObject.md)\<`unknown`\> | [`JsonArray`](JsonArray.md)\<`unknown`\> | [`JsonValue`](JsonValue.md)\<`unknown`, `string`\>
 
 ##### parentKey?
 
 `string`
+
+The parent key for nested structures (used for dot notation)
 
 #### Returns
 
@@ -66,9 +77,13 @@
 
 > **get** **bufferLength**(): `number`
 
+Gets the current length of the buffer.
+
 ##### Returns
 
 `number`
+
+The number of bytes in the buffer
 
 #### Inherited from
 
@@ -82,9 +97,13 @@
 
 > **get** **entityType**(): `string`
 
+Gets the type name of this entity.
+
 ##### Returns
 
 `string`
+
+The constructor name of this entity
 
 #### Inherited from
 
@@ -98,11 +117,15 @@
 
 > **set** **maxBufferSize**(`size`): `void`
 
+Sets the maximum buffer size before compaction occurs.
+
 ##### Parameters
 
 ###### size
 
 `number`
+
+The maximum buffer size in bytes
 
 ##### Returns
 
@@ -118,6 +141,9 @@
 
 > **\[asyncIterator\]**(): `AsyncGenerator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md), `any`, `any`\>
 
+Returns an async iterator for key-value pairs.
+Enables use of for await...of loops on JsonKeyValueParser.
+
 #### Returns
 
 `AsyncGenerator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md), `any`, `any`\>
@@ -128,6 +154,9 @@
 
 > **\[iterator\]**(): `Generator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md), `any`, `any`\>
 
+Returns an iterator for key-value pairs.
+Enables use of for...of loops on JsonKeyValueParser.
+
 #### Returns
 
 `Generator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md), `any`, `any`\>
@@ -137,6 +166,8 @@
 ### consume()
 
 > **consume**(): `void`
+
+Consumes the entity by reading it if not already consumed.
 
 #### Returns
 
@@ -152,6 +183,8 @@
 
 > **consumeAsync**(): `Promise`\<`void`\>
 
+Asynchronously consumes the entity by reading it if not already consumed.
+
 #### Returns
 
 `Promise`\<`void`\>
@@ -166,11 +199,15 @@
 
 > **feed**(...`input`): `void`
 
+Feeds input data into the buffer.
+
 #### Parameters
 
 ##### input
 
 ...[`JsonStreamInput`](../type-aliases/JsonStreamInput.md)[]
+
+One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the buffer
 
 #### Returns
 
@@ -186,9 +223,16 @@
 
 > **parse**(): `Generator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md)\>
 
+Generator that yields key-value pairs from the JSON structure.
+Flattens nested objects and arrays using dot notation and array indices.
+
 #### Returns
 
 `Generator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md)\>
+
+#### Yields
+
+Key-value pairs as [key, value] tuples
 
 #### Overrides
 
@@ -200,9 +244,15 @@
 
 > **parseAsync**(): `AsyncGenerator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md)\>
 
+Async generator that yields key-value pairs from a stream.
+
 #### Returns
 
 `AsyncGenerator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md)\>
+
+#### Yields
+
+Key-value pairs as [key, value] tuples
 
 ---
 
@@ -210,9 +260,17 @@
 
 > **read**(): `Generator`
 
+Reads and parses the entity, consuming it in the process.
+
 #### Returns
 
 `Generator`
+
+The parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 
@@ -224,9 +282,17 @@
 
 > **readAsync**(): `Promise`\<`Generator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md), `any`, `any`\>\>
 
+Asynchronously reads and parses the entity from a stream.
+
 #### Returns
 
 `Promise`\<`Generator`\<[`JsonKeyValuePair`](../type-aliases/JsonKeyValuePair.md), `any`, `any`\>\>
+
+A promise that resolves to the parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 
@@ -237,6 +303,8 @@
 ### skipWhitespace()
 
 > `protected` **skipWhitespace**(): `void`
+
+Skips whitespace characters in the buffer.
 
 #### Returns
 
@@ -252,11 +320,15 @@
 
 > **tryParse**\<`T`\>(`cb`): `T` \| `undefined`
 
+Attempts to parse by executing a callback, reverting buffer state on failure.
+
 #### Type Parameters
 
 ##### T
 
 `T` = `JsonKeyValueParser`
+
+The return type of the callback
 
 #### Parameters
 
@@ -264,9 +336,17 @@
 
 (`entity`) => `T`
 
+The callback function to execute
+
 #### Returns
 
 `T` \| `undefined`
+
+The result of the callback, or undefined if parsing needs more data
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 

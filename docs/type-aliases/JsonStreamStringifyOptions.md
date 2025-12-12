@@ -8,8 +8,12 @@
 
 > **JsonStreamStringifyOptions** = `object`
 
+Options for JSON streaming stringification.
+
 ## Properties
 
 ### stringChunkSize?
 
 > `optional` **stringChunkSize**: `number`
+
+Maximum size of string chunks when yielding formatted strings

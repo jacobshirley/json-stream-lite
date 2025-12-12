@@ -6,6 +6,9 @@
 
 # Class: JsonObject\<T\>
 
+Represents a JSON object.
+Provides streaming access to object members (key-value pairs).
+
 ## Extends
 
 - [`JsonEntity`](JsonEntity.md)\<`T`\>
@@ -16,15 +19,21 @@
 
 `T` = `unknown`
 
+The expected type of the object
+
 ## Constructors
 
 ### Constructor
 
 > **new JsonObject**\<`T`\>(`buffer?`): `JsonObject`\<`T`\>
 
+Creates a new JSON entity.
+
 #### Parameters
 
 ##### buffer?
+
+Optional ByteBuffer or ByteStream to read from
 
 [`ByteStream`](../type-aliases/ByteStream.md) | `ByteBuffer`
 
@@ -64,9 +73,13 @@
 
 > **get** **bufferLength**(): `number`
 
+Gets the current length of the buffer.
+
 ##### Returns
 
 `number`
+
+The number of bytes in the buffer
 
 #### Inherited from
 
@@ -80,9 +93,13 @@
 
 > **get** **entityType**(): `string`
 
+Gets the type name of this entity.
+
 ##### Returns
 
 `string`
+
+The constructor name of this entity
 
 #### Inherited from
 
@@ -96,11 +113,15 @@
 
 > **set** **maxBufferSize**(`size`): `void`
 
+Sets the maximum buffer size before compaction occurs.
+
 ##### Parameters
 
 ###### size
 
 `number`
+
+The maximum buffer size in bytes
 
 ##### Returns
 
@@ -116,6 +137,9 @@
 
 > **\[asyncIterator\]**(): `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
 
+Returns an async iterator for object members.
+Enables use of for await...of loops on JsonObject.
+
 #### Returns
 
 `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
@@ -126,6 +150,9 @@
 
 > **\[iterator\]**(): `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
 
+Returns an iterator for object members.
+Enables use of for...of loops on JsonObject.
+
 #### Returns
 
 `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
@@ -135,6 +162,8 @@
 ### consume()
 
 > **consume**(): `void`
+
+Consumes the entity by reading it if not already consumed.
 
 #### Returns
 
@@ -150,6 +179,8 @@
 
 > **consumeAsync**(): `Promise`\<`void`\>
 
+Asynchronously consumes the entity by reading it if not already consumed.
+
 #### Returns
 
 `Promise`\<`void`\>
@@ -164,11 +195,15 @@
 
 > **feed**(...`input`): `void`
 
+Feeds input data into the buffer.
+
 #### Parameters
 
 ##### input
 
 ...[`JsonStreamInput`](../type-aliases/JsonStreamInput.md)[]
+
+One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the buffer
 
 #### Returns
 
@@ -184,9 +219,16 @@
 
 > **members**(): `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
 
+Generator that yields object members as key-value pairs.
+Allows for streaming/incremental processing of large objects.
+
 #### Returns
 
 `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
+
+#### Yields
+
+Object containing the key and value entities for each member
 
 ---
 
@@ -194,9 +236,16 @@
 
 > **membersAsync**(): `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
 
+Async generator that yields object members from a stream.
+Allows for asynchronous streaming/incremental processing.
+
 #### Returns
 
 `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
+
+#### Yields
+
+Object containing the key and value entities for each member
 
 ---
 
@@ -204,9 +253,13 @@
 
 > `protected` **parse**(): `T`
 
+Parses the entire object into a JavaScript object.
+
 #### Returns
 
 `T`
+
+The parsed object
 
 #### Overrides
 
@@ -218,9 +271,17 @@
 
 > **read**(): `T`
 
+Reads and parses the entity, consuming it in the process.
+
 #### Returns
 
 `T`
+
+The parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 
@@ -232,9 +293,17 @@
 
 > **readAsync**(): `Promise`\<`T`\>
 
+Asynchronously reads and parses the entity from a stream.
+
 #### Returns
 
 `Promise`\<`T`\>
+
+A promise that resolves to the parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 
@@ -245,6 +314,8 @@
 ### skipWhitespace()
 
 > `protected` **skipWhitespace**(): `void`
+
+Skips whitespace characters in the buffer.
 
 #### Returns
 
@@ -260,11 +331,15 @@
 
 > **tryParse**\<`T`\>(`cb`): `T` \| `undefined`
 
+Attempts to parse by executing a callback, reverting buffer state on failure.
+
 #### Type Parameters
 
 ##### T
 
 `T` = `JsonObject`\<`T`\>
+
+The return type of the callback
 
 #### Parameters
 
@@ -272,9 +347,17 @@
 
 (`entity`) => `T`
 
+The callback function to execute
+
 #### Returns
 
 `T` \| `undefined`
+
+The result of the callback, or undefined if parsing needs more data
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 

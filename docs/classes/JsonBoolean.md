@@ -6,6 +6,8 @@
 
 # Class: JsonBoolean\<T\>
 
+Represents a JSON boolean value (true or false).
+
 ## Extends
 
 - [`JsonEntity`](JsonEntity.md)\<`T`\>
@@ -16,15 +18,21 @@
 
 `T` _extends_ `boolean` = `boolean`
 
+The specific boolean type (defaults to boolean)
+
 ## Constructors
 
 ### Constructor
 
 > **new JsonBoolean**\<`T`\>(`buffer?`): `JsonBoolean`\<`T`\>
 
+Creates a new JSON entity.
+
 #### Parameters
 
 ##### buffer?
+
+Optional ByteBuffer or ByteStream to read from
 
 [`ByteStream`](../type-aliases/ByteStream.md) | `ByteBuffer`
 
@@ -64,9 +72,13 @@
 
 > **get** **bufferLength**(): `number`
 
+Gets the current length of the buffer.
+
 ##### Returns
 
 `number`
+
+The number of bytes in the buffer
 
 #### Inherited from
 
@@ -80,9 +92,13 @@
 
 > **get** **entityType**(): `string`
 
+Gets the type name of this entity.
+
 ##### Returns
 
 `string`
+
+The constructor name of this entity
 
 #### Inherited from
 
@@ -96,11 +112,15 @@
 
 > **set** **maxBufferSize**(`size`): `void`
 
+Sets the maximum buffer size before compaction occurs.
+
 ##### Parameters
 
 ###### size
 
 `number`
+
+The maximum buffer size in bytes
 
 ##### Returns
 
@@ -116,6 +136,8 @@
 
 > **consume**(): `void`
 
+Consumes the entity by reading it if not already consumed.
+
 #### Returns
 
 `void`
@@ -129,6 +151,8 @@
 ### consumeAsync()
 
 > **consumeAsync**(): `Promise`\<`void`\>
+
+Asynchronously consumes the entity by reading it if not already consumed.
 
 #### Returns
 
@@ -144,11 +168,15 @@
 
 > **feed**(...`input`): `void`
 
+Feeds input data into the buffer.
+
 #### Parameters
 
 ##### input
 
 ...[`JsonStreamInput`](../type-aliases/JsonStreamInput.md)[]
+
+One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the buffer
 
 #### Returns
 
@@ -164,9 +192,13 @@
 
 > `protected` **parse**(): `T`
 
+Parses a JSON boolean from the buffer.
+
 #### Returns
 
 `T`
+
+The parsed boolean value (true or false)
 
 #### Overrides
 
@@ -178,9 +210,17 @@
 
 > **read**(): `T`
 
+Reads and parses the entity, consuming it in the process.
+
 #### Returns
 
 `T`
+
+The parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 
@@ -192,9 +232,17 @@
 
 > **readAsync**(): `Promise`\<`T`\>
 
+Asynchronously reads and parses the entity from a stream.
+
 #### Returns
 
 `Promise`\<`T`\>
+
+A promise that resolves to the parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 
@@ -205,6 +253,8 @@
 ### skipWhitespace()
 
 > `protected` **skipWhitespace**(): `void`
+
+Skips whitespace characters in the buffer.
 
 #### Returns
 
@@ -220,11 +270,15 @@
 
 > **tryParse**\<`T`\>(`cb`): `T` \| `undefined`
 
+Attempts to parse by executing a callback, reverting buffer state on failure.
+
 #### Type Parameters
 
 ##### T
 
 `T` = `JsonBoolean`\<`T`\>
+
+The return type of the callback
 
 #### Parameters
 
@@ -232,9 +286,17 @@
 
 (`entity`) => `T`
 
+The callback function to execute
+
 #### Returns
 
 `T` \| `undefined`
+
+The result of the callback, or undefined if parsing needs more data
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 

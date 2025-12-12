@@ -6,6 +6,9 @@
 
 # Class: JsonValue\<T, K\>
 
+Represents any JSON value (primitive, object, or array).
+Provides lazy evaluation and type detection for JSON values.
+
 ## Extends
 
 - [`JsonEntity`](JsonEntity.md)\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
@@ -16,9 +19,13 @@
 
 `T` _extends_ `unknown` = `unknown`
 
+The expected type of the value
+
 ### K
 
 `K` _extends_ `string` = `string`
+
+The key type for object properties (defaults to string)
 
 ## Constructors
 
@@ -26,15 +33,21 @@
 
 > **new JsonValue**\<`T`, `K`\>(`buffer?`, `key?`): `JsonValue`\<`T`, `K`\>
 
+Creates a new JsonValue entity.
+
 #### Parameters
 
 ##### buffer?
+
+Optional ByteBuffer or ByteStream to read from
 
 [`ByteStream`](../type-aliases/ByteStream.md) | `ByteBuffer`
 
 ##### key?
 
 [`JsonString`](JsonString.md)\<`K`\>
+
+Optional key associated with this value (for object members)
 
 #### Returns
 
@@ -72,9 +85,13 @@
 
 > **get** **bufferLength**(): `number`
 
+Gets the current length of the buffer.
+
 ##### Returns
 
 `number`
+
+The number of bytes in the buffer
 
 #### Inherited from
 
@@ -88,9 +105,13 @@
 
 > **get** **entityType**(): `string`
 
+Gets the type name of this entity.
+
 ##### Returns
 
 `string`
+
+The constructor name of this entity
 
 #### Inherited from
 
@@ -104,11 +125,15 @@
 
 > **set** **maxBufferSize**(`size`): `void`
 
+Sets the maximum buffer size before compaction occurs.
+
 ##### Parameters
 
 ###### size
 
 `number`
+
+The maximum buffer size in bytes
 
 ##### Returns
 
@@ -124,6 +149,8 @@
 
 > **consume**(): `void`
 
+Consumes the value, ensuring it is fully read.
+
 #### Returns
 
 `void`
@@ -137,6 +164,8 @@
 ### consumeAsync()
 
 > **consumeAsync**(): `Promise`\<`void`\>
+
+Asynchronously consumes the value, ensuring it is fully read.
 
 #### Returns
 
@@ -152,11 +181,15 @@
 
 > **feed**(...`input`): `void`
 
+Feeds input data into the buffer.
+
 #### Parameters
 
 ##### input
 
 ...[`JsonStreamInput`](../type-aliases/JsonStreamInput.md)[]
+
+One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the buffer
 
 #### Returns
 
@@ -172,9 +205,13 @@
 
 > `protected` **parse**(): [`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
 
+Parses the value, determining its type and creating the appropriate entity.
+
 #### Returns
 
 [`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
+
+The parsed JSON entity (primitive, object, or array)
 
 #### Overrides
 
@@ -186,9 +223,14 @@
 
 > **read**(): [`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
 
+Reads the value entity without reading its contents.
+Allows for lazy evaluation of the actual value.
+
 #### Returns
 
 [`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>
+
+The JSON entity representing this value
 
 #### Overrides
 
@@ -200,9 +242,13 @@
 
 > **readAsync**(): `Promise`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
 
+Asynchronously reads the value entity from a stream.
+
 #### Returns
 
 `Promise`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
+
+A promise that resolves to the JSON entity representing this value
 
 #### Overrides
 
@@ -214,9 +260,13 @@
 
 > **readValue**(): `unknown`
 
+Reads and fully evaluates the value.
+
 #### Returns
 
 `unknown`
+
+The actual JavaScript value (string, number, boolean, null, object, or array)
 
 ---
 
@@ -224,15 +274,21 @@
 
 > **readValueAsync**(): `Promise`\<`unknown`\>
 
+Asynchronously reads and fully evaluates the value.
+
 #### Returns
 
 `Promise`\<`unknown`\>
+
+A promise that resolves to the actual JavaScript value
 
 ---
 
 ### skipWhitespace()
 
 > `protected` **skipWhitespace**(): `void`
+
+Skips whitespace characters in the buffer.
 
 #### Returns
 
@@ -248,11 +304,15 @@
 
 > **tryParse**\<`T`\>(`cb`): `T` \| `undefined`
 
+Attempts to parse by executing a callback, reverting buffer state on failure.
+
 #### Type Parameters
 
 ##### T
 
 `T` = `JsonValue`\<`T`, `K`\>
+
+The return type of the callback
 
 #### Parameters
 
@@ -260,9 +320,17 @@
 
 (`entity`) => `T`
 
+The callback function to execute
+
 #### Returns
 
 `T` \| `undefined`
+
+The result of the callback, or undefined if parsing needs more data
+
+#### Throws
+
+Error if the entity has already been consumed
 
 #### Inherited from
 
