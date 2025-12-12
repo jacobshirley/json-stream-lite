@@ -1,5 +1,5 @@
 import { ByteBuffer } from './byte-buffer.js'
-import { ByteStream, JsonKeyValuePair } from './types.js'
+import { ByteStream, JsonKeyValuePair, JsonStreamInput } from './types.js'
 import { bytesToNumber, bytesToString } from './utils.js'
 
 /**
@@ -143,7 +143,7 @@ export abstract class JsonEntity<T> {
      *
      * @param input - One or more numbers or arrays of numbers to add to the buffer
      */
-    feed(...input: (number | number[])[]): void {
+    feed(...input: JsonStreamInput[]): void {
         for (const item of input) {
             this.buffer.feed(item)
         }

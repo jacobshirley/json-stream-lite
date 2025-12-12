@@ -6,4 +6,4 @@
 
 # Type Alias: ByteStream
 
-> **ByteStream** = `AsyncIterable`\<`number` \| `number`[] \| `Uint8Array`\>
+> **ByteStream** = `AsyncIterable`\<[`JsonStreamInput`](JsonStreamInput.md)\>
