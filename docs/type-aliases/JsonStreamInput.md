@@ -7,3 +7,5 @@
 # Type Alias: JsonStreamInput
 
 > **JsonStreamInput** = `string` \| `number` \| `number`[] \| `Uint8Array`
+
+Union type representing valid JSON stream input formats.

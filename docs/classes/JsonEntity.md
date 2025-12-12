@@ -6,6 +6,9 @@
 
 # Abstract Class: JsonEntity\<T\>
 
+Abstract base class for all JSON entities.
+Provides common functionality for parsing, reading, and consuming JSON values.
+
 ## Extended by
 
 - [`JsonString`](JsonString.md)
@@ -23,15 +26,21 @@
 
 `T`
 
+The type of value this entity represents
+
 ## Constructors
 
 ### Constructor
 
 > **new JsonEntity**\<`T`\>(`buffer?`): `JsonEntity`\<`T`\>
 
+Creates a new JSON entity.
+
 #### Parameters
 
 ##### buffer?
+
+Optional ByteBuffer or ByteStream to read from
 
 [`ByteStream`](../type-aliases/ByteStream.md) | `ByteBuffer`
 
@@ -59,9 +68,13 @@
 
 > **get** **bufferLength**(): `number`
 
+Gets the current length of the buffer.
+
 ##### Returns
 
 `number`
+
+The number of bytes in the buffer
 
 ---
 
@@ -71,9 +84,13 @@
 
 > **get** **entityType**(): `string`
 
+Gets the type name of this entity.
+
 ##### Returns
 
 `string`
+
+The constructor name of this entity
 
 ---
 
@@ -83,11 +100,15 @@
 
 > **set** **maxBufferSize**(`size`): `void`
 
+Sets the maximum buffer size before compaction occurs.
+
 ##### Parameters
 
 ###### size
 
 `number`
+
+The maximum buffer size in bytes
 
 ##### Returns
 
@@ -99,6 +120,8 @@
 
 > **consume**(): `void`
 
+Consumes the entity by reading it if not already consumed.
+
 #### Returns
 
 `void`
@@ -108,6 +131,8 @@
 ### consumeAsync()
 
 > **consumeAsync**(): `Promise`\<`void`\>
+
+Asynchronously consumes the entity by reading it if not already consumed.
 
 #### Returns
 
@@ -119,11 +144,15 @@
 
 > **feed**(...`input`): `void`
 
+Feeds input data into the buffer.
+
 #### Parameters
 
 ##### input
 
 ...[`JsonStreamInput`](../type-aliases/JsonStreamInput.md)[]
+
+One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the buffer
 
 #### Returns
 
@@ -135,9 +164,13 @@
 
 > `abstract` `protected` **parse**(): `T`
 
+Abstract method that subclasses must implement to parse their specific type.
+
 #### Returns
 
 `T`
+
+The parsed value of type T
 
 ---
 
@@ -145,9 +178,17 @@
 
 > **read**(): `T`
 
+Reads and parses the entity, consuming it in the process.
+
 #### Returns
 
 `T`
+
+The parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 ---
 
@@ -155,15 +196,25 @@
 
 > **readAsync**(): `Promise`\<`T`\>
 
+Asynchronously reads and parses the entity from a stream.
+
 #### Returns
 
 `Promise`\<`T`\>
+
+A promise that resolves to the parsed value
+
+#### Throws
+
+Error if the entity has already been consumed
 
 ---
 
 ### skipWhitespace()
 
 > `protected` **skipWhitespace**(): `void`
+
+Skips whitespace characters in the buffer.
 
 #### Returns
 
@@ -175,11 +226,15 @@
 
 > **tryParse**\<`T`\>(`cb`): `T` \| `undefined`
 
+Attempts to parse by executing a callback, reverting buffer state on failure.
+
 #### Type Parameters
 
 ##### T
 
 `T` = `JsonEntity`\<`T`\>
+
+The return type of the callback
 
 #### Parameters
 
@@ -187,6 +242,14 @@
 
 (`entity`) => `T`
 
+The callback function to execute
+
 #### Returns
 
 `T` \| `undefined`
+
+The result of the callback, or undefined if parsing needs more data
+
+#### Throws
+
+Error if the entity has already been consumed
