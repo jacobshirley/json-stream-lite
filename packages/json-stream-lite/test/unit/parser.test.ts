@@ -10,7 +10,7 @@ import { ByteBuffer } from '../../src/byte-buffer.js'
 
 type KeyValue = { key: string; value: any }
 
-describe('JSON object parsing', () => {
+describe('JSON parsing', () => {
     it('should break down a simple JSON object', () => {
         const json = '{"key": "value"}'
         const object = new JsonObject()
@@ -392,6 +392,15 @@ describe('JSON object parsing', () => {
 
         // expect(buffer.length).toBeLessThan(10) // Ensure buffer size is controlled
         expect(output).toEqual({ nested: { c: [1, 2, 3, 4, 5] } })
+    })
+
+    it('should be able to feed in strings', () => {
+        const json = '"Hello, World!"'
+        const jsonValue = new JsonValue()
+        jsonValue.feed(json)
+        const value = jsonValue.read().read()
+
+        expect(value).toBe('Hello, World!')
     })
 })
 

@@ -84,9 +84,14 @@ export abstract class JsonEntity<T> {
         return this.buffer.length
     }
 
-    feed(...input: (number | number[])[]): void {
+    feed(...input: (number | number[] | string)[]): void {
+        const textEncoder = new TextEncoder()
         for (const item of input) {
-            this.buffer.feed(item)
+            if (typeof item === 'string') {
+                this.buffer.feed(textEncoder.encode(item))
+            } else {
+                this.buffer.feed(item)
+            }
         }
     }
 
