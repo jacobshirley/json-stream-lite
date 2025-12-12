@@ -141,7 +141,7 @@ export abstract class JsonEntity<T> {
     /**
      * Feeds input data into the buffer.
      *
-     * @param input - One or more numbers or arrays of numbers to add to the buffer
+     * @param input - One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the buffer
      */
     feed(...input: JsonStreamInput[]): void {
         for (const item of input) {
