@@ -109,6 +109,22 @@ const response = await fetch('https://api.example.com/data.json')
 await processStream(response.body!)
 ```
 
+### Controlling Buffer Size
+
+Limit memory usage by setting a maximum buffer size:
+
+```typescript
+import { JsonObject } from 'json-stream-lite'
+
+const parser = new JsonObject()
+parser.maxBufferSize = 1024 * 1024 // 1 MB
+
+// Feed data into the parser
+parser.feed('...large JSON data...')
+const result = parser.read()
+console.log(result)
+```
+
 ### Key-Value Extraction
 
 Flatten nested JSON structures into dot-notation key-value pairs:

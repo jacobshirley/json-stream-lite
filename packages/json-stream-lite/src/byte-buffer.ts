@@ -1,12 +1,14 @@
 import { ByteStream } from './types.js'
 import { bytesToString } from './utils.js'
 
+const DEFAULT_MAX_BUFFER_SIZE = 1024 * 100 // 100 KB
+
 export class NoMoreTokensError extends Error {}
 export class EofReachedError extends Error {}
 
 export class ByteBuffer {
     /** Maximum size of the buffer before compaction */
-    maxBufferSize: number = 1000
+    maxBufferSize: number = DEFAULT_MAX_BUFFER_SIZE
     /** Whether end of file has been signaled */
     eof: boolean = false
     /** Current position in the buffer */
