@@ -1,7 +1,19 @@
+/**
+ * Options for JSON streaming stringification.
+ */
 export type JsonStreamStringifyOptions = {
+    /** Maximum size of string chunks when yielding formatted strings */
     stringChunkSize?: number
 }
 
+/**
+ * Formats a string value for JSON output, escaping special characters.
+ * Yields the formatted string in chunks for memory efficiency.
+ *
+ * @param str - The string to format
+ * @param chunkSize - Maximum size of each yielded chunk (default: 1024)
+ * @yields Formatted string chunks with proper JSON escaping
+ */
 function* formatString(
     str: string,
     chunkSize: number = 1024,
@@ -45,16 +57,36 @@ function* formatString(
     }
 }
 
+/**
+ * Determines if a value should be ignored during stringification.
+ * Functions and undefined values are not valid in JSON.
+ *
+ * @param value - The value to check
+ * @returns True if the value should be ignored
+ */
 function shouldIgnore(value: unknown): boolean {
     return typeof value === 'function' || value === undefined
 }
 
+/**
+ * Type guard to check if an object has a custom toJSON method.
+ *
+ * @param value - The object to check
+ * @returns True if the object has a toJSON method
+ */
 function hasCustomToJsonFunction(
     value: object,
 ): value is { toJSON: () => unknown } {
     return 'toJSON' in value && typeof (value as any).toJSON === 'function'
 }
 
+/**
+ * Type guard to check if an object has a custom toString method.
+ * Excludes default Object and Array toString methods.
+ *
+ * @param value - The object to check
+ * @returns True if the object has a custom toString method
+ */
 function hasCustomToStringFunction(
     value: object,
 ): value is { toString: () => string } {
@@ -66,6 +98,17 @@ function hasCustomToStringFunction(
     )
 }
 
+/**
+ * Internal recursive function that stringifies a value with depth tracking.
+ * Handles all JSON types including primitives, arrays, and objects.
+ *
+ * @param value - The value to stringify
+ * @param replacer - Optional replacer function for value transformation
+ * @param indent - Number of spaces for indentation (0 for compact)
+ * @param currentDepth - Current nesting depth for indentation
+ * @param options - Stringification options
+ * @yields String chunks representing the JSON output
+ */
 function* jsonStreamStringifyWithDepth(
     value: unknown,
     replacer?: any,
@@ -175,6 +218,24 @@ function* jsonStreamStringifyWithDepth(
     }
 }
 
+/**
+ * Converts a JavaScript value to JSON format, yielding string chunks.
+ * Provides memory-efficient streaming stringification for large objects.
+ *
+ * @param value - The value to stringify
+ * @param replacer - Optional replacer function or array for filtering/transforming values
+ * @param indent - Number of spaces for indentation (0 for compact output)
+ * @param options - Additional stringification options
+ * @returns Generator yielding JSON string chunks
+ *
+ * @example
+ * ```typescript
+ * const data = { name: "John", age: 30 };
+ * for (const chunk of jsonStreamStringify(data)) {
+ *   process.stdout.write(chunk);
+ * }
+ * ```
+ */
 export function jsonStreamStringify(
     value: unknown,
     replacer?: any,
@@ -184,8 +245,29 @@ export function jsonStreamStringify(
     return jsonStreamStringifyWithDepth(value, replacer, indent, 0, options)
 }
 
+/**
+ * Shared TextEncoder instance for converting strings to UTF-8 bytes.
+ */
 const TEXT_ENCODER = new TextEncoder()
 
+/**
+ * Converts a JavaScript value to JSON format, yielding Uint8Array byte chunks.
+ * Provides memory-efficient streaming stringification with binary output.
+ *
+ * @param value - The value to stringify
+ * @param replacer - Optional replacer function or array for filtering/transforming values
+ * @param indent - Number of spaces for indentation (0 for compact output)
+ * @param options - Additional stringification options
+ * @returns Generator yielding JSON as Uint8Array chunks
+ *
+ * @example
+ * ```typescript
+ * const data = { name: "John", age: 30 };
+ * for (const chunk of jsonStreamStringifyBytes(data)) {
+ *   await stream.write(chunk);
+ * }
+ * ```
+ */
 export function* jsonStreamStringifyBytes(
     value: unknown,
     replacer?: any,
