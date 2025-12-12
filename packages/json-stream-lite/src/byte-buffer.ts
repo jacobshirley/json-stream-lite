@@ -53,7 +53,7 @@ export class ByteBuffer {
     }
 
     /**
-     * Reads data from the async stream into the buffer.
+     * Reads data from the stream into the buffer.
      * Reads up to maxBufferSize bytes at a time.
      */
     readStream(): boolean {
@@ -82,7 +82,7 @@ export class ByteBuffer {
     }
 
     /**
-     * Reads data from the async stream into the buffer.
+     * Reads data from the sync or async stream into the buffer.
      * Reads up to maxBufferSize bytes at a time.
      */
     async readStreamAsync(): Promise<void> {
