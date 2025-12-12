@@ -402,6 +402,17 @@ describe('JSON parsing', () => {
 
         expect(value).toBe('Hello, World!')
     })
+
+    it('should be able to feed in strings in async mode', async () => {
+        const json = (async function* () {
+            yield '"Hello, World!"'
+        })()
+
+        const jsonValue = new JsonValue(json)
+        const value = await jsonValue.readValueAsync()
+
+        expect(value).toBe('Hello, World!')
+    })
 })
 
 describe('JSON key value parser', () => {

@@ -1,4 +1,4 @@
-import { ByteStream } from './types.js'
+import type { ByteStream, JsonStreamInput } from './types.js'
 import { bytesToString } from './utils.js'
 
 export class NoMoreTokensError extends Error {}
@@ -57,7 +57,7 @@ export class ByteBuffer {
      *
      * @param input - Input items to add to the buffer
      */
-    feed(...input: (string | number | number[] | Uint8Array)[]): void {
+    feed(...input: JsonStreamInput[]): void {
         const textEncoder = new TextEncoder()
 
         for (const item of input) {
