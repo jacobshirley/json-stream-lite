@@ -196,7 +196,7 @@ export abstract class JsonEntity<T> {
         }
 
         while (!this.buffer.atEof()) {
-            await this.buffer.readStream()
+            await this.buffer.readStreamAsync()
             const res = this.tryParse(() => this.read())
             if (res !== undefined) {
                 return res
@@ -574,7 +574,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
         value: JsonValue<T>
     }> {
         while (!this.buffer.atEof()) {
-            await this.buffer.readStream()
+            await this.buffer.readStreamAsync()
 
             const memberGen = this.members()
             let currentMember:
@@ -684,7 +684,7 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
      */
     async *itemsAsync(): AsyncGenerator<JsonValueType<T>> {
         while (!this.buffer.atEof()) {
-            await this.buffer.readStream()
+            await this.buffer.readStreamAsync()
 
             const itemGen = this.items()
             let currentItem: IteratorResult<JsonValueType<T>> | undefined =
@@ -839,7 +839,7 @@ export class JsonKeyValueParser extends JsonEntity<
      */
     async *parseAsync(): AsyncGenerator<JsonKeyValuePair> {
         while (!this.buffer.atEof()) {
-            await this.buffer.readStream()
+            await this.buffer.readStreamAsync()
             const parserGen = this.parse()
 
             let currentPair: IteratorResult<JsonKeyValuePair> | undefined =
