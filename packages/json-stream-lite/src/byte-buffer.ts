@@ -86,16 +86,18 @@ export class ByteBuffer {
      * Reads up to maxBufferSize bytes at a time.
      */
     async readStreamAsync(): Promise<void> {
-        if (!this.asyncIterable) {
+        this.readStream()
+
+        if (
+            !this.asyncIterable ||
+            !(Symbol.asyncIterator in this.asyncIterable)
+        ) {
             return
         }
 
         let i = 0
 
-        const iterator =
-            Symbol.asyncIterator in this.asyncIterable
-                ? this.asyncIterable[Symbol.asyncIterator]()
-                : this.asyncIterable[Symbol.iterator]()
+        const iterator = this.asyncIterable[Symbol.asyncIterator]()
 
         while (i < this.maxBufferSize) {
             const nextByte = await iterator.next()
