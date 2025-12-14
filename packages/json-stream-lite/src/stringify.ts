@@ -1,3 +1,5 @@
+import { stringToBytes } from './utils'
+
 /**
  * Options for JSON streaming stringification.
  */
@@ -246,11 +248,6 @@ export function jsonStreamStringify(
 }
 
 /**
- * Shared TextEncoder instance for converting strings to UTF-8 bytes.
- */
-const TEXT_ENCODER = new TextEncoder()
-
-/**
  * Converts a JavaScript value to JSON format, yielding Uint8Array byte chunks.
  * Provides memory-efficient streaming stringification with binary output.
  *
@@ -282,6 +279,6 @@ export function* jsonStreamStringifyBytes(
     )
 
     for (const chunk of stringGenerator) {
-        yield TEXT_ENCODER.encode(chunk)
+        yield stringToBytes(chunk)
     }
 }

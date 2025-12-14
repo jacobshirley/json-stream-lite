@@ -1,10 +1,5 @@
 import type { ByteStream, JsonStreamInput } from './types.js'
-import { bytesToString } from './utils.js'
-
-/**
- * Shared TextEncoder instance for converting strings to UTF-8 bytes.
- */
-const textEncoder = new TextEncoder()
+import { bytesToString, stringToBytes } from './utils.js'
 
 /**
  * Default maximum buffer size before compaction
@@ -142,7 +137,7 @@ export class ByteBuffer {
 
                 continue
             } else if (typeof item === 'string') {
-                const encoded = textEncoder.encode(item)
+                const encoded = stringToBytes(item)
                 for (const byte of encoded) {
                     this.buffer.push(byte)
                 }

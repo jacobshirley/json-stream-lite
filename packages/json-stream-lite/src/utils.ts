@@ -1,3 +1,6 @@
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
+
 /**
  * Converts a string to a Uint8Array of UTF-8 encoded bytes.
  *
@@ -5,7 +8,7 @@
  * @returns A Uint8Array containing the UTF-8 encoded bytes
  */
 export function stringToBytes(str: string): Uint8Array {
-    return new TextEncoder().encode(str)
+    return textEncoder.encode(str)
 }
 
 /**
@@ -15,7 +18,7 @@ export function stringToBytes(str: string): Uint8Array {
  * @returns The decoded string
  */
 export function bytesToString(bytes: Uint8Array): string {
-    return new TextDecoder().decode(bytes)
+    return textDecoder.decode(bytes)
 }
 
 /**
