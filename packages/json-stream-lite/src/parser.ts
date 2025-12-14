@@ -520,7 +520,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
      */
     *members(): Generator<{
         key: JsonString<Extract<keyof T, string>>
-        value: JsonValue<T>
+        value: JsonValue<T[keyof T]>
     }> {
         this.skipWhitespace()
 
@@ -544,7 +544,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
             }
 
             const key = new JsonString<Extract<keyof T, string>>(this.buffer)
-            const value = new JsonValue<T>(this.buffer, key)
+            const value = new JsonValue<T[keyof T]>(this.buffer, key)
 
             yield { key, value }
 
@@ -571,7 +571,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
      */
     async *membersAsync(): AsyncGenerator<{
         key: JsonString<Extract<keyof T, string>>
-        value: JsonValue<T>
+        value: JsonValue<T[keyof T]>
     }> {
         while (!this.buffer.atEof()) {
             await this.buffer.readStreamAsync()
@@ -580,7 +580,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
             let currentMember:
                 | IteratorResult<{
                       key: JsonString<Extract<keyof T, string>>
-                      value: JsonValue<T>
+                      value: JsonValue<T[keyof T]>
                   }>
                 | undefined = undefined
 
@@ -745,7 +745,7 @@ export class JsonArray<T = unknown> extends JsonEntity<T[]> {
 export class JsonKeyValueParser extends JsonEntity<
     Generator<JsonKeyValuePair>
 > {
-    private container: JsonObject | JsonArray | JsonValue
+    private container: JsonObject<any> | JsonArray<any> | JsonValue<any>
     private parentKey?: string
 
     /**
@@ -757,7 +757,7 @@ export class JsonKeyValueParser extends JsonEntity<
      */
     constructor(
         buffer?: ByteBuffer | ByteStream,
-        container?: JsonObject | JsonArray | JsonValue,
+        container?: JsonObject<any> | JsonArray<any> | JsonValue<any>,
         parentKey?: string,
     ) {
         super(buffer)
