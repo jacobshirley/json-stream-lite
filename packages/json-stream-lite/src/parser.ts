@@ -452,9 +452,9 @@ export class JsonValue<
      *
      * @returns The actual JavaScript value (string, number, boolean, null, object, or array)
      */
-    readValue(): unknown {
+    readValue(): T {
         const value = this.read()
-        return value.read()
+        return value.read() as T
     }
 
     /**
@@ -462,9 +462,9 @@ export class JsonValue<
      *
      * @returns A promise that resolves to the actual JavaScript value
      */
-    async readValueAsync(): Promise<unknown> {
+    async readValueAsync(): Promise<T> {
         const value = await this.readAsync()
-        return await value.readAsync()
+        return (await value.readAsync()) as T
     }
 
     /**

@@ -168,7 +168,11 @@ describe('JSON parsing', () => {
     it('should handle sub objects (only top-level key-value pairs are returned)', () => {
         const json =
             '{"outerKey": {"innerKey": "innerValue"}, "anotherKey": 99}'
-        const object = new JsonObject()
+        const object = new JsonObject<{
+            outerKey: {}
+            innerKey: string
+            anotherKey: number
+        }>()
         object.feed(...stringToBytes(json))
         const keyValuePairs: KeyValue[] = []
 
