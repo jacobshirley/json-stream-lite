@@ -511,7 +511,7 @@ describe('JSON parsing', () => {
         expect(keyValuePairs).toEqual([{ key: 'key', value: 'value' }])
     })
 
-    it('should not be allowed to exceed buffer size', () => {
+    it('should not be allowed to exceed buffer size when configured', () => {
         const json = '{"key": "value"}'
         const object = new JsonObject()
         object.maxBufferSize = 5 // Small buffer to force buffer size exceeded
@@ -520,6 +520,31 @@ describe('JSON parsing', () => {
         expect(() => {
             object.feed(...stringToBytes(json))
         }).toThrow('Buffer size exceeded maximum limit')
+    })
+
+    it('should handle whitespace in strings', async () => {
+        const json =
+            '{" key with spaces ": "   value with spaces   ", "array": [ " spaced item ", "another spaced item" ]}'
+        const object = new JsonObject(
+            (async function* () {
+                for (const byte of stringToBytes(json)) {
+                    yield byte
+                }
+            })(),
+        )
+        object.maxBufferSize = 2
+        const keyValuePairs: KeyValue[] = []
+
+        for await (const { key: keyEntity, value: valueEntity } of object) {
+            const key = await keyEntity.readAsync()
+            const value = await valueEntity.readValueAsync()
+            keyValuePairs.push({ key, value })
+        }
+
+        expect(keyValuePairs).toEqual([
+            { key: ' key with spaces ', value: '   value with spaces   ' },
+            { key: 'array', value: [' spaced item ', 'another spaced item'] },
+        ])
     })
 })
 
