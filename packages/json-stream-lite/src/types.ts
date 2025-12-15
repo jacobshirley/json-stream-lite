@@ -10,6 +10,7 @@ export type JsonStreamInput = string | number | number[] | Uint8Array
 export type ByteStream =
     | AsyncIterable<JsonStreamInput>
     | Iterable<JsonStreamInput>
+    | ReadableStream<JsonStreamInput>
 
 /**
  * Union type representing all JSON primitive value types.
