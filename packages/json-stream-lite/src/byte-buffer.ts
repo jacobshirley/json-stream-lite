@@ -262,7 +262,7 @@ export class ByteBuffer {
 
     /**
      * Override to customize when to compact the buffer
-     * By default, compacts when more than 1000 items have been consumed
+     * By default, compacts when more than maxBufferSize bytes have been consumed
      *
      * @returns boolean indicating whether to compact the buffer
      */
