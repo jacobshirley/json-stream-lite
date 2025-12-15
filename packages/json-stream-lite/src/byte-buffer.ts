@@ -79,18 +79,23 @@ export class ByteBuffer {
         }
 
         const iterator = this.asyncIterable[Symbol.iterator]()
-        const next = iterator.next()
 
-        if (next.done) {
-            this.eof = true
+        let processed = false
+        while (this.length < this.maxBufferSize || !processed) {
+            const next = iterator.next()
+            processed = true
 
-            return false
+            if (next.done) {
+                this.eof = true
+
+                break
+            }
+
+            const value = next.value
+            this.feed(value)
         }
 
-        const value = next.value
-        this.feed(value)
-
-        return true
+        return processed
     }
 
     /**
@@ -106,18 +111,21 @@ export class ByteBuffer {
         ) {
             return
         }
-
         const iterator = this.asyncIterable[Symbol.asyncIterator]()
 
-        const next = await iterator.next()
+        let processed = false
+        while (this.length < this.maxBufferSize || !processed) {
+            processed = true
+            const next = await iterator.next()
 
-        if (next.done) {
-            this.eof = true
-            return
+            if (next.done) {
+                this.eof = true
+                return
+            }
+
+            const value = next.value
+            this.feed(value)
         }
-
-        const value = next.value
-        this.feed(value)
     }
 
     /**
