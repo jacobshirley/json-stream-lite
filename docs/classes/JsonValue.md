@@ -258,13 +258,13 @@ A promise that resolves to the JSON entity representing this value
 
 ### readValue()
 
-> **readValue**(): `unknown`
+> **readValue**(): `T`
 
 Reads and fully evaluates the value.
 
 #### Returns
 
-`unknown`
+`T`
 
 The actual JavaScript value (string, number, boolean, null, object, or array)
 
@@ -272,13 +272,13 @@ The actual JavaScript value (string, number, boolean, null, object, or array)
 
 ### readValueAsync()
 
-> **readValueAsync**(): `Promise`\<`unknown`\>
+> **readValueAsync**(): `Promise`\<`T`\>
 
 Asynchronously reads and fully evaluates the value.
 
 #### Returns
 
-`Promise`\<`unknown`\>
+`Promise`\<`T`\>
 
 A promise that resolves to the actual JavaScript value
 
