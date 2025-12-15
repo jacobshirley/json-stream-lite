@@ -510,6 +510,17 @@ describe('JSON parsing', () => {
 
         expect(keyValuePairs).toEqual([{ key: 'key', value: 'value' }])
     })
+
+    it('should not be allowed to exceed buffer size', () => {
+        const json = '{"key": "value"}'
+        const object = new JsonObject()
+        object.maxBufferSize = 5 // Small buffer to force buffer size exceeded
+        object.allowBufferToBeExceeded = false // Disable exceeding buffer
+
+        expect(() => {
+            object.feed(...stringToBytes(json))
+        }).toThrow('Buffer size exceeded maximum limit')
+    })
 })
 
 describe('JSON key value parser', () => {
