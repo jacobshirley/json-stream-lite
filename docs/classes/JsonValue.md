@@ -17,7 +17,7 @@ Provides lazy evaluation and type detection for JSON values.
 
 ### T
 
-`T` _extends_ `unknown` = `unknown`
+`T` = `any`
 
 The expected type of the value
 

@@ -17,7 +17,7 @@ Provides streaming access to array items.
 
 ### T
 
-`T` = `unknown`
+`T` = `any`
 
 The expected type of array elements
 

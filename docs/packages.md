@@ -20,6 +20,7 @@
 
 - [ByteStream](type-aliases/ByteStream.md)
 - [JsonKeyValuePair](type-aliases/JsonKeyValuePair.md)
+- [JsonObjectMember](type-aliases/JsonObjectMember.md)
 - [JsonPrimitive](type-aliases/JsonPrimitive.md)
 - [JsonPrimitiveType](type-aliases/JsonPrimitiveType.md)
 - [JsonStreamInput](type-aliases/JsonStreamInput.md)
