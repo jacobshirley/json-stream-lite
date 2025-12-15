@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { JsonArray, jsonStreamStringifyBytes } from '../../src/index.js'
+import {
+    JsonArray,
+    JsonObject,
+    jsonStreamStringifyBytes,
+} from '../../src/index.js'
 
 describe('JSON stream end-to-end tests', () => {
     test('should chunk and parse large JSON data correctly', async () => {
@@ -31,5 +35,23 @@ describe('JSON stream end-to-end tests', () => {
             values: [0, 0, 0, 0, 0],
         })
         expect(items.length).toBe(LARGE_SIZE)
+    })
+
+    test('should handle escaped characters in strings correctly', async () => {
+        const testData = {
+            message:
+                'Hello, "world"!\nThis is a test string with special characters: \\"\t\b\f\r\\',
+        }
+
+        async function* byteStream() {
+            yield* jsonStreamStringifyBytes(testData, null, 0, {
+                stringChunkSize: 16, // Small chunks to force multiple yields
+            })
+        }
+
+        const reader = new JsonObject(byteStream())
+        const obj = await reader.readAsync()
+
+        expect(obj).toEqual(testData)
     })
 })
