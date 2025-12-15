@@ -3,6 +3,7 @@ import {
     JsonArray,
     JsonKeyValueParser,
     JsonObject,
+    JsonString,
     JsonValue,
 } from '../../src/index.js'
 import { stringToBytes } from '../../src/utils.js'
@@ -15,13 +16,14 @@ describe('JSON parsing', () => {
         const json = '{"key": "value"}'
         const object = new JsonObject()
 
-        object.feed(...stringToBytes(json))
+        object.maxBufferSize = 2 // Small buffer to force chunked processing
+        object.feed(json)
 
         const pairs: KeyValue[] = []
 
         for (const { key: keyEntity, value: valueEntity } of object.members()) {
             const key = keyEntity.read()
-            const value = valueEntity.read().read()
+            const value = valueEntity.readValue()
 
             pairs.push({ key, value })
         }
@@ -544,6 +546,62 @@ describe('JSON parsing', () => {
         expect(keyValuePairs).toEqual([
             { key: ' key with spaces ', value: '   value with spaces   ' },
             { key: 'array', value: [' spaced item ', 'another spaced item'] },
+        ])
+    })
+
+    it('should be able to parse escaped characters in strings', () => {
+        const json = '"\\"Line1\\nLine2\\tTabbed\\\\\\"\\b"'
+        const jsonValue = new JsonValue<string>()
+        jsonValue.feed(...stringToBytes(json))
+        const value = jsonValue.readValue()
+
+        expect(value).toBe('"Line1\nLine2\tTabbed\\"\b')
+    })
+
+    it('should be able to stream strings', () => {
+        const jsonValue = new JsonString('"Streaming String Example"')
+        const parts: string[] = []
+
+        for (const chunk of jsonValue.stream(1)) {
+            parts.push(chunk)
+        }
+
+        expect(parts.join('')).toBe('Streaming String Example')
+    })
+
+    it('should be able to stream strings in async mode', async () => {
+        const jsonValue = new JsonString(
+            (async function* () {
+                const str = '"Async Streaming String Example"'
+                for (const char of str) {
+                    yield char
+                }
+            })(),
+        )
+        jsonValue.maxBufferSize = 2
+        const parts: string[] = []
+
+        for await (const chunk of jsonValue.streamAsync(2)) {
+            parts.push(chunk)
+        }
+
+        expect(parts.join('')).toBe('Async Streaming String Example')
+        expect(parts).toEqual([
+            'As',
+            'yn',
+            'c ',
+            'St',
+            're',
+            'am',
+            'in',
+            'g ',
+            'St',
+            'ri',
+            'ng',
+            ' E',
+            'xa',
+            'mp',
+            'le',
         ])
     })
 })

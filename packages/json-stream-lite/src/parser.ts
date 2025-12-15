@@ -16,6 +16,7 @@ const BYTE_MAP = {
     r: 114,
     l: 108,
     s: 115,
+    b: 98,
     zero: 48,
     nine: 57,
     minus: 45,
@@ -33,6 +34,9 @@ const BYTE_MAP = {
     rightSquare: 93,
     comma: 44,
     colon: 58,
+    backslash: 92,
+    formFeed: 12,
+    backspace: 8,
 }
 
 /**
@@ -255,7 +259,7 @@ export abstract class JsonEntity<T> {
                 this.buffer.locked = false
                 return res
             },
-            (e) => {
+            () => {
                 this.buffer.locked = false
             },
         )
@@ -275,18 +279,108 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
      * @returns The parsed string value
      */
     protected parse(): T {
-        const bytes: number[] = []
+        const bytes = this.streamBytes(Number.MAX_SAFE_INTEGER)
+        const chunk = bytes.next().value
+        return bytesToString(chunk) as T
+    }
 
-        this.buffer.next() // consume opening quotes
-
-        while (this.buffer.peek() !== BYTE_MAP.quotes) {
-            bytes.push(this.buffer.next())
+    *streamBytes(chunkSize: number = 1024): Generator<Uint8Array> {
+        if (this.buffer.peek() === BYTE_MAP.quotes) {
+            this.buffer.next() // consume quotes
         }
 
-        this.buffer.next() // consume closing quotes
+        const bytes: number[] = []
+        while (!this.buffer.atEof() && this.buffer.peek() !== BYTE_MAP.quotes) {
+            const byte = this.buffer.next()
 
-        const result = bytesToString(new Uint8Array(bytes))
-        return result as T
+            if (byte === BYTE_MAP.backslash) {
+                switch (this.buffer.peek()) {
+                    case BYTE_MAP.quotes:
+                        bytes.push(BYTE_MAP.quotes) // quotes
+                        break
+                    case BYTE_MAP.backslash:
+                        bytes.push(BYTE_MAP.backslash) // backslash
+                        break
+                    case BYTE_MAP.b:
+                        bytes.push(BYTE_MAP.backspace) // backspace
+                        break
+                    case BYTE_MAP.f:
+                        bytes.push(BYTE_MAP.formFeed) // form feed
+                        break
+                    case BYTE_MAP.n:
+                        bytes.push(BYTE_MAP.lineFeed) // line feed
+                        break
+                    case BYTE_MAP.r:
+                        bytes.push(BYTE_MAP.carriageReturn) // carriage return
+                        break
+                    case BYTE_MAP.t:
+                        bytes.push(BYTE_MAP.tab) // tab
+                        break
+                }
+
+                this.buffer.next() // consume escaped character
+            } else {
+                bytes.push(byte)
+            }
+
+            if (bytes.length >= chunkSize) {
+                const result = new Uint8Array(bytes)
+                bytes.length = 0
+                yield result
+            }
+        }
+
+        if (this.buffer.peek() === BYTE_MAP.quotes) {
+            this.buffer.next() // consume quotes
+        }
+
+        if (bytes.length > 0) {
+            const result = new Uint8Array(bytes)
+            yield result
+        }
+    }
+
+    async *streamBytesAsync(
+        chunkSize: number = 1024,
+    ): AsyncGenerator<Uint8Array> {
+        while (!this.buffer.atEof()) {
+            const stream = this.streamBytes(chunkSize)
+
+            while (true) {
+                const next = this.tryParse(() => stream.next())
+
+                if (next === undefined) {
+                    await this.buffer.readStreamAsync()
+                    break
+                }
+
+                if (next.done) {
+                    return
+                }
+
+                yield next.value
+            }
+        }
+    }
+
+    *stream(chunkSize: number = 1024): Generator<string> {
+        for (const chunk of this.streamBytes(chunkSize)) {
+            yield bytesToString(chunk)
+        }
+    }
+
+    async *streamAsync(chunkSize: number = 1024): AsyncGenerator<string> {
+        for await (const chunk of this.streamBytesAsync(chunkSize)) {
+            yield bytesToString(chunk)
+        }
+    }
+
+    [Symbol.iterator]() {
+        return this.stream()
+    }
+
+    [Symbol.asyncIterator]() {
+        return this.streamAsync()
     }
 }
 
