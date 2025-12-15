@@ -485,6 +485,31 @@ describe('JSON parsing', () => {
 
         expect(keyValuePairs).toEqual([{ key: 'key', value: 'value' }])
     })
+
+    it('should support ReadableStream as a byte stream', async () => {
+        const json = '{"key": "value"}'
+        const byteStream = new ReadableStream({
+            start(controller) {
+                for (const byte of stringToBytes(json)) {
+                    controller.enqueue(new Uint8Array([byte]))
+                }
+                controller.close()
+            },
+        })
+
+        const object = new JsonObject(byteStream)
+        object.maxBufferSize = 2 // Small buffer to force chunked processing
+        const keyValuePairs: KeyValue[] = []
+
+        for await (const { key: keyEntity, value: valueEntity } of object) {
+            const key = await keyEntity.readAsync()
+            const value = await (await valueEntity.readAsync()).readAsync()
+
+            keyValuePairs.push({ key, value })
+        }
+
+        expect(keyValuePairs).toEqual([{ key: 'key', value: 'value' }])
+    })
 })
 
 describe('JSON key value parser', () => {

@@ -17,6 +17,30 @@ export class NoMoreTokensError extends Error {}
 export class EofReachedError extends Error {}
 
 /**
+ * Converts a ReadableStream into an AsyncIterable.
+ *
+ * @param stream - The ReadableStream to convert
+ * @returns An AsyncIterable that yields items from the stream
+ */
+function readableStreamToAsyncIterable<T extends JsonStreamInput>(
+    stream: ReadableStream<T>,
+): AsyncIterable<T> {
+    const reader = stream.getReader()
+
+    return {
+        async *[Symbol.asyncIterator]() {
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) {
+                    break
+                }
+                yield value
+            }
+        },
+    }
+}
+
+/**
  * A buffer for managing byte-level input with support for async streams.
  * Provides lookahead, consumption tracking, and buffer compaction capabilities.
  */
@@ -45,7 +69,11 @@ export class ByteBuffer {
      */
     constructor(asyncIterable?: ByteStream) {
         this.asyncIterable =
-            typeof asyncIterable === 'string' ? [asyncIterable] : asyncIterable
+            asyncIterable instanceof ReadableStream
+                ? readableStreamToAsyncIterable(asyncIterable)
+                : typeof asyncIterable === 'string'
+                  ? [asyncIterable]
+                  : asyncIterable
     }
 
     /**
