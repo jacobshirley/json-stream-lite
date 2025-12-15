@@ -1,4 +1,4 @@
-import { stringToBytes } from './utils'
+import { stringToBytes } from './utils.js'
 
 /**
  * Options for JSON streaming stringification.
