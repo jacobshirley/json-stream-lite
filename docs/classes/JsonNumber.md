@@ -67,6 +67,32 @@ Optional ByteBuffer or ByteStream to read from
 
 ## Accessors
 
+### allowBufferToBeExceeded
+
+#### Set Signature
+
+> **set** **allowBufferToBeExceeded**(`value`): `void`
+
+Sets whether to allow exceeding the buffer size temporarily. Default is true.
+
+##### Parameters
+
+###### value
+
+`boolean`
+
+True to allow exceeding the buffer size, false to enforce the limit
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`allowBufferToBeExceeded`](JsonEntity.md#allowbuffertobeexceeded)
+
+---
+
 ### bufferLength
 
 #### Get Signature
@@ -113,7 +139,9 @@ The constructor name of this entity
 
 > **set** **maxBufferSize**(`size`): `void`
 
-Sets the maximum buffer size before compaction occurs.
+Sets the maximum buffer size before compaction occurs. Defaults to 100 KB.
+NOTE: The buffer size may be exceeded temporarily during reads. For example, if a large string is read that exceeds the max size.
+If this is not desired, set `allowBufferToBeExceeded` to false (default is true).
 
 ##### Parameters
 
