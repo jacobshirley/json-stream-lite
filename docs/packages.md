@@ -6,6 +6,8 @@
 
 ## Classes
 
+- [BufferSizeExceededError](classes/BufferSizeExceededError.md)
+- [EofReachedError](classes/EofReachedError.md)
 - [JsonArray](classes/JsonArray.md)
 - [JsonBoolean](classes/JsonBoolean.md)
 - [JsonEntity](classes/JsonEntity.md)
@@ -13,8 +15,10 @@
 - [JsonNull](classes/JsonNull.md)
 - [JsonNumber](classes/JsonNumber.md)
 - [JsonObject](classes/JsonObject.md)
+- [JsonStreamLiteError](classes/JsonStreamLiteError.md)
 - [JsonString](classes/JsonString.md)
 - [JsonValue](classes/JsonValue.md)
+- [NoMoreTokensError](classes/NoMoreTokensError.md)
 
 ## Type Aliases
 

@@ -11,7 +11,7 @@ importers:
   .:
     dependencies:
       json-stream-lite:
-        specifier: 1.0.18
+        specifier: 1.0.19
         version: link:packages/json-stream-lite
     devDependencies:
       '@commitlint/cli':
