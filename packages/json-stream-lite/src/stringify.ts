@@ -43,6 +43,12 @@ function* formatString(
             case '\t':
                 parts.push('\\t')
                 break
+            case '\b':
+                parts.push('\\b')
+                break
+            case '\f':
+                parts.push('\\f')
+                break
             default:
                 parts.push(char)
         }
