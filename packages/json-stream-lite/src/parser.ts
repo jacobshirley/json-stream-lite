@@ -121,7 +121,18 @@ export abstract class JsonEntity<T> {
     }
 
     /**
-     * Sets the maximum buffer size before compaction occurs.
+     * Sets whether to allow exceeding the buffer size temporarily. Default is true.
+     *
+     * @param value - True to allow exceeding the buffer size, false to enforce the limit
+     */
+    set allowBufferToBeExceeded(value: boolean) {
+        this.buffer.allowBufferToBeExceeded = value
+    }
+
+    /**
+     * Sets the maximum buffer size before compaction occurs. Defaults to 100 KB.
+     * NOTE: The buffer size may be exceeded temporarily during reads. For example, if a large string is read that exceeds the max size.
+     * If this is not desired, set `allowBufferToBeExceeded` to false (default is true).
      *
      * @param size - The maximum buffer size in bytes
      */

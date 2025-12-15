@@ -1,20 +1,11 @@
+import { DEFAULT_MAX_BUFFER_SIZE } from './defaults.js'
+import {
+    BufferSizeExceededError,
+    EofReachedError,
+    NoMoreTokensError,
+} from './errors.js'
 import type { ByteStream, JsonStreamInput } from './types.js'
 import { bytesToString, stringToBytes } from './utils.js'
-
-/**
- * Default maximum buffer size before compaction
- */
-const DEFAULT_MAX_BUFFER_SIZE = 1024 * 100 // 100 KB
-
-/**
- * Error thrown when the buffer is empty and more input is needed.
- */
-export class NoMoreTokensError extends Error {}
-
-/**
- * Error thrown when the end of file has been reached and no more items are available.
- */
-export class EofReachedError extends Error {}
 
 /**
  * Converts a ReadableStream into an AsyncIterable.
@@ -53,6 +44,8 @@ export class ByteBuffer {
     bufferIndex: number = 0
     /** Whether the buffer is locked against compaction */
     locked: boolean = false
+    /** Whether to allow exceeding the buffer size temporarily */
+    allowBufferToBeExceeded: boolean = true
     /** Current position in the input stream */
     protected inputOffset: number = 0
     /** Number of outputs generated */
@@ -85,24 +78,19 @@ export class ByteBuffer {
             return false
         }
 
-        let i = 0
-
         const iterator = this.asyncIterable[Symbol.iterator]()
+        const next = iterator.next()
 
-        while (i < this.maxBufferSize) {
-            const next = iterator.next()
+        if (next.done) {
+            this.eof = true
 
-            if (next.done) {
-                this.eof = true
-                break
-            }
-
-            const value = next.value
-            this.feed(value)
-            i++
+            return false
         }
 
-        return i > 0
+        const value = next.value
+        this.feed(value)
+
+        return true
     }
 
     /**
@@ -119,22 +107,17 @@ export class ByteBuffer {
             return
         }
 
-        let i = 0
-
         const iterator = this.asyncIterable[Symbol.asyncIterator]()
 
-        while (i < this.maxBufferSize) {
-            const next = await iterator.next()
+        const next = await iterator.next()
 
-            if (next.done) {
-                this.eof = true
-                break
-            }
-
-            const value = next.value
-            this.feed(value)
-            i++
+        if (next.done) {
+            this.eof = true
+            return
         }
+
+        const value = next.value
+        this.feed(value)
     }
 
     /**
@@ -155,27 +138,39 @@ export class ByteBuffer {
         for (const item of input) {
             if (Array.isArray(item)) {
                 for (const subItem of item) {
-                    this.buffer.push(subItem)
+                    this.push(subItem)
                 }
 
                 continue
             } else if (item instanceof Uint8Array) {
                 for (const subItem of item) {
-                    this.buffer.push(subItem)
+                    this.push(subItem)
                 }
 
                 continue
             } else if (typeof item === 'string') {
                 const encoded = stringToBytes(item)
                 for (const byte of encoded) {
-                    this.buffer.push(byte)
+                    this.push(byte)
                 }
 
                 continue
             }
 
-            this.buffer.push(item)
+            this.push(item)
         }
+    }
+
+    push(byte: number): void {
+        if (
+            !this.allowBufferToBeExceeded &&
+            this.buffer.length >= this.maxBufferSize
+        ) {
+            throw new BufferSizeExceededError(
+                'Buffer size exceeded maximum limit',
+            )
+        }
+        this.buffer.push(byte)
     }
 
     /**
