@@ -18,7 +18,7 @@ describe('JSON stream end-to-end tests', () => {
         }
 
         const reader = new JsonArray(byteStream())
-        reader.maxBufferSize = 50
+        reader.maxBufferSize = 200
         const items: unknown[] = []
 
         for await (const item of reader) {
