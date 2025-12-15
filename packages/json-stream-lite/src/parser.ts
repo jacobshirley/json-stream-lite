@@ -207,11 +207,11 @@ export abstract class JsonEntity<T> {
         }
 
         while (!this.buffer.atEof()) {
-            await this.buffer.readStreamAsync()
             const res = this.tryParse(() => this.read())
             if (res !== undefined) {
                 return res
             }
+            await this.buffer.readStreamAsync()
         }
 
         return this.read()
@@ -604,8 +604,6 @@ export class JsonObject<T extends object = any> extends JsonEntity<T> {
      */
     async *membersAsync(): AsyncGenerator<JsonObjectMember<T>> {
         while (!this.buffer.atEof()) {
-            await this.buffer.readStreamAsync()
-
             const memberGen = this.members()
             let currentMember: IteratorResult<JsonObjectMember<T>> | undefined =
                 undefined
@@ -624,6 +622,8 @@ export class JsonObject<T extends object = any> extends JsonEntity<T> {
                 await currentMember.value.key.consumeAsync()
                 await currentMember.value.value.consumeAsync()
             }
+
+            await this.buffer.readStreamAsync()
         }
     }
 
@@ -710,8 +710,6 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
      */
     async *itemsAsync(): AsyncGenerator<JsonValueType<T>> {
         while (!this.buffer.atEof()) {
-            await this.buffer.readStreamAsync()
-
             const itemGen = this.items()
             let currentItem: IteratorResult<JsonValueType<T>> | undefined =
                 undefined
@@ -729,6 +727,8 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
 
                 await currentItem.value.consumeAsync()
             }
+
+            await this.buffer.readStreamAsync()
         }
     }
 
@@ -865,7 +865,6 @@ export class JsonKeyValueParser extends JsonEntity<
      */
     async *parseAsync(): AsyncGenerator<JsonKeyValuePair> {
         while (!this.buffer.atEof()) {
-            await this.buffer.readStreamAsync()
             const parserGen = this.parse()
 
             let currentPair: IteratorResult<JsonKeyValuePair> | undefined =
@@ -881,6 +880,8 @@ export class JsonKeyValueParser extends JsonEntity<
                 }
                 yield currentPair.value
             }
+
+            await this.buffer.readStreamAsync()
         }
     }
 
