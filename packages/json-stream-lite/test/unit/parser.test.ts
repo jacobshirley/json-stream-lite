@@ -124,8 +124,8 @@ describe('JSON parsing', () => {
         const json = '{"numbers": [10, 20, 30, 40, 50]}'
         const bytes = stringToBytes(json)
         const jsonValue = new JsonValue()
-
         const keyValuePairs: KeyValue[] = []
+
         for (const byte of bytes) {
             jsonValue.feed(byte)
             jsonValue.tryParse((value) => {
@@ -165,11 +165,47 @@ describe('JSON parsing', () => {
         ])
     })
 
+    it('should handle streaming arrays with types', () => {
+        const json = '{"numbers": [10, 20, 30, 40, 50]}'
+        const jsonValue = new JsonValue<{
+            numbers: number[]
+        }>(json)
+
+        const keyValuePairs: KeyValue[] = []
+        const jsonObject = jsonValue.read()
+
+        for (const {
+            key: keyEntity,
+            value: valueEntity,
+        } of jsonObject.members()) {
+            const key = keyEntity.read()
+            const value = valueEntity.read()
+            const array: number[] = []
+
+            for (const itemEntity of value.items()) {
+                const itemValue = itemEntity.read()
+
+                array.push(itemValue)
+            }
+
+            keyValuePairs.push({ key, value: array })
+        }
+
+        expect(keyValuePairs).toEqual([
+            { key: 'numbers', value: [10, 20, 30, 40, 50] },
+        ])
+    })
+
     it('should handle sub objects (only top-level key-value pairs are returned)', () => {
         const json =
             '{"outerKey": {"innerKey": "innerValue"}, "anotherKey": 99}'
         const object = new JsonObject<{
-            outerKey: {}
+            outerKey: {
+                innerKey: 'test'
+                subObjecT: {
+                    subKey: string
+                }
+            }
             innerKey: string
             anotherKey: number
         }>()
@@ -182,9 +218,19 @@ describe('JSON parsing', () => {
 
             if (valueObj instanceof JsonObject) {
                 for (const { key, value } of valueObj) {
+                    const read = key.read()
+                    const readValue = value.readValue()
+
+                    read === 'innerKey'
+                    readValue === 'test'
+                    //@ts-expect-error Confirm that the type narrowing works correctly
+                    read === 'something-else'
+                    //@ts-expect-error Confirm that the type narrowing works correctly
+                    readValue === 'something-else'
+
                     keyValuePairs.push({
-                        key: key.read(),
-                        value: value.readValue(),
+                        key: read,
+                        value: readValue,
                     })
                 }
             }

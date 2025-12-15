@@ -71,7 +71,9 @@ export class ByteBuffer {
         this.asyncIterable =
             asyncIterable instanceof ReadableStream
                 ? readableStreamToAsyncIterable(asyncIterable)
-                : asyncIterable
+                : typeof asyncIterable === 'string'
+                  ? [asyncIterable]
+                  : asyncIterable
     }
 
     /**
@@ -88,19 +90,19 @@ export class ByteBuffer {
         const iterator = this.asyncIterable[Symbol.iterator]()
 
         while (i < this.maxBufferSize) {
-            const nextByte = iterator.next()
+            const next = iterator.next()
 
-            if (nextByte.done) {
+            if (next.done) {
                 this.eof = true
-                return false
+                break
             }
 
-            const value = nextByte.value
+            const value = next.value
             this.feed(value)
             i++
         }
 
-        return true
+        return i > 0
     }
 
     /**
@@ -122,14 +124,14 @@ export class ByteBuffer {
         const iterator = this.asyncIterable[Symbol.asyncIterator]()
 
         while (i < this.maxBufferSize) {
-            const nextByte = await iterator.next()
+            const next = await iterator.next()
 
-            if (nextByte.done) {
+            if (next.done) {
                 this.eof = true
                 break
             }
 
-            const value = nextByte.value
+            const value = next.value
             this.feed(value)
             i++
         }
