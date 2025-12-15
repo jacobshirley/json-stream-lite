@@ -268,6 +268,10 @@ const result = parser.read()
 console.log(result) // { name: 'Alice' }
 ```
 
+### Stream Strings
+
+See [string streaming](./EXAMPLES.md#streaming-json-strings) for advanced string handling.
+
 ## Use Cases
 
 ### 1. Processing API Responses
