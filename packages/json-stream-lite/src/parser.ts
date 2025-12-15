@@ -275,6 +275,23 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
      * @returns The parsed string value
      */
     protected parse(): T {
+        const bytes = this.streamBytes(Number.MAX_SAFE_INTEGER)
+        const chunk = bytes.next().value
+        return bytesToString(chunk) as T
+    }
+
+    /**
+     * Generator that yields the string content as raw byte chunks.
+     * Handles escape sequences by converting them to their actual byte values.
+     *
+     * @param chunkSize - The maximum size of each yielded byte array chunk (defaults to 1024)
+     * @yields Uint8Array chunks containing the unescaped string bytes
+     */
+    *streamBytes(chunkSize: number = 1024): Generator<Uint8Array> {
+        if (this.buffer.peek() === BYTE_MAP.quotes) {
+            this.buffer.next() // consume quotes
+        }
+
         const bytes: number[] = []
 
         this.buffer.next() // consume opening quotes
@@ -285,8 +302,82 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
 
         this.buffer.next() // consume closing quotes
 
-        const result = bytesToString(new Uint8Array(bytes))
-        return result as T
+        if (bytes.length > 0) {
+            const result = new Uint8Array(bytes)
+            yield result
+        }
+    }
+
+    /**
+     * Async generator that yields the string content as raw byte chunks from a stream.
+     * Handles escape sequences by converting them to their actual byte values.
+     * Waits for more data from the stream when needed.
+     *
+     * @param chunkSize - The maximum size of each yielded byte array chunk (defaults to 1024)
+     * @yields Uint8Array chunks containing the unescaped string bytes
+     */
+    async *streamBytesAsync(
+        chunkSize: number = 1024,
+    ): AsyncGenerator<Uint8Array> {
+        while (!this.buffer.atEof()) {
+            const stream = this.streamBytes(chunkSize)
+
+            while (true) {
+                const next = this.tryParse(() => stream.next())
+
+                if (next === undefined) {
+                    await this.buffer.readStreamAsync()
+                    break
+                }
+
+                if (next.done) {
+                    return
+                }
+
+                yield next.value
+            }
+        }
+    }
+
+    /**
+     * Generator that yields the string content as chunks of strings.
+     *
+     * @param chunkSize - The maximum size of each yielded string chunk (defaults to 1024)
+     * @yields Chunks of the string content
+     */
+    *stream(chunkSize: number = 1024): Generator<string> {
+        for (const chunk of this.streamBytes(chunkSize)) {
+            yield bytesToString(chunk)
+        }
+    }
+
+    /**
+     * Async generator that yields the string content as chunks of strings.
+     * @param chunkSize - The maximum size of each yielded string chunk (defaults to 1024)
+     * @yields Chunks of the string content
+     */
+    async *streamAsync(chunkSize: number = 1024): AsyncGenerator<string> {
+        for await (const chunk of this.streamBytesAsync(chunkSize)) {
+            yield bytesToString(chunk)
+        }
+    }
+
+    /**
+     * Returns an iterator for string chunks.
+     * Enables use of for...of loops on JsonString.
+     * @yields Chunks of the string content
+     */
+    [Symbol.iterator]() {
+        return this.stream()
+    }
+
+    /**
+     * Returns an async iterator for string chunks.
+     * Enables use of for await...of loops on JsonString.
+     * @yields Chunks of the string content
+     */
+    [Symbol.asyncIterator]() {
+        return this.streamAsync()
     }
 }
 
@@ -451,7 +542,8 @@ export class JsonValue<T = any, K extends string = string> extends JsonEntity<
         } else {
             throw new Error(
                 'Unexpected token while parsing JSON value: ' +
-                    String.fromCharCode(next ?? 0),
+                    String.fromCharCode(next ?? 0) +
+                    ` (${next})`,
             )
         }
     }
