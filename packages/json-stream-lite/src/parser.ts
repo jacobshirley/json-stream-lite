@@ -360,10 +360,25 @@ export type JsonPrimitiveType = JsonString | JsonNumber | JsonBoolean | JsonNull
  *
  * @typeParam T - The expected type of the value
  */
-export type JsonValueType<T = unknown> =
-    | JsonPrimitiveType
-    | JsonObject<T>
-    | JsonArray<T>
+export type JsonValueType<T = any> = T extends string
+    ? JsonString<Extract<T, string>>
+    : T extends number
+      ? JsonNumber<Extract<T, number>>
+      : T extends boolean
+        ? JsonBoolean<Extract<T, boolean>>
+        : T extends null
+          ? JsonNull
+          : T extends (infer K)[]
+            ? JsonArray<K>
+            : T extends object
+              ? JsonObject<Extract<T, object>>
+              :
+                    | JsonString
+                    | JsonNumber
+                    | JsonBoolean
+                    | JsonNull
+                    | JsonArray
+                    | JsonObject
 
 /**
  * Represents any JSON value (primitive, object, or array).
@@ -372,10 +387,9 @@ export type JsonValueType<T = unknown> =
  * @typeParam T - The expected type of the value
  * @typeParam K - The key type for object properties (defaults to string)
  */
-export class JsonValue<
-    T extends unknown = unknown,
-    K extends string = string,
-> extends JsonEntity<JsonValueType<T>> {
+export class JsonValue<T = any, K extends string = string> extends JsonEntity<
+    JsonValueType<T>
+> {
     private key?: JsonString<K>
     private value?: JsonValueType<T>
 
@@ -412,17 +426,17 @@ export class JsonValue<
         const next = this.buffer.peek()
 
         if (next === BYTE_MAP.quotes) {
-            return new JsonString(this.buffer)
+            return new JsonString(this.buffer) as JsonValueType<T>
         } else if (isNumberStart(next)) {
-            return new JsonNumber(this.buffer)
+            return new JsonNumber(this.buffer) as JsonValueType<T>
         } else if (next === BYTE_MAP.t || next === BYTE_MAP.f) {
-            return new JsonBoolean(this.buffer)
+            return new JsonBoolean(this.buffer) as JsonValueType<T>
         } else if (next === BYTE_MAP.n) {
-            return new JsonNull(this.buffer)
+            return new JsonNull(this.buffer) as JsonValueType<T>
         } else if (next === BYTE_MAP.leftBrace) {
-            return new JsonObject<T>(this.buffer)
+            return new JsonObject<any>(this.buffer) as JsonValueType<T>
         } else if (next === BYTE_MAP.leftSquare) {
-            return new JsonArray<T>(this.buffer)
+            return new JsonArray<any>(this.buffer) as JsonValueType<T>
         } else {
             throw new Error(
                 'Unexpected token while parsing JSON value: ' +
@@ -506,22 +520,30 @@ export class JsonValue<
 }
 
 /**
+ * Type representing the members of a JSON object as key-value pairs.
+ * Each member consists of a key of type K and a value of type T[K].
+ */
+export type JsonObjectMember<T extends object> = {
+    [K in keyof T]: {
+        key: JsonString<Extract<K, string>>
+        value: JsonValue<T[K]>
+    }
+}[keyof T]
+
+/**
  * Represents a JSON object.
  * Provides streaming access to object members (key-value pairs).
  *
  * @typeParam T - The expected type of the object
  */
-export class JsonObject<T = unknown> extends JsonEntity<T> {
+export class JsonObject<T extends object = any> extends JsonEntity<T> {
     /**
      * Generator that yields object members as key-value pairs.
      * Allows for streaming/incremental processing of large objects.
      *
      * @yields Object containing the key and value entities for each member
      */
-    *members(): Generator<{
-        key: JsonString<Extract<keyof T, string>>
-        value: JsonValue<T>
-    }> {
+    *members(): Generator<JsonObjectMember<T>> {
         this.skipWhitespace()
 
         if (this.buffer.peek() === BYTE_MAP.leftBrace) {
@@ -543,8 +565,8 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
                 this.skipWhitespace()
             }
 
-            const key = new JsonString<Extract<keyof T, string>>(this.buffer)
-            const value = new JsonValue<T>(this.buffer, key)
+            const key = new JsonString<any>(this.buffer)
+            const value = new JsonValue<any>(this.buffer, key)
 
             yield { key, value }
 
@@ -569,20 +591,13 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
      *
      * @yields Object containing the key and value entities for each member
      */
-    async *membersAsync(): AsyncGenerator<{
-        key: JsonString<Extract<keyof T, string>>
-        value: JsonValue<T>
-    }> {
+    async *membersAsync(): AsyncGenerator<JsonObjectMember<T>> {
         while (!this.buffer.atEof()) {
             await this.buffer.readStreamAsync()
 
             const memberGen = this.members()
-            let currentMember:
-                | IteratorResult<{
-                      key: JsonString<Extract<keyof T, string>>
-                      value: JsonValue<T>
-                  }>
-                | undefined = undefined
+            let currentMember: IteratorResult<JsonObjectMember<T>> | undefined =
+                undefined
 
             while (true) {
                 currentMember = this.tryParse(() => memberGen.next())
@@ -639,7 +654,7 @@ export class JsonObject<T = unknown> extends JsonEntity<T> {
  *
  * @typeParam T - The expected type of array elements
  */
-export class JsonArray<T = unknown> extends JsonEntity<T[]> {
+export class JsonArray<T = any> extends JsonEntity<T[]> {
     /**
      * Generator that yields array items.
      * Allows for streaming/incremental processing of large arrays.
