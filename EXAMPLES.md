@@ -1156,8 +1156,8 @@ for await (const streamChunk of jsonObject.streamAsync(2)) {
  * Received string chunk: am
  * Received string chunk: ed
  * Received string chunk:  J
- * Received string chunk: SO
- * Received string chunk: N
+ * Received string chunk: JS
+ * Received string chunk: ON
  * Received string chunk: St
  * Received string chunk: ri
  * Received string chunk: ng
