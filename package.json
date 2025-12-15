@@ -1,7 +1,7 @@
 {
     "name": "json-stream-lite-monorepo",
     "private": true,
-    "version": "1.0.18",
+    "version": "1.0.19",
     "type": "module",
     "description": "",
     "scripts": {
@@ -39,7 +39,7 @@
         "typescript": "^5.9.3"
     },
     "dependencies": {
-        "json-stream-lite": "1.0.18"
+        "json-stream-lite": "1.0.19"
     },
     "pnpm": {
         "packageExtensions": {
