@@ -161,6 +161,26 @@ The maximum buffer size in bytes
 
 ## Methods
 
+### \[asyncIterator\]()
+
+> **\[asyncIterator\]**(): `AsyncGenerator`\<`string`, `any`, `any`\>
+
+#### Returns
+
+`AsyncGenerator`\<`string`, `any`, `any`\>
+
+---
+
+### \[iterator\]()
+
+> **\[iterator\]**(): `Generator`\<`string`, `any`, `any`\>
+
+#### Returns
+
+`Generator`\<`string`, `any`, `any`\>
+
+---
+
 ### consume()
 
 > **consume**(): `void`
@@ -292,6 +312,70 @@ Skips whitespace characters in the buffer.
 #### Inherited from
 
 [`JsonEntity`](JsonEntity.md).[`skipWhitespace`](JsonEntity.md#skipwhitespace)
+
+---
+
+### stream()
+
+> **stream**(`chunkSize`): `Generator`\<`string`\>
+
+#### Parameters
+
+##### chunkSize
+
+`number` = `1024`
+
+#### Returns
+
+`Generator`\<`string`\>
+
+---
+
+### streamAsync()
+
+> **streamAsync**(`chunkSize`): `AsyncGenerator`\<`string`\>
+
+#### Parameters
+
+##### chunkSize
+
+`number` = `1024`
+
+#### Returns
+
+`AsyncGenerator`\<`string`\>
+
+---
+
+### streamBytes()
+
+> **streamBytes**(`chunkSize`): `Generator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+#### Parameters
+
+##### chunkSize
+
+`number` = `1024`
+
+#### Returns
+
+`Generator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+---
+
+### streamBytesAsync()
+
+> **streamBytesAsync**(`chunkSize`): `AsyncGenerator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+#### Parameters
+
+##### chunkSize
+
+`number` = `1024`
+
+#### Returns
+
+`AsyncGenerator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
 ---
 
