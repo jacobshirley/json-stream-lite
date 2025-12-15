@@ -16,6 +16,7 @@ const BYTE_MAP = {
     r: 114,
     l: 108,
     s: 115,
+    b: 98,
     zero: 48,
     nine: 57,
     minus: 45,
@@ -33,6 +34,9 @@ const BYTE_MAP = {
     rightSquare: 93,
     comma: 44,
     colon: 58,
+    backslash: 92,
+    formFeed: 12,
+    backspace: 8,
 }
 
 /**
@@ -255,7 +259,7 @@ export abstract class JsonEntity<T> {
                 this.buffer.locked = false
                 return res
             },
-            (e) => {
+            () => {
                 this.buffer.locked = false
             },
         )
@@ -293,14 +297,49 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
         }
 
         const bytes: number[] = []
+        while (!this.buffer.atEof() && this.buffer.peek() !== BYTE_MAP.quotes) {
+            const byte = this.buffer.next()
 
-        this.buffer.next() // consume opening quotes
+            if (byte === BYTE_MAP.backslash) {
+                switch (this.buffer.peek()) {
+                    case BYTE_MAP.quotes:
+                        bytes.push(BYTE_MAP.quotes) // quotes
+                        break
+                    case BYTE_MAP.backslash:
+                        bytes.push(BYTE_MAP.backslash) // backslash
+                        break
+                    case BYTE_MAP.b:
+                        bytes.push(BYTE_MAP.backspace) // backspace
+                        break
+                    case BYTE_MAP.f:
+                        bytes.push(BYTE_MAP.formFeed) // form feed
+                        break
+                    case BYTE_MAP.n:
+                        bytes.push(BYTE_MAP.lineFeed) // line feed
+                        break
+                    case BYTE_MAP.r:
+                        bytes.push(BYTE_MAP.carriageReturn) // carriage return
+                        break
+                    case BYTE_MAP.t:
+                        bytes.push(BYTE_MAP.tab) // tab
+                        break
+                }
 
-        while (this.buffer.peek() !== BYTE_MAP.quotes) {
-            bytes.push(this.buffer.next())
+                this.buffer.next() // consume escaped character
+            } else {
+                bytes.push(byte)
+            }
+
+            if (bytes.length >= chunkSize) {
+                const result = new Uint8Array(bytes)
+                bytes.length = 0
+                yield result
+            }
         }
 
-        this.buffer.next() // consume closing quotes
+        if (this.buffer.peek() === BYTE_MAP.quotes) {
+            this.buffer.next() // consume quotes
+        }
 
         if (bytes.length > 0) {
             const result = new Uint8Array(bytes)
