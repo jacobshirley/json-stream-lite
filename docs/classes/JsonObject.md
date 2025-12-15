@@ -17,7 +17,7 @@ Provides streaming access to object members (key-value pairs).
 
 ### T
 
-`T` = `unknown`
+`T` _extends_ `object` = `any`
 
 The expected type of the object
 
@@ -135,27 +135,27 @@ The maximum buffer size in bytes
 
 ### \[asyncIterator\]()
 
-> **\[asyncIterator\]**(): `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
+> **\[asyncIterator\]**(): `AsyncGenerator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>, `any`, `any`\>
 
 Returns an async iterator for object members.
 Enables use of for await...of loops on JsonObject.
 
 #### Returns
 
-`AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
+`AsyncGenerator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>, `any`, `any`\>
 
 ---
 
 ### \[iterator\]()
 
-> **\[iterator\]**(): `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
+> **\[iterator\]**(): `Generator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>, `any`, `any`\>
 
 Returns an iterator for object members.
 Enables use of for...of loops on JsonObject.
 
 #### Returns
 
-`Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}, `any`, `any`\>
+`Generator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>, `any`, `any`\>
 
 ---
 
@@ -217,14 +217,14 @@ One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the bu
 
 ### members()
 
-> **members**(): `Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
+> **members**(): `Generator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>\>
 
 Generator that yields object members as key-value pairs.
 Allows for streaming/incremental processing of large objects.
 
 #### Returns
 
-`Generator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
+`Generator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>\>
 
 #### Yields
 
@@ -234,14 +234,14 @@ Object containing the key and value entities for each member
 
 ### membersAsync()
 
-> **membersAsync**(): `AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
+> **membersAsync**(): `AsyncGenerator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>\>
 
 Async generator that yields object members from a stream.
 Allows for asynchronous streaming/incremental processing.
 
 #### Returns
 
-`AsyncGenerator`\<\{ `key`: [`JsonString`](JsonString.md)\<`Extract`\<keyof `T`, `string`\>\>; `value`: [`JsonValue`](JsonValue.md)\<`T`\>; \}\>
+`AsyncGenerator`\<[`JsonObjectMember`](../type-aliases/JsonObjectMember.md)\<`T`\>\>
 
 #### Yields
 

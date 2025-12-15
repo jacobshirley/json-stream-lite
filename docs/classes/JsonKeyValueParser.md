@@ -33,7 +33,7 @@ Optional ByteBuffer or ByteStream to read from
 
 The JSON container to parse (object, array, or value)
 
-[`JsonObject`](JsonObject.md)\<`unknown`\> | [`JsonArray`](JsonArray.md)\<`unknown`\> | [`JsonValue`](JsonValue.md)\<`unknown`, `string`\>
+[`JsonObject`](JsonObject.md)\<`any`\> | [`JsonArray`](JsonArray.md)\<`any`\> | [`JsonValue`](JsonValue.md)\<`any`, `string`\>
 
 ##### parentKey?
 
