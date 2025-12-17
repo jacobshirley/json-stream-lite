@@ -297,28 +297,67 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
                 switch (this.buffer.peek()) {
                     case BYTE_MAP.quotes:
                         bytes.push(BYTE_MAP.quotes) // quotes
+                        this.buffer.next() // consume escaped character
                         break
                     case BYTE_MAP.backslash:
                         bytes.push(BYTE_MAP.backslash) // backslash
+                        this.buffer.next() // consume escaped character
                         break
                     case BYTE_MAP.b:
                         bytes.push(BYTE_MAP.backspace) // backspace
+                        this.buffer.next() // consume escaped character
                         break
                     case BYTE_MAP.f:
                         bytes.push(BYTE_MAP.formFeed) // form feed
+                        this.buffer.next() // consume escaped character
                         break
                     case BYTE_MAP.n:
                         bytes.push(BYTE_MAP.lineFeed) // line feed
+                        this.buffer.next() // consume escaped character
                         break
                     case BYTE_MAP.r:
                         bytes.push(BYTE_MAP.carriageReturn) // carriage return
+                        this.buffer.next() // consume escaped character
                         break
                     case BYTE_MAP.t:
                         bytes.push(BYTE_MAP.tab) // tab
+                        this.buffer.next() // consume escaped character
+                        break
+                    case BYTE_MAP.u:
+                        // Unicode escape sequence \uXXXX
+                        this.buffer.next() // consume 'u'
+                        const hex1 = this.buffer.next()
+                        const hex2 = this.buffer.next()
+                        const hex3 = this.buffer.next()
+                        const hex4 = this.buffer.next()
+
+                        // Convert 4 hex digits to a character code
+                        const hexString = String.fromCharCode(
+                            hex1,
+                            hex2,
+                            hex3,
+                            hex4,
+                        )
+                        const charCode = parseInt(hexString, 16)
+
+                        if (!isNaN(charCode)) {
+                            // For characters that fit in a single byte, push the byte
+                            // For multi-byte UTF-8, we need to encode properly
+                            if (charCode < 0x80) {
+                                bytes.push(charCode)
+                            } else {
+                                // UTF-8 encode the character
+                                const char = String.fromCharCode(charCode)
+                                const encoded = new TextEncoder().encode(char)
+                                bytes.push(...encoded)
+                            }
+                        }
+                        break
+                    default:
+                        // Unknown escape sequence - consume it
+                        this.buffer.next()
                         break
                 }
-
-                this.buffer.next() // consume escaped character
             } else {
                 bytes.push(byte)
             }

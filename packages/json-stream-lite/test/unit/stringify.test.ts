@@ -36,6 +36,14 @@ describe('JSON stream stringify', () => {
         expect(result).toBe(expected)
     })
 
+    it('should handle control characters with unicode escapes', () => {
+        const obj = { company: '\x10' }
+        const result = Array.from(jsonStreamStringify(obj)).join('')
+        const expected = JSON.stringify(obj)
+        expect(result).toBe(expected)
+        expect(result).toBe('{"company":"\\u0010"}')
+    })
+
     it('should stringify with a replacer function', () => {
         const obj = { a: 1, b: 2, c: 3 }
         const replacer = (key: string, value: any) =>
