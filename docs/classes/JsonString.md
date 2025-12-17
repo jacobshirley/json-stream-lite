@@ -165,9 +165,16 @@ The maximum buffer size in bytes
 
 > **\[asyncIterator\]**(): `AsyncGenerator`\<`string`, `any`, `any`\>
 
+Returns an async iterator for string chunks.
+Enables use of for await...of loops on JsonString.
+
 #### Returns
 
 `AsyncGenerator`\<`string`, `any`, `any`\>
+
+#### Yields
+
+Chunks of the string content
 
 ---
 
@@ -175,9 +182,16 @@ The maximum buffer size in bytes
 
 > **\[iterator\]**(): `Generator`\<`string`, `any`, `any`\>
 
+Returns an iterator for string chunks.
+Enables use of for...of loops on JsonString.
+
 #### Returns
 
 `Generator`\<`string`, `any`, `any`\>
+
+#### Yields
+
+Chunks of the string content
 
 ---
 
@@ -319,15 +333,23 @@ Skips whitespace characters in the buffer.
 
 > **stream**(`chunkSize`): `Generator`\<`string`\>
 
+Generator that yields the string content as chunks of strings.
+
 #### Parameters
 
 ##### chunkSize
 
 `number` = `1024`
 
+The maximum size of each yielded string chunk (defaults to 1024)
+
 #### Returns
 
 `Generator`\<`string`\>
+
+#### Yields
+
+Chunks of the string content
 
 ---
 
@@ -335,15 +357,23 @@ Skips whitespace characters in the buffer.
 
 > **streamAsync**(`chunkSize`): `AsyncGenerator`\<`string`\>
 
+Async generator that yields the string content as chunks of strings.
+
 #### Parameters
 
 ##### chunkSize
 
 `number` = `1024`
 
+The maximum size of each yielded string chunk (defaults to 1024)
+
 #### Returns
 
 `AsyncGenerator`\<`string`\>
+
+#### Yields
+
+Chunks of the string content
 
 ---
 
@@ -351,15 +381,24 @@ Skips whitespace characters in the buffer.
 
 > **streamBytes**(`chunkSize`): `Generator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
+Generator that yields the string content as raw byte chunks.
+Handles escape sequences by converting them to their actual byte values.
+
 #### Parameters
 
 ##### chunkSize
 
 `number` = `1024`
 
+The maximum size of each yielded byte array chunk (defaults to 1024)
+
 #### Returns
 
 `Generator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+#### Yields
+
+Uint8Array chunks containing the unescaped string bytes
 
 ---
 
@@ -367,15 +406,25 @@ Skips whitespace characters in the buffer.
 
 > **streamBytesAsync**(`chunkSize`): `AsyncGenerator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
+Async generator that yields the string content as raw byte chunks from a stream.
+Handles escape sequences by converting them to their actual byte values.
+Waits for more data from the stream when needed.
+
 #### Parameters
 
 ##### chunkSize
 
 `number` = `1024`
 
+The maximum size of each yielded byte array chunk (defaults to 1024)
+
 #### Returns
 
 `AsyncGenerator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+#### Yields
+
+Uint8Array chunks containing the unescaped string bytes
 
 ---
 

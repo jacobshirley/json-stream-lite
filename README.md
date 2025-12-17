@@ -270,7 +270,7 @@ console.log(result) // { name: 'Alice' }
 
 ### Stream Strings
 
-See [string streaming](./EXAMPLES.md#streaming-json-strings) for advanced string handling.
+See [string streaming](./EXAMPLES.md#streaming-json-strings-advanced-usage) for advanced string handling.
 
 ## Use Cases
 
