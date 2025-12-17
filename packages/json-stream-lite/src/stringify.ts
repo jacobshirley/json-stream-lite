@@ -27,6 +27,8 @@ function* formatString(
     const parts = ['"']
     for (let i = 0; i < str.length; i++) {
         const char = str[i]
+        const charCode = str.charCodeAt(i)
+
         switch (char) {
             case '\\':
                 parts.push('\\\\')
@@ -50,7 +52,12 @@ function* formatString(
                 parts.push('\\f')
                 break
             default:
-                parts.push(char)
+                // Escape control characters (0x00-0x1F) as \uXXXX
+                if (charCode < 0x20) {
+                    parts.push('\\u' + charCode.toString(16).padStart(4, '0'))
+                } else {
+                    parts.push(char)
+                }
         }
     }
     parts.push('"')

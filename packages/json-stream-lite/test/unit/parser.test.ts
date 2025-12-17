@@ -558,6 +558,21 @@ describe('JSON parsing', () => {
         expect(value).toBe('"Line1\nLine2\tTabbed\\"\b')
     })
 
+    it('should be able to parse unicode escape sequences', () => {
+        const json = '{"company":"\\u0010"}'
+        const object = new JsonObject()
+        object.feed(...stringToBytes(json))
+
+        const pairs: KeyValue[] = []
+        for (const { key: keyEntity, value: valueEntity } of object.members()) {
+            const key = keyEntity.read()
+            const value = valueEntity.readValue()
+            pairs.push({ key, value })
+        }
+
+        expect(pairs).toEqual([{ key: 'company', value: '\x10' }])
+    })
+
     it('should be able to stream strings', () => {
         const jsonValue = new JsonString('"Streaming String Example"')
         const parts: string[] = []
