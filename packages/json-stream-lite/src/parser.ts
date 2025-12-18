@@ -536,7 +536,7 @@ export class JsonNull extends JsonEntity<null> {
 export type JsonPrimitiveType = JsonString | JsonNumber | JsonBoolean | JsonNull
 
 /**
- * Union type representing any JSON value entity type (primitive, object, or array).
+ * Converts a standard JS primitive type into a json-stream-lite parser type
  *
  * @typeParam T - The expected type of the value
  */
