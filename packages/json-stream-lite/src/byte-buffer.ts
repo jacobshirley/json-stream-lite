@@ -4,7 +4,7 @@ import {
     EofReachedError,
     NoMoreTokensError,
 } from './errors.js'
-import type { ByteStream, JsonStreamInput } from './types.js'
+import type { ByteStream, StreamInput } from './types.js'
 import { bytesToString, stringToBytes } from './utils.js'
 
 /**
@@ -13,7 +13,7 @@ import { bytesToString, stringToBytes } from './utils.js'
  * @param stream - The ReadableStream to convert
  * @returns An AsyncIterable that yields items from the stream
  */
-function readableStreamToAsyncIterable<T extends JsonStreamInput>(
+function readableStreamToAsyncIterable<T extends StreamInput>(
     stream: ReadableStream<T>,
 ): AsyncIterable<T> {
     const reader = stream.getReader()
@@ -142,7 +142,7 @@ export class ByteBuffer {
      *
      * @param input - Input items to add to the buffer
      */
-    feed(...input: JsonStreamInput[]): void {
+    feed(...input: StreamInput[]): void {
         for (const item of input) {
             if (Array.isArray(item)) {
                 for (const subItem of item) {
@@ -221,13 +221,14 @@ export class ByteBuffer {
      */
     next(): number {
         if (this.bufferIndex >= this.buffer.length) {
-            if (!this.eof) {
-                if (!this.readStream()) {
-                    throw new NoMoreTokensError('No more items available')
-                } else {
-                    return this.next()
-                }
+            if (this.readStream()) {
+                return this.next()
             }
+
+            if (!this.eof) {
+                throw new NoMoreTokensError('No more items available')
+            }
+
             throw new EofReachedError('End of file reached')
         }
         this.inputOffset++

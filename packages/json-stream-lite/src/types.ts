@@ -1,16 +1,16 @@
 /**
- * Union type representing valid JSON stream input formats.
+ * Union type representing valid stream input formats.
  */
-export type JsonStreamInput = string | number | number[] | Uint8Array
+export type StreamInput = string | number | number[] | Uint8Array
 
 /**
  * An async iterable stream of JSON input that can be consumed incrementally.
  * Supports strings, numbers, arrays of numbers, or Uint8Arrays as stream items.
  */
 export type ByteStream =
-    | AsyncIterable<JsonStreamInput>
-    | Iterable<JsonStreamInput>
-    | ReadableStream<JsonStreamInput>
+    | AsyncIterable<StreamInput>
+    | Iterable<StreamInput>
+    | ReadableStream<StreamInput>
 
 /**
  * Union type representing all JSON primitive value types.
