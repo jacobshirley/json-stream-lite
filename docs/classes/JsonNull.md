@@ -194,7 +194,7 @@ Feeds input data into the buffer.
 
 ##### input
 
-...[`JsonStreamInput`](../type-aliases/JsonStreamInput.md)[]
+...[`StreamInput`](../type-aliases/StreamInput.md)[]
 
 One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the buffer
 
