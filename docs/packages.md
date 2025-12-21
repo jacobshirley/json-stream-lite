@@ -27,9 +27,9 @@
 - [JsonObjectMember](type-aliases/JsonObjectMember.md)
 - [JsonPrimitive](type-aliases/JsonPrimitive.md)
 - [JsonPrimitiveType](type-aliases/JsonPrimitiveType.md)
-- [JsonStreamInput](type-aliases/JsonStreamInput.md)
 - [JsonStreamStringifyOptions](type-aliases/JsonStreamStringifyOptions.md)
 - [JsonValueType](type-aliases/JsonValueType.md)
+- [StreamInput](type-aliases/StreamInput.md)
 
 ## Functions
 
