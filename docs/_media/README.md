@@ -32,7 +32,7 @@ yarn add json-stream-lite
 
 ### Parsing JSON
 
-#### Parse a complete JSON object incrementally
+#### Parse a complete JSON object
 
 ```typescript
 import { JsonObject } from 'json-stream-lite'
@@ -48,7 +48,7 @@ const result = parser.read()
 console.log(result) // { name: 'Alice', age: 30, active: true }
 ```
 
-#### Stream through object members
+#### Stream through object members incrementally
 
 ```typescript
 import { JsonObject } from 'json-stream-lite'
