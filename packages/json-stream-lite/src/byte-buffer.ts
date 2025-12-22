@@ -65,7 +65,9 @@ export class ByteBuffer {
             asyncIterable instanceof ReadableStream
                 ? readableStreamToAsyncIterable(asyncIterable)
                 : typeof asyncIterable === 'string'
-                  ? [asyncIterable]
+                  ? (function* () {
+                        yield* [asyncIterable]
+                    })()
                   : asyncIterable
     }
 
