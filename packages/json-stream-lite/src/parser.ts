@@ -1,4 +1,9 @@
 import { ByteBuffer } from './byte-buffer.js'
+import {
+    jsonStreamStringify,
+    jsonStreamStringifyBytes,
+    JsonStreamStringifyOptions,
+} from './stringify.js'
 import { ByteStream, JsonKeyValuePair, StreamInput } from './types.js'
 import { bytesToNumber, bytesToString } from './utils.js'
 
@@ -263,6 +268,32 @@ export abstract class JsonEntity<T> {
                 this.buffer.locked = false
             },
         )
+    }
+
+    /**
+     * Serializes a value into a JSON string using json-stream-lite.
+     * See `jsonStreamStringify` for more details.
+     */
+    static stringify(
+        value: unknown,
+        replacer?: any,
+        indent: number = 0,
+        options?: JsonStreamStringifyOptions,
+    ): Generator<string> {
+        return jsonStreamStringify(value, replacer, indent, options)
+    }
+
+    /**
+     * Serializes a value into JSON as Uint8Array byte chunks using json-stream-lite.
+     * See `jsonStreamStringifyBytes` for more details.
+     */
+    static stringifyBytes(
+        value: unknown,
+        replacer?: any,
+        indent: number = 0,
+        options?: JsonStreamStringifyOptions,
+    ): Generator<Uint8Array> {
+        return jsonStreamStringifyBytes(value, replacer, indent, options)
     }
 }
 
