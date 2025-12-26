@@ -24,7 +24,7 @@
     "keywords": [],
     "author": "",
     "license": "MIT",
-    "packageManager": "pnpm@10.26.1",
+    "packageManager": "pnpm@10.26.2",
     "devDependencies": {
         "@commitlint/cli": "^20.1.0",
         "@commitlint/config-conventional": "^20.0.0",
