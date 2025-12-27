@@ -277,3 +277,65 @@ The result of the callback, or undefined if parsing needs more data
 #### Throws
 
 Error if the entity has already been consumed
+
+---
+
+### stringify()
+
+> `static` **stringify**(`value`, `replacer?`, `indent?`, `options?`): `Generator`\<`string`\>
+
+Serializes a value into a JSON string using json-stream-lite.
+See `jsonStreamStringify` for more details.
+
+#### Parameters
+
+##### value
+
+`unknown`
+
+##### replacer?
+
+`any`
+
+##### indent?
+
+`number` = `0`
+
+##### options?
+
+[`JsonStreamStringifyOptions`](../type-aliases/JsonStreamStringifyOptions.md)
+
+#### Returns
+
+`Generator`\<`string`\>
+
+---
+
+### stringifyBytes()
+
+> `static` **stringifyBytes**(`value`, `replacer?`, `indent?`, `options?`): `Generator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+Serializes a value into JSON as Uint8Array byte chunks using json-stream-lite.
+See `jsonStreamStringifyBytes` for more details.
+
+#### Parameters
+
+##### value
+
+`unknown`
+
+##### replacer?
+
+`any`
+
+##### indent?
+
+`number` = `0`
+
+##### options?
+
+[`JsonStreamStringifyOptions`](../type-aliases/JsonStreamStringifyOptions.md)
+
+#### Returns
+
+`Generator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
