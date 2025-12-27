@@ -54,4 +54,17 @@ describe('JSON stream end-to-end tests', () => {
 
         expect(obj).toEqual(testData)
     })
+
+    test('should parse nested JSON structures correctly', async () => {
+        const nestedData = `{"testResults":[{"name":"src/example.test.ts","assertionResults":[{"ancestorTitles":["ExampleComponent","Example2"],"title":"should render correctly","status":"passed","duration":15,"location":{"line":10,"column":3}}]}]}`
+        const data = new JsonObject(nestedData)
+
+        for (const keyValue of data) {
+            const { key, value } = keyValue
+            expect(await key.readAsync()).toBe('testResults')
+            const testResults = await value.readValueAsync()
+            expect(Array.isArray(testResults)).toBe(true)
+            expect(testResults.length).toBe(1)
+        }
+    })
 })
