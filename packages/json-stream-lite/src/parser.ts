@@ -716,7 +716,9 @@ export class JsonValue<T = any, K extends string = string> extends JsonEntity<
             this.value.consume()
         } else {
             super.consume()
+            this.value?.consume()
         }
+        this.consumed = true
     }
 
     /**
@@ -727,7 +729,10 @@ export class JsonValue<T = any, K extends string = string> extends JsonEntity<
             await this.value.consumeAsync()
         } else {
             await super.consumeAsync()
+            await this.value?.consumeAsync()
         }
+
+        this.consumed = true
     }
 }
 
@@ -853,7 +858,8 @@ export class JsonObject<T extends object = any> extends JsonEntity<T> {
         const obj: any = {}
 
         for (const { key, value } of this.members()) {
-            obj[key.read()] = value.read().read()
+            const keyString = key.read()
+            obj[keyString] = value.readValue()
         }
 
         return obj
