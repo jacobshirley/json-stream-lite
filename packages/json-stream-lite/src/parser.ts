@@ -1,7 +1,9 @@
 import { ByteBuffer } from './byte-buffer.js'
 import {
     jsonStreamStringify,
+    jsonStreamStringifyAsync,
     jsonStreamStringifyBytes,
+    jsonStreamStringifyBytesAsync,
     JsonStreamStringifyOptions,
 } from './stringify.js'
 import { ByteStream, JsonKeyValuePair, StreamInput } from './types.js'
@@ -273,6 +275,7 @@ export abstract class JsonEntity<T> {
     /**
      * Serializes a value into a JSON string using json-stream-lite.
      * See `jsonStreamStringify` for more details.
+     * @returns A generator yielding JSON string chunks
      */
     static stringify(
         value: unknown,
@@ -286,6 +289,7 @@ export abstract class JsonEntity<T> {
     /**
      * Serializes a value into JSON as Uint8Array byte chunks using json-stream-lite.
      * See `jsonStreamStringifyBytes` for more details.
+     * @returns A generator yielding JSON byte chunks
      */
     static stringifyBytes(
         value: unknown,
@@ -294,6 +298,34 @@ export abstract class JsonEntity<T> {
         options?: JsonStreamStringifyOptions,
     ): Generator<Uint8Array> {
         return jsonStreamStringifyBytes(value, replacer, indent, options)
+    }
+
+    /**
+     * Asynchronously serializes a value into a JSON string using json-stream-lite.
+     * See `jsonStreamStringifyAsync` for more details.
+     * @returns An async generator yielding JSON string chunks
+     * */
+    static stringifyAsync(
+        value: AsyncIterable<unknown> | Iterable<unknown>,
+        replacer?: any,
+        indent: number = 0,
+        options?: JsonStreamStringifyOptions,
+    ): AsyncGenerator<string> {
+        return jsonStreamStringifyAsync(value, replacer, indent, options)
+    }
+
+    /**
+     * Asynchronously serializes a value into JSON as Uint8Array byte chunks using json-stream-lite.
+     * See `jsonStreamStringifyBytesAsync` for more details.
+     * @returns An async generator yielding JSON byte chunks
+     * */
+    static stringifyBytesAsync(
+        value: AsyncIterable<unknown> | Iterable<unknown>,
+        replacer?: any,
+        indent: number = 0,
+        options?: JsonStreamStringifyOptions,
+    ): AsyncGenerator<Uint8Array> {
+        return jsonStreamStringifyBytesAsync(value, replacer, indent, options)
     }
 }
 
