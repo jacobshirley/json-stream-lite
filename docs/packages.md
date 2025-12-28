@@ -36,4 +36,6 @@
 - [jsonKeyValueParser](functions/jsonKeyValueParser.md)
 - [jsonKeyValueParserAsync](functions/jsonKeyValueParserAsync.md)
 - [jsonStreamStringify](functions/jsonStreamStringify.md)
+- [jsonStreamStringifyAsync](functions/jsonStreamStringifyAsync.md)
 - [jsonStreamStringifyBytes](functions/jsonStreamStringifyBytes.md)
+- [jsonStreamStringifyBytesAsync](functions/jsonStreamStringifyBytesAsync.md)
