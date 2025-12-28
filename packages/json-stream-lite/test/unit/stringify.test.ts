@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { jsonStreamStringify } from '../../src/index.js'
+import {
+    JsonEntity,
+    jsonStreamStringify,
+    jsonStreamStringifyAsync,
+} from '../../src/index.js'
 
 describe('JSON stream stringify', () => {
     it('should stringify a simple object', () => {
@@ -9,7 +13,7 @@ describe('JSON stream stringify', () => {
                 stringChunkSize: 1,
             }),
         )
-        expect(chunks.length).toBe(35) // Expect multiple chunks due to stringChunkSize
+        expect(chunks.length).toBe(39) // Expect multiple chunks due to stringChunkSize
         const result = chunks.join('')
         const expected = JSON.stringify(obj, null, 2)
         expect(result).toBe(expected)
@@ -295,4 +299,58 @@ describe('JSON stream stringify', () => {
             expect(chunkCount).toBeGreaterThan(LARGE_SIZE) // Many chunks generated
         },
     )
+
+    it('should stringify async iterables', async () => {
+        async function* generateData() {
+            for (let i = 0; i < 5; i++) {
+                yield { index: i, value: `Item ${i}`, nested: { a: 1 } }
+            }
+        }
+
+        const asyncIterable = generateData()
+        const chunks = []
+        for await (const chunk of JsonEntity.stringifyAsync(asyncIterable)) {
+            chunks.push(chunk)
+        }
+        const result = chunks.join('')
+        const expected = JSON.stringify([
+            { index: 0, value: 'Item 0', nested: { a: 1 } },
+            { index: 1, value: 'Item 1', nested: { a: 1 } },
+            { index: 2, value: 'Item 2', nested: { a: 1 } },
+            { index: 3, value: 'Item 3', nested: { a: 1 } },
+            { index: 4, value: 'Item 4', nested: { a: 1 } },
+        ])
+        expect(result).toBe(expected)
+    })
+
+    it('should stringify async iterables with indentation', async () => {
+        async function* generateData() {
+            for (let i = 0; i < 5; i++) {
+                yield { index: i, value: `Item ${i}`, nested: { a: 1 } }
+            }
+        }
+
+        const asyncIterable = generateData()
+        const chunks = []
+        for await (const chunk of jsonStreamStringifyAsync(
+            asyncIterable,
+            null,
+            4,
+        )) {
+            chunks.push(chunk)
+        }
+        const result = chunks.join('')
+        const expected = JSON.stringify(
+            [
+                { index: 0, value: 'Item 0', nested: { a: 1 } },
+                { index: 1, value: 'Item 1', nested: { a: 1 } },
+                { index: 2, value: 'Item 2', nested: { a: 1 } },
+                { index: 3, value: 'Item 3', nested: { a: 1 } },
+                { index: 4, value: 'Item 4', nested: { a: 1 } },
+            ],
+            null,
+            4,
+        )
+        expect(result).toBe(expected)
+    })
 })
