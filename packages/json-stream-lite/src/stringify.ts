@@ -321,7 +321,7 @@ export async function* jsonStreamStringifyAsync(
     options?: JsonStreamStringifyOptions,
 ): AsyncGenerator<string> {
     yield '['
-    yield '\n'
+    if (indent > 0) yield '\n'
 
     let isFirst = true
     for await (const item of value) {
@@ -336,7 +336,8 @@ export async function* jsonStreamStringifyAsync(
 
         if (!isFirst) {
             yield ','
-            yield '\n'
+
+            if (indent > 0) yield '\n'
         } else {
             isFirst = false
         }
@@ -345,7 +346,7 @@ export async function* jsonStreamStringifyAsync(
             yield chunk
         }
     }
-    yield '\n'
+    if (indent > 0) yield '\n'
     yield ']'
 }
 

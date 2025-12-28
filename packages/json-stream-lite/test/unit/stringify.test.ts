@@ -308,6 +308,29 @@ describe('JSON stream stringify', () => {
 
         const asyncIterable = generateData()
         const chunks = []
+        for await (const chunk of jsonStreamStringifyAsync(asyncIterable)) {
+            chunks.push(chunk)
+        }
+        const result = chunks.join('')
+        const expected = JSON.stringify([
+            { index: 0, value: 'Item 0', nested: { a: 1 } },
+            { index: 1, value: 'Item 1', nested: { a: 1 } },
+            { index: 2, value: 'Item 2', nested: { a: 1 } },
+            { index: 3, value: 'Item 3', nested: { a: 1 } },
+            { index: 4, value: 'Item 4', nested: { a: 1 } },
+        ])
+        expect(result).toBe(expected)
+    })
+
+    it('should stringify async iterables with indentation', async () => {
+        async function* generateData() {
+            for (let i = 0; i < 5; i++) {
+                yield { index: i, value: `Item ${i}`, nested: { a: 1 } }
+            }
+        }
+
+        const asyncIterable = generateData()
+        const chunks = []
         for await (const chunk of jsonStreamStringifyAsync(
             asyncIterable,
             null,
