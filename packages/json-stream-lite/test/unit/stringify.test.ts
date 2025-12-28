@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+    JsonEntity,
     jsonStreamStringify,
     jsonStreamStringifyAsync,
 } from '../../src/index.js'
@@ -308,7 +309,7 @@ describe('JSON stream stringify', () => {
 
         const asyncIterable = generateData()
         const chunks = []
-        for await (const chunk of jsonStreamStringifyAsync(asyncIterable)) {
+        for await (const chunk of JsonEntity.stringifyAsync(asyncIterable)) {
             chunks.push(chunk)
         }
         const result = chunks.join('')
