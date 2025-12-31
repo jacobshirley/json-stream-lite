@@ -4,6 +4,9 @@
 
 A lightweight, memory-efficient, zero-dependency streaming JSON parser and stringifier written in TypeScript. Process large JSON files without loading them entirely into memory.
 
+[![npm version](https://img.shields.io/npm/v/json-stream-lite.svg)](https://www.npmjs.com/package/json-stream-lite)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Features
 
 - 🚀 **Stream parsing**: Parse JSON incrementally as data arrives
