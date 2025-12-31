@@ -395,9 +395,48 @@ See `jsonStreamStringify` for more details.
 
 `Generator`\<`string`\>
 
+A generator yielding JSON string chunks
+
 #### Inherited from
 
 [`JsonEntity`](JsonEntity.md).[`stringify`](JsonEntity.md#stringify)
+
+---
+
+### stringifyAsync()
+
+> `static` **stringifyAsync**(`value`, `replacer?`, `indent?`, `options?`): `AsyncGenerator`\<`string`\>
+
+Asynchronously serializes a value into a JSON string using json-stream-lite.
+See `jsonStreamStringifyAsync` for more details.
+
+#### Parameters
+
+##### value
+
+`AsyncIterable`\<`unknown`, `any`, `any`\> | `Iterable`\<`unknown`, `any`, `any`\>
+
+##### replacer?
+
+`any`
+
+##### indent?
+
+`number` = `0`
+
+##### options?
+
+[`JsonStreamStringifyOptions`](../type-aliases/JsonStreamStringifyOptions.md)
+
+#### Returns
+
+`AsyncGenerator`\<`string`\>
+
+An async generator yielding JSON string chunks
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`stringifyAsync`](JsonEntity.md#stringifyasync)
 
 ---
 
@@ -430,6 +469,45 @@ See `jsonStreamStringifyBytes` for more details.
 
 `Generator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
+A generator yielding JSON byte chunks
+
 #### Inherited from
 
 [`JsonEntity`](JsonEntity.md).[`stringifyBytes`](JsonEntity.md#stringifybytes)
+
+---
+
+### stringifyBytesAsync()
+
+> `static` **stringifyBytesAsync**(`value`, `replacer?`, `indent?`, `options?`): `AsyncGenerator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+Asynchronously serializes a value into JSON as Uint8Array byte chunks using json-stream-lite.
+See `jsonStreamStringifyBytesAsync` for more details.
+
+#### Parameters
+
+##### value
+
+`AsyncIterable`\<`unknown`, `any`, `any`\> | `Iterable`\<`unknown`, `any`, `any`\>
+
+##### replacer?
+
+`any`
+
+##### indent?
+
+`number` = `0`
+
+##### options?
+
+[`JsonStreamStringifyOptions`](../type-aliases/JsonStreamStringifyOptions.md)
+
+#### Returns
+
+`AsyncGenerator`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+An async generator yielding JSON byte chunks
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`stringifyBytesAsync`](JsonEntity.md#stringifybytesasync)

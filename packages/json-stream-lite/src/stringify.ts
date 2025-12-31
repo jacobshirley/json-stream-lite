@@ -121,6 +121,7 @@ function hasCustomToStringFunction(
  * @param replacer - Optional replacer function for value transformation
  * @param indent - Number of spaces for indentation (0 for compact)
  * @param currentDepth - Current nesting depth for indentation
+ * @param start - Indicates if this is the start of the stringification
  * @param options - Stringification options
  * @yields String chunks representing the JSON output
  */
@@ -129,6 +130,7 @@ function* jsonStreamStringifyWithDepth(
     replacer?: any,
     indent: number = 0,
     currentDepth: number = 0,
+    start: boolean = true,
     options?: JsonStreamStringifyOptions,
 ): Generator<string> {
     if (replacer) {
@@ -143,6 +145,11 @@ function* jsonStreamStringifyWithDepth(
         }
     }
 
+    // If this is the first call and indenting, add initial indentation
+    if (start && indent > 0 && currentDepth > 0) {
+        yield ' '.repeat(indent * currentDepth)
+    }
+
     if (value === null) {
         yield 'null'
     } else if (typeof value === 'boolean') {
@@ -152,10 +159,10 @@ function* jsonStreamStringifyWithDepth(
     } else if (typeof value === 'string') {
         yield* formatString(value, options?.stringChunkSize)
     } else if (Array.isArray(value)) {
-        yield '['
-
         const len = value.length
         const valueIndent = indent * (currentDepth + 1)
+
+        yield '['
 
         for (let i = 0; i < len; i++) {
             const next = value[i]
@@ -165,7 +172,8 @@ function* jsonStreamStringifyWithDepth(
             }
 
             if (indent > 0) {
-                yield '\n' + ' '.repeat(valueIndent)
+                yield '\n'
+                yield ' '.repeat(valueIndent)
             }
 
             if (shouldIgnore(next)) {
@@ -178,6 +186,7 @@ function* jsonStreamStringifyWithDepth(
                 replacer,
                 indent > 0 ? indent : 0,
                 currentDepth + 1,
+                false,
                 options,
             )
         }
@@ -188,12 +197,12 @@ function* jsonStreamStringifyWithDepth(
 
         yield ']'
     } else if (typeof value === 'object') {
-        yield '{'
-
         const keys = Object.keys(value as Record<string, unknown>)
         const len = keys.length
         const valueIndent = indent * (currentDepth + 1)
         let count = 0
+
+        yield '{'
 
         for (let i = 0; i < len; i++) {
             const key = keys[i]
@@ -209,7 +218,8 @@ function* jsonStreamStringifyWithDepth(
             }
 
             if (indent > 0) {
-                yield '\n' + ' '.repeat(valueIndent)
+                yield '\n'
+                yield ' '.repeat(valueIndent)
             }
 
             yield* formatString(key, options?.stringChunkSize)
@@ -219,6 +229,7 @@ function* jsonStreamStringifyWithDepth(
                 replacer,
                 indent > 0 ? indent : 0,
                 currentDepth + 1,
+                false,
                 options,
             )
 
@@ -257,7 +268,14 @@ export function jsonStreamStringify(
     indent: number = 0,
     options?: JsonStreamStringifyOptions,
 ): Generator<string> {
-    return jsonStreamStringifyWithDepth(value, replacer, indent, 0, options)
+    return jsonStreamStringifyWithDepth(
+        value,
+        replacer,
+        indent,
+        0,
+        true,
+        options,
+    )
 }
 
 /**
@@ -292,6 +310,58 @@ export function* jsonStreamStringifyBytes(
     )
 
     for (const chunk of stringGenerator) {
+        yield stringToBytes(chunk)
+    }
+}
+
+export async function* jsonStreamStringifyAsync(
+    value: AsyncIterable<unknown> | Iterable<unknown>,
+    replacer?: any,
+    indent: number = 0,
+    options?: JsonStreamStringifyOptions,
+): AsyncGenerator<string> {
+    yield '['
+    if (indent > 0) yield '\n'
+
+    let isFirst = true
+    for await (const item of value) {
+        const stringGenerator = jsonStreamStringifyWithDepth(
+            item,
+            replacer,
+            indent,
+            1,
+            true,
+            options,
+        )
+
+        if (!isFirst) {
+            yield ','
+
+            if (indent > 0) yield '\n'
+        } else {
+            isFirst = false
+        }
+
+        for (const chunk of stringGenerator) {
+            yield chunk
+        }
+    }
+    if (indent > 0) yield '\n'
+    yield ']'
+}
+
+export async function* jsonStreamStringifyBytesAsync(
+    value: AsyncIterable<unknown> | Iterable<unknown>,
+    replacer?: any,
+    indent: number = 0,
+    options?: JsonStreamStringifyOptions,
+): AsyncGenerator<Uint8Array> {
+    for await (const chunk of jsonStreamStringifyAsync(
+        value,
+        replacer,
+        indent,
+        options,
+    )) {
         yield stringToBytes(chunk)
     }
 }
