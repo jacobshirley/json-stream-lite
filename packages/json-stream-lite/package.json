@@ -54,7 +54,7 @@
     ],
     "author": "Jacob Shirley",
     "license": "MIT",
-    "packageManager": "pnpm@10.30.3",
+    "packageManager": "pnpm@10.32.1",
     "devDependencies": {
         "typescript": "^5.9.3",
         "vitest": "^4.0.14",
