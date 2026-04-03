@@ -44,6 +44,8 @@ const BYTE_MAP = {
     backslash: 92,
     formFeed: 12,
     backspace: 8,
+    slash: 47,
+    asterisk: 42,
 }
 
 /**
@@ -123,6 +125,131 @@ export abstract class JsonEntity<T> {
     }
 
     /**
+     * Sets the end-of-file (EOF) state of the buffer, indicating whether no more data will be added.
+     */
+    set eof(value: boolean) {
+        this.buffer.eof = value
+    }
+
+    /**
+     * Skips whitespace and yields any comments encountered.
+     */
+    private *getComments(): Generator<JsonComment> {
+        while (true) {
+            this.skipWhitespace()
+            if (this.buffer.peek() === BYTE_MAP.colon) {
+                this.buffer.next() // consume :
+            }
+            this.skipWhitespace()
+
+            const byte = this.buffer.peek()
+            if (byte === BYTE_MAP.slash) {
+                const next = this.buffer.peek(1)
+                if (next === BYTE_MAP.slash || next === BYTE_MAP.asterisk) {
+                    const comment = new JsonComment(this.buffer)
+                    yield comment
+                    comment.consume()
+                    continue
+                }
+            }
+            break
+        }
+    }
+
+    /**
+     * Asynchronously skips whitespace and yields any comments encountered, waiting for more data if needed.
+     */
+    private async *getCommentsAsync(): AsyncGenerator<JsonComment> {
+        while (true) {
+            const comments = this.getComments()
+            const comment = this.tryParse(() => comments.next())
+            if (comment === undefined) {
+                await this.buffer.readStreamAsync()
+                continue
+            }
+            if (comment.done) {
+                break
+            }
+            yield comment.value
+        }
+    }
+
+    /**
+     * Generators for pre-comments. In JSONC, comments can appear before or after any value.
+     */
+    get preComments(): Generator<JsonComment> {
+        return this.getComments()
+    }
+
+    /**
+     * Generators for post-comments. In JSONC, comments can appear before or after any value.
+     */
+    get postComments(): Generator<JsonComment> {
+        return this.getComments()
+    }
+
+    /**
+     * Async generators for pre-comments. In JSONC, comments can appear before or after any value.
+     */
+    get preCommentsAsync(): AsyncGenerator<JsonComment> {
+        return this.getCommentsAsync()
+    }
+
+    /**
+     * Async generators for post-comments. In JSONC, comments can appear before or after any value.
+     */
+    get postCommentsAsync(): AsyncGenerator<JsonComment> {
+        return this.getCommentsAsync()
+    }
+
+    /**
+     * Convenience getters to read all pre comments as strings. Consumes the comments in the process.
+     */
+    get preCommentStrings(): string[] {
+        const strings: string[] = []
+        for (const comment of this.preComments) {
+            strings.push(comment.read())
+        }
+        return strings
+    }
+
+    /**
+     * Convenience getters to read all post comments as strings. Consumes the comments in the process.
+     */
+    get postCommentStrings(): string[] {
+        const strings: string[] = []
+        for (const comment of this.postComments) {
+            strings.push(comment.read())
+        }
+        return strings
+    }
+
+    /**
+     * Convenience getter to read a single pre comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+     */
+    get singlePreCommentString(): string | null {
+        const preComments = this.preComments
+        const first = preComments.next()
+        if (first.done) {
+            return null
+        }
+
+        return first.value.read()
+    }
+
+    /**
+     * Convenience getter to read a single post comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+     */
+    get singlePostCommentString(): string | null {
+        const postComments = this.postComments
+        const first = postComments.next()
+        if (first.done) {
+            return null
+        }
+        return first.value.read()
+    }
+
+    /**
      * Gets the type name of this entity.
      *
      * @returns The constructor name of this entity
@@ -179,7 +306,7 @@ export abstract class JsonEntity<T> {
     protected abstract parse(): T
 
     /**
-     * Skips whitespace characters in the buffer.
+     * Skips whitespace characters (and comments when JSONC is enabled) in the buffer.
      */
     protected skipWhitespace(): void {
         while (isWhitespace(this.buffer.peek())) {
@@ -198,7 +325,10 @@ export abstract class JsonEntity<T> {
             throw new Error('JSON entity has already been consumed.')
         }
 
+        for (const _ of this.preComments) {
+        }
         const read = this.parse()
+
         this.consumed = true
 
         if (this.buffer.canCompact()) this.buffer.compact()
@@ -255,10 +385,6 @@ export abstract class JsonEntity<T> {
      * @throws Error if the entity has already been consumed
      */
     tryParse<T = this>(cb: (entity: this) => T): T | undefined {
-        if (this.consumed) {
-            throw new Error('JSON entity has already been consumed.')
-        }
-
         this.buffer.locked = true
         return this.buffer.resetOnFail(
             () => {
@@ -335,6 +461,89 @@ export abstract class JsonEntity<T> {
  *
  * @typeParam T - The specific string type (defaults to string)
  */
+/**
+ * Represents a JSONC comment (single-line or block).
+ * Extends JsonEntity so it can be yielded alongside other entities in JSONC containers.
+ */
+/**
+ * Represents a JSONC comment (single-line or block).
+ * Parses lazily from the buffer — the comment text is only decoded when read().
+ */
+export class JsonComment extends JsonEntity<string> {
+    /** The comment style: 'line' for //, 'block' for /* * / */
+    style: 'line' | 'block' = 'line'
+
+    protected parse(): string {
+        this.skipWhitespace()
+
+        if (this.buffer.peek() === BYTE_MAP.colon) {
+            this.buffer.next() // consume :
+        }
+
+        this.skipWhitespace()
+
+        if (this.buffer.peek() !== BYTE_MAP.slash) {
+            return ''
+        }
+
+        // Consume opening //  or /*
+        this.buffer.next() // consume /
+        const second = this.buffer.next()
+        const bytes: number[] = []
+
+        if (second === BYTE_MAP.slash) {
+            this.style = 'line'
+            while (true) {
+                const byte = this.buffer.peek()
+                if (
+                    byte === null ||
+                    byte === BYTE_MAP.lineFeed ||
+                    byte === BYTE_MAP.carriageReturn
+                ) {
+                    if (byte === BYTE_MAP.carriageReturn) {
+                        this.buffer.next()
+                        if (this.buffer.peek() === BYTE_MAP.lineFeed) {
+                            this.buffer.next()
+                        }
+                    } else if (byte === BYTE_MAP.lineFeed) {
+                        this.buffer.next()
+                    }
+                    break
+                }
+                bytes.push(this.buffer.next())
+            }
+        } else {
+            // asterisk — block comment
+            this.style = 'block'
+            while (true) {
+                const byte = this.buffer.peek()
+                if (byte === null) break
+                if (
+                    byte === BYTE_MAP.asterisk &&
+                    this.buffer.peek(1) === BYTE_MAP.slash
+                ) {
+                    this.buffer.next() // *
+                    this.buffer.next() // /
+                    break
+                }
+                bytes.push(this.buffer.next())
+            }
+        }
+
+        const commentString = bytesToString(new Uint8Array(bytes)).trim()
+
+        return commentString
+    }
+
+    override get preComments(): Generator<JsonComment> {
+        return (function* () {})()
+    }
+
+    override get postComments(): Generator<JsonComment> {
+        return (function* () {})()
+    }
+}
+
 export class JsonString<T extends string = string> extends JsonEntity<T> {
     /**
      * Parses a JSON string from the buffer.
@@ -635,6 +844,7 @@ export class JsonValue<T = any, K extends string = string> extends JsonEntity<
 > {
     private key?: JsonString<K>
     private value?: JsonValueType<T>
+    public hasReadValue: boolean = false
 
     /**
      * Creates a new JsonValue entity.
@@ -702,6 +912,7 @@ export class JsonValue<T = any, K extends string = string> extends JsonEntity<
 
         this.value = super.read()
         this.consumed = false
+        this.hasReadValue = true
         return this.value
     }
 
@@ -911,7 +1122,7 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
      *
      * @yields Each item entity in the array
      */
-    *items(): Generator<JsonValueType<T>> {
+    *items(): Generator<JsonValue<T>> {
         this.skipWhitespace()
         if (this.buffer.peek() === BYTE_MAP.leftSquare) {
             this.buffer.next() // consume [
@@ -930,10 +1141,10 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
                 this.skipWhitespace()
             }
 
-            const value = new JsonValue<T>(this.buffer).read()
-            yield value
+            const valueObject = new JsonValue<T>(this.buffer)
+            yield valueObject
 
-            if (!value.consumed) value.read()
+            valueObject.consume()
             this.skipWhitespace()
         }
 
@@ -947,10 +1158,10 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
      *
      * @yields Each item entity in the array
      */
-    async *itemsAsync(): AsyncGenerator<JsonValueType<T>> {
+    async *itemsAsync(): AsyncGenerator<JsonValue<T>> {
         while (!this.buffer.atEof()) {
             const itemGen = this.items()
-            let currentItem: IteratorResult<JsonValueType<T>> | undefined =
+            let currentItem: IteratorResult<JsonValue<T>> | undefined =
                 undefined
 
             while (true) {
@@ -996,7 +1207,7 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
         const values: T[] = []
 
         for (const value of this) {
-            values.push(value.read() as T)
+            values.push(value.readValue() as T)
         }
 
         return values
@@ -1061,7 +1272,7 @@ export class JsonKeyValueParser extends JsonEntity<
             let index = 0
 
             for (const valueEntity of this.container) {
-                const value = valueEntity
+                const value = valueEntity.read()
                 const finalKey = this.parentKey
                     ? `${this.parentKey}[${index}]`
                     : `[${index}]`

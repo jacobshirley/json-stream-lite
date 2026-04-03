@@ -17,7 +17,8 @@
         "incremental": true,
         "allowArbitraryExtensions": false,
         "allowImportingTsExtensions": false,
-        "erasableSyntaxOnly": true
+        "erasableSyntaxOnly": true,
+        "types": ["node"]
     },
     "include": ["examples/**/*", "scripts/**/*"]
 }

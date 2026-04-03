@@ -7,6 +7,7 @@ import { stringToBytes } from './utils.js'
  * Flattens nested structures using dot notation and array indices.
  *
  * @param bytes - The JSON input as bytes or string
+ * @param options - Optional parser options (jsonc, strict)
  * @yields Key-value pairs as [key, value] tuples
  *
  * @example

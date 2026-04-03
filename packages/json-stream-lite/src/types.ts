@@ -23,3 +23,13 @@ export type JsonPrimitive = string | number | boolean | null
  * and the value is a JSON primitive.
  */
 export type JsonKeyValuePair = [string, JsonPrimitive]
+
+/**
+ * Options for configuring JSON parsing behavior.
+ */
+export type JsonParserOptions = {
+    /** Enable JSONC (JSON with Comments) parsing. Allows // and /* * / comments. */
+    jsonc?: boolean
+    /** Enforce strict JSON parsing. When false, trailing commas are allowed. Default: true. */
+    strict?: boolean
+}

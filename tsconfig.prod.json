@@ -7,6 +7,5 @@
         "incremental": false,
         "declarationMap": false
     },
-    "include": ["src/**/*.ts"],
-    "exclude": ["test/**/*.test.ts"]
+    "include": ["examples/**/*", "scripts/**/*"]
 }
