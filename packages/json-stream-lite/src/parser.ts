@@ -285,7 +285,6 @@ export abstract class JsonEntity<T> {
         for (const _ of this.preComments) {
         }
         const read = this.parse()
-        //for (const _ of this.postComments) {}
 
         this.consumed = true
 
