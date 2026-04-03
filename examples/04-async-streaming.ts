@@ -55,7 +55,7 @@ async function parseAsyncArray() {
     console.log('Processing items as they arrive:')
     let sum = 0
     for await (const item of parser) {
-        const value = await item.readAsync()
+        const value = await item.readValueAsync()
         sum += value as number
         console.log(`  Received: ${value}, Running sum: ${sum}`)
     }

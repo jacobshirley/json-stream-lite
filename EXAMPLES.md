@@ -90,13 +90,13 @@ console.log('\n=== Example 2: Stream Array Items ===')
 import { JsonArray } from 'json-stream-lite'
 
 const numbersJson = '[10, 20, 30, 40, 50]'
-const numbersParser = new JsonArray()
+const numbersParser = new JsonArray<number>()
 numbersParser.feed(...stringToBytes(numbersJson))
 
 console.log('Processing items one by one:')
 let sum = 0
 for (const item of numbersParser.items()) {
-    const value = item.read() as number
+    const value = item.readValue()
     sum += value
     console.log(`  Current value: ${value}, Running sum: ${sum}`)
 }
@@ -326,7 +326,7 @@ async function parseAsyncArray() {
     console.log('Processing items as they arrive:')
     let sum = 0
     for await (const item of parser) {
-        const value = await item.readAsync()
+        const value = await item.readValueAsync()
         sum += value as number
         console.log(`  Received: ${value}, Running sum: ${sum}`)
     }

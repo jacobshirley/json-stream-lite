@@ -185,6 +185,9 @@ import { jsonStreamStringifyBytes } from 'json-stream-lite'
 
 const data = { name: 'Alice', age: 30 }
 
+// Example with a hypothetical writeToFile function
+declare function writeToFile(data: Uint8Array): Promise<void>
+
 for (const bytes of jsonStreamStringifyBytes(data)) {
     // bytes is a Uint8Array
     await writeToFile(bytes)
@@ -217,6 +220,9 @@ See [docs](https://jacobshirley.github.io/json-stream-lite/v1).
 ```typescript
 import { createReadStream } from 'fs'
 import { JsonObject } from 'json-stream-lite'
+
+// Example processing function
+declare function processRecord(key: string, value: unknown): Promise<void>
 
 async function processLargeFile(filePath: string) {
     const stream = createReadStream(filePath)
@@ -280,6 +286,8 @@ See [string streaming](./EXAMPLES.md#streaming-json-strings-advanced-usage) for 
 ### 1. Processing API Responses
 
 ```typescript
+import { JsonObject } from 'json-stream-lite'
+
 async function processApiResponse(url: string) {
     const response = await fetch(url)
     const parser = new JsonObject(response.body!)
@@ -331,6 +339,21 @@ async function generateLargeFile(data: unknown, outputPath: string) {
 
 ```typescript
 import { jsonStreamStringify } from 'json-stream-lite'
+
+// Example database and app setup
+interface Request {}
+interface Response {
+    setHeader: (name: string, value: string) => void
+    write: (chunk: string) => void
+    end: () => void
+}
+declare const db: { query: (sql: string) => Promise<unknown[]> }
+declare const app: {
+    get: (
+        path: string,
+        handler: (req: Request, res: Response) => Promise<void>,
+    ) => void
+}
 
 async function* exportDatabase(query: string) {
     const records = await db.query(query)
