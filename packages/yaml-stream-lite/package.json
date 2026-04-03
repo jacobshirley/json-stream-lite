@@ -1,0 +1,71 @@
+{
+    "name": "yaml-stream-lite",
+    "version": "1.0.0",
+    "description": "A lightweight, memory-efficient, zero-dependency streaming YAML parser and stringifier for JavaScript and TypeScript. It works in both Node.js and browser environments.",
+    "main": "dist/index.js",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/jacobshirley/yaml-stream-lite.git"
+    },
+    "homepage": "https://jacobshirley.github.io/yaml-stream-lite/v1",
+    "bugs": {
+        "url": "https://github.com/jacobshirley/yaml-stream-lite/issues"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./*": {
+            "types": "./dist/*.d.ts",
+            "default": "./dist/*"
+        }
+    },
+    "scripts": {
+        "test:unit": "vitest run test/unit",
+        "test": "vitest run",
+        "compile": "pnpm compile:validate && tsc -p tsconfig.prod.json",
+        "compile:validate": "tsc -p tsconfig.json --noEmit",
+        "watch": "tsc -watch -p tsconfig.prod.json",
+        "watch:all": "tsc -watch -p tsconfig.json",
+        "prepack": "cp ../../README.md . && cp ../../EXAMPLES.md ."
+    },
+    "keywords": [
+        "yaml",
+        "stream",
+        "streaming",
+        "parser",
+        "stringify",
+        "parse",
+        "incremental",
+        "async",
+        "memory-efficient",
+        "low-memory",
+        "large-files",
+        "yaml-parser",
+        "yaml-stream",
+        "streaming-yaml",
+        "lightweight",
+        "zero-dependencies",
+        "typescript",
+        "browser",
+        "nodejs"
+    ],
+    "author": "Jacob Shirley",
+    "license": "MIT",
+    "packageManager": "pnpm@10.33.0",
+    "devDependencies": {
+        "typescript": "^6.0.2",
+        "vitest": "^4.0.14",
+        "@vitest/browser": "^4.0.14",
+        "@vitest/browser-playwright": "^4.0.14",
+        "@vitest/coverage-v8": "^4.0.14",
+        "playwright": "^1.57.0"
+    },
+    "files": [
+        "dist",
+        "!**/*.tsbuildinfo",
+        "EXAMPLES.md"
+    ]
+}
