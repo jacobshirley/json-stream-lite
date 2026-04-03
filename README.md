@@ -341,8 +341,8 @@ async function generateLargeFile(data: unknown, outputPath: string) {
 import { jsonStreamStringify } from 'json-stream-lite'
 
 // Example database and app setup
-interface Request {}
-interface Response {
+type ExpressRequest = Record<string, unknown>
+type ExpressResponse = {
     setHeader: (name: string, value: string) => void
     write: (chunk: string) => void
     end: () => void
@@ -351,7 +351,7 @@ declare const db: { query: (sql: string) => Promise<unknown[]> }
 declare const app: {
     get: (
         path: string,
-        handler: (req: Request, res: Response) => Promise<void>,
+        handler: (req: ExpressRequest, res: ExpressResponse) => Promise<void>,
     ) => void
 }
 
