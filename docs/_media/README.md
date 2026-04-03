@@ -4,6 +4,9 @@
 
 A lightweight, memory-efficient, zero-dependency streaming JSON parser and stringifier written in TypeScript. Process large JSON files without loading them entirely into memory.
 
+[![npm version](https://img.shields.io/npm/v/json-stream-lite.svg)](https://www.npmjs.com/package/json-stream-lite)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Features
 
 - 🚀 **Stream parsing**: Parse JSON incrementally as data arrives
@@ -182,6 +185,9 @@ import { jsonStreamStringifyBytes } from 'json-stream-lite'
 
 const data = { name: 'Alice', age: 30 }
 
+// Example with a hypothetical writeToFile function
+declare function writeToFile(data: Uint8Array): Promise<void>
+
 for (const bytes of jsonStreamStringifyBytes(data)) {
     // bytes is a Uint8Array
     await writeToFile(bytes)
@@ -214,6 +220,9 @@ See [docs](https://jacobshirley.github.io/json-stream-lite/v1).
 ```typescript
 import { createReadStream } from 'fs'
 import { JsonObject } from 'json-stream-lite'
+
+// Example processing function
+declare function processRecord(key: string, value: unknown): Promise<void>
 
 async function processLargeFile(filePath: string) {
     const stream = createReadStream(filePath)
@@ -277,6 +286,8 @@ See [string streaming](./EXAMPLES.md#streaming-json-strings-advanced-usage) for 
 ### 1. Processing API Responses
 
 ```typescript
+import { JsonObject } from 'json-stream-lite'
+
 async function processApiResponse(url: string) {
     const response = await fetch(url)
     const parser = new JsonObject(response.body!)
@@ -329,7 +340,10 @@ async function generateLargeFile(data: unknown, outputPath: string) {
 ```typescript
 import { jsonStreamStringify } from 'json-stream-lite'
 
-async function* exportDatabase(query: string) {
+async function* exportDatabase(
+    query: string,
+    db: { query: (sql: string) => Promise<unknown[]> },
+) {
     const records = await db.query(query)
 
     for (const chunk of jsonStreamStringify(records, null, 2)) {
@@ -337,10 +351,13 @@ async function* exportDatabase(query: string) {
     }
 }
 
-// Stream to client
-app.get('/export', async (req, res) => {
+// Example usage with Express-like server
+declare const db: { query: (sql: string) => Promise<unknown[]> }
+declare const app: any
+
+app.get('/export', async (req: any, res: any) => {
     res.setHeader('Content-Type', 'application/json')
-    for await (const chunk of exportDatabase('SELECT * FROM users')) {
+    for await (const chunk of exportDatabase('SELECT * FROM users', db)) {
         res.write(chunk)
     }
     res.end()

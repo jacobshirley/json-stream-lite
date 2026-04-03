@@ -132,6 +132,30 @@ The constructor name of this entity
 
 ---
 
+### eof
+
+#### Set Signature
+
+> **set** **eof**(`value`): `void`
+
+Sets the end-of-file (EOF) state of the buffer, indicating whether no more data will be added.
+
+##### Parameters
+
+###### value
+
+`boolean`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`eof`](JsonEntity.md#eof)
+
+---
+
 ### maxBufferSize
 
 #### Set Signature
@@ -157,6 +181,150 @@ The maximum buffer size in bytes
 #### Inherited from
 
 [`JsonEntity`](JsonEntity.md).[`maxBufferSize`](JsonEntity.md#maxbuffersize)
+
+---
+
+### postComments
+
+#### Get Signature
+
+> **get** **postComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+
+Generators for post-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`Generator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`postComments`](JsonEntity.md#postcomments)
+
+---
+
+### postCommentsAsync
+
+#### Get Signature
+
+> **get** **postCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+Async generators for post-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`postCommentsAsync`](JsonEntity.md#postcommentsasync)
+
+---
+
+### postCommentStrings
+
+#### Get Signature
+
+> **get** **postCommentStrings**(): `string`[]
+
+Convenience getters to read all post comments as strings. Consumes the comments in the process.
+
+##### Returns
+
+`string`[]
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`postCommentStrings`](JsonEntity.md#postcommentstrings)
+
+---
+
+### preComments
+
+#### Get Signature
+
+> **get** **preComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+
+Generators for pre-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`Generator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`preComments`](JsonEntity.md#precomments)
+
+---
+
+### preCommentsAsync
+
+#### Get Signature
+
+> **get** **preCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+Async generators for pre-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`preCommentsAsync`](JsonEntity.md#precommentsasync)
+
+---
+
+### preCommentStrings
+
+#### Get Signature
+
+> **get** **preCommentStrings**(): `string`[]
+
+Convenience getters to read all pre comments as strings. Consumes the comments in the process.
+
+##### Returns
+
+`string`[]
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`preCommentStrings`](JsonEntity.md#precommentstrings)
+
+---
+
+### singlePostCommentString
+
+#### Get Signature
+
+> **get** **singlePostCommentString**(): `string` \| `null`
+
+Convenience getter to read a single post comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+
+##### Returns
+
+`string` \| `null`
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`singlePostCommentString`](JsonEntity.md#singlepostcommentstring)
+
+---
+
+### singlePreCommentString
+
+#### Get Signature
+
+> **get** **singlePreCommentString**(): `string` \| `null`
+
+Convenience getter to read a single pre comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+
+##### Returns
+
+`string` \| `null`
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`singlePreCommentString`](JsonEntity.md#singleprecommentstring)
 
 ## Methods
 
@@ -282,7 +450,7 @@ Error if the entity has already been consumed
 
 > `protected` **skipWhitespace**(): `void`
 
-Skips whitespace characters in the buffer.
+Skips whitespace characters (and comments when JSONC is enabled) in the buffer.
 
 #### Returns
 
