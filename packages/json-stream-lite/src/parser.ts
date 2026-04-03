@@ -124,6 +124,9 @@ export abstract class JsonEntity<T> {
             buffer instanceof ByteBuffer ? buffer : new ByteBuffer(buffer)
     }
 
+    /**
+     * Sets the end-of-file (EOF) state of the buffer, indicating whether no more data will be added.
+     */
     set eof(value: boolean) {
         this.buffer.eof = value
     }
@@ -153,6 +156,9 @@ export abstract class JsonEntity<T> {
         }
     }
 
+    /**
+     * Asynchronously skips whitespace and yields any comments encountered, waiting for more data if needed.
+     */
     private async *getCommentsAsync(): AsyncGenerator<JsonComment> {
         while (true) {
             const comments = this.getComments()
@@ -168,22 +174,37 @@ export abstract class JsonEntity<T> {
         }
     }
 
+    /**
+     * Generators for pre-comments. In JSONC, comments can appear before or after any value.
+     */
     get preComments(): Generator<JsonComment> {
         return this.getComments()
     }
 
+    /**
+     * Generators for post-comments. In JSONC, comments can appear before or after any value.
+     */
     get postComments(): Generator<JsonComment> {
         return this.getComments()
     }
 
+    /**
+     * Async generators for pre-comments. In JSONC, comments can appear before or after any value.
+     */
     get preCommentsAsync(): AsyncGenerator<JsonComment> {
         return this.getCommentsAsync()
     }
 
+    /**
+     * Async generators for post-comments. In JSONC, comments can appear before or after any value.
+     */
     get postCommentsAsync(): AsyncGenerator<JsonComment> {
         return this.getCommentsAsync()
     }
 
+    /**
+     * Convenience getters to read all pre comments as strings. Consumes the comments in the process.
+     */
     get preCommentStrings(): string[] {
         const strings: string[] = []
         for (const comment of this.preComments) {
@@ -192,6 +213,9 @@ export abstract class JsonEntity<T> {
         return strings
     }
 
+    /**
+     * Convenience getters to read all post comments as strings. Consumes the comments in the process.
+     */
     get postCommentStrings(): string[] {
         const strings: string[] = []
         for (const comment of this.postComments) {
@@ -200,6 +224,9 @@ export abstract class JsonEntity<T> {
         return strings
     }
 
+    /**
+     * Convenience getter to read a single pre comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+     */
     get singlePreCommentString(): string | null {
         const preComments = this.preComments
         const first = preComments.next()
@@ -210,6 +237,9 @@ export abstract class JsonEntity<T> {
         return first.value.read()
     }
 
+    /**
+     * Convenience getter to read a single post comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+     */
     get singlePostCommentString(): string | null {
         const postComments = this.postComments
         const first = postComments.next()
