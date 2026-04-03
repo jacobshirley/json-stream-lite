@@ -340,22 +340,10 @@ async function generateLargeFile(data: unknown, outputPath: string) {
 ```typescript
 import { jsonStreamStringify } from 'json-stream-lite'
 
-// Example database and app setup
-type ExpressRequest = Record<string, unknown>
-type ExpressResponse = {
-    setHeader: (name: string, value: string) => void
-    write: (chunk: string) => void
-    end: () => void
-}
-declare const db: { query: (sql: string) => Promise<unknown[]> }
-declare const app: {
-    get: (
-        path: string,
-        handler: (req: ExpressRequest, res: ExpressResponse) => Promise<void>,
-    ) => void
-}
-
-async function* exportDatabase(query: string) {
+async function* exportDatabase(
+    query: string,
+    db: { query: (sql: string) => Promise<unknown[]> },
+) {
     const records = await db.query(query)
 
     for (const chunk of jsonStreamStringify(records, null, 2)) {
@@ -363,10 +351,13 @@ async function* exportDatabase(query: string) {
     }
 }
 
-// Stream to client
-app.get('/export', async (req, res) => {
+// Example usage with Express-like server
+declare const db: { query: (sql: string) => Promise<unknown[]> }
+declare const app: any
+
+app.get('/export', async (req: any, res: any) => {
     res.setHeader('Content-Type', 'application/json')
-    for await (const chunk of exportDatabase('SELECT * FROM users')) {
+    for await (const chunk of exportDatabase('SELECT * FROM users', db)) {
         res.write(chunk)
     }
     res.end()
