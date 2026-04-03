@@ -326,6 +326,14 @@ describe('JSONC stringify', () => {
             }),
         ].join('')
 
+        expect(result).toMatchInlineSnapshot(`
+          "{
+            // comment for a
+            "a": 1,
+            /* block comment */
+            "b": 2
+          }"
+        `)
         expect(result).toContain('// comment for a')
         expect(result).toContain('/* block comment */')
     })
