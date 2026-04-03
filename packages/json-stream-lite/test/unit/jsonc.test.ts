@@ -1,26 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import {
-    JsonArray,
-    JsonObject,
-    JsoncComment,
-    jsonStreamStringify,
-} from '../../src/index.js'
+import { JsonArray, JsonObject, jsonStreamStringify } from '../../src/index.js'
 import { stringToBytes } from '../../src/utils.js'
 
 describe('JSONC comment parsing', () => {
-    it('should parse single-line comment before value', () => {
+    it('should parse single-line comment before value', async () => {
         const json = '// header comment\n{"key": "value"} // trailing comment'
-        const object = new JsonObject()
-        object.feed(json)
+        const object = new JsonObject(json)
+
         const comments: string[] = []
-        for (const comment of object.preComments) {
-            comments.push(comment.read())
+        for await (const comment of object.preCommentsAsync) {
+            comments.push(await comment.readAsync())
         }
 
-        const result = object.read()
+        const result = await object.readAsync()
         const trailingComments: string[] = []
-        for (const comment of object.postComments) {
-            trailingComments.push(comment.read())
+        for await (const comment of object.postCommentsAsync) {
+            trailingComments.push(await comment.readAsync())
         }
 
         expect(comments).toEqual(['header comment'])
@@ -32,6 +27,7 @@ describe('JSONC comment parsing', () => {
         const json = '/* block comment */ {"key": "value"}'
         const object = new JsonObject()
         object.feed(json)
+        object.eof = true
 
         const comments: string[] = []
         for (const comment of object.preComments) {
@@ -209,6 +205,7 @@ describe('JSONC comment parsing', () => {
         const json = '{"a": 1} // trailing'
         const object = new JsonObject()
         object.feed(json)
+        object.eof = true
 
         const items: string[] = []
         for (const item of object.members()) {

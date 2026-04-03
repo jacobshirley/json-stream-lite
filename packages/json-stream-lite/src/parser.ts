@@ -124,25 +124,26 @@ export abstract class JsonEntity<T> {
             buffer instanceof ByteBuffer ? buffer : new ByteBuffer(buffer)
     }
 
+    set eof(value: boolean) {
+        this.buffer.eof = value
+    }
+
     /**
      * Skips whitespace and yields any comments encountered.
      */
-    private *getComments(): Generator<JsoncComment> {
+    private *getComments(): Generator<JsonComment> {
         while (true) {
-            if (this.safePeek() === null) {
-                return
-            }
             this.skipWhitespace()
             if (this.buffer.peek() === BYTE_MAP.colon) {
                 this.buffer.next() // consume :
             }
             this.skipWhitespace()
 
-            const byte = this.safePeek()
+            const byte = this.buffer.peek()
             if (byte === BYTE_MAP.slash) {
-                const next = this.safePeek(1)
+                const next = this.buffer.peek(1)
                 if (next === BYTE_MAP.slash || next === BYTE_MAP.asterisk) {
-                    const comment = new JsoncComment(this.buffer)
+                    const comment = new JsonComment(this.buffer)
                     yield comment
                     comment.consume()
                     continue
@@ -152,12 +153,35 @@ export abstract class JsonEntity<T> {
         }
     }
 
-    get preComments(): Generator<JsoncComment> {
+    private async *getCommentsAsync(): AsyncGenerator<JsonComment> {
+        while (true) {
+            const comments = this.getComments()
+            const comment = this.tryParse(() => comments.next())
+            if (comment === undefined) {
+                await this.buffer.readStreamAsync()
+                continue
+            }
+            if (comment.done) {
+                break
+            }
+            yield comment.value
+        }
+    }
+
+    get preComments(): Generator<JsonComment> {
         return this.getComments()
     }
 
-    get postComments(): Generator<JsoncComment> {
+    get postComments(): Generator<JsonComment> {
         return this.getComments()
+    }
+
+    get preCommentsAsync(): AsyncGenerator<JsonComment> {
+        return this.getCommentsAsync()
+    }
+
+    get postCommentsAsync(): AsyncGenerator<JsonComment> {
+        return this.getCommentsAsync()
     }
 
     get preCommentStrings(): string[] {
@@ -261,17 +285,6 @@ export abstract class JsonEntity<T> {
     }
 
     /**
-     * Safely peeks at the buffer, returning null if no data is available
-     * (even when eof has not been signaled).
-     */
-    protected safePeek(ahead: number = 0): number | null {
-        if (this.buffer.bufferIndex + ahead >= this.buffer.length) {
-            return null
-        }
-        return this.buffer.peek(ahead)
-    }
-
-    /**
      * Reads and parses the entity, consuming it in the process.
      *
      * @returns The parsed value
@@ -342,10 +355,6 @@ export abstract class JsonEntity<T> {
      * @throws Error if the entity has already been consumed
      */
     tryParse<T = this>(cb: (entity: this) => T): T | undefined {
-        if (this.consumed) {
-            throw new Error('JSON entity has already been consumed.')
-        }
-
         this.buffer.locked = true
         return this.buffer.resetOnFail(
             () => {
@@ -430,7 +439,7 @@ export abstract class JsonEntity<T> {
  * Represents a JSONC comment (single-line or block).
  * Parses lazily from the buffer — the comment text is only decoded when read().
  */
-export class JsoncComment extends JsonEntity<string> {
+export class JsonComment extends JsonEntity<string> {
     /** The comment style: 'line' for //, 'block' for /* * / */
     style: 'line' | 'block' = 'line'
 
@@ -455,7 +464,7 @@ export class JsoncComment extends JsonEntity<string> {
         if (second === BYTE_MAP.slash) {
             this.style = 'line'
             while (true) {
-                const byte = this.safePeek()
+                const byte = this.buffer.peek()
                 if (
                     byte === null ||
                     byte === BYTE_MAP.lineFeed ||
@@ -496,11 +505,11 @@ export class JsoncComment extends JsonEntity<string> {
         return commentString
     }
 
-    override get preComments(): Generator<JsoncComment> {
+    override get preComments(): Generator<JsonComment> {
         return (function* () {})()
     }
 
-    override get postComments(): Generator<JsoncComment> {
+    override get postComments(): Generator<JsonComment> {
         return (function* () {})()
     }
 }

@@ -184,12 +184,20 @@ export class ByteBuffer {
     }
 
     /**
+     * Checks if the buffer has been fully consumed.
+     * @returns True if buffer index is at or beyond the end of the buffer
+     *       */
+    atEnd(): boolean {
+        return this.bufferIndex >= this.buffer.length
+    }
+
+    /**
      * Checks if end of file has been reached and buffer is exhausted.
      *
      * @returns True if no more input is available
      */
     atEof(): boolean {
-        return this.eof && this.bufferIndex >= this.buffer.length
+        return this.eof && this.atEnd()
     }
 
     /**
