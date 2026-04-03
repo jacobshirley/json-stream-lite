@@ -1,109 +1,83 @@
 import { describe, expect, test } from 'vitest'
 import {
-    JsonKeyValuePair,
-    jsonKeyValueParser,
-    jsonKeyValueParserAsync,
+    YamlKeyValuePair,
+    yamlKeyValueParser,
+    yamlKeyValueParserAsync,
 } from '../../src/index.js'
-import { stringToBytes } from '../../src/utils.js'
 
-describe('JSON streaming with generators', () => {
-    test('should parse key-value pairs', () => {
-        const jsonString = '{"name":"Alice","age":30}'
-        const pairs: JsonKeyValuePair[] = []
-
-        for (const jsonPair of jsonKeyValueParser(jsonString)) {
-            pairs.push(jsonPair)
+describe('yamlKeyValueParser (sync)', () => {
+    test('parses flat mapping', () => {
+        const yaml = 'name: John\nage: 30\n'
+        const pairs: YamlKeyValuePair[] = []
+        for (const pair of yamlKeyValueParser(yaml)) {
+            pairs.push(pair)
         }
-
         expect(pairs).toEqual([
-            ['name', 'Alice'],
+            ['name', 'John'],
             ['age', 30],
         ])
     })
 
-    test('should parse key-values pairs (async generator)', async () => {
-        const jsonString = '{"city":"Wonderland","population":1000}'
-        const pairs: JsonKeyValuePair[] = []
-
-        for await (const jsonPair of jsonKeyValueParserAsync(
-            (async function* () {
-                for (const char of jsonString) {
-                    yield char.charCodeAt(0)
-                }
-            })(),
-        )) {
-            pairs.push(jsonPair)
+    test('parses nested mapping', () => {
+        const yaml = 'user:\n  name: Alice\n  scores:\n    - 10\n    - 20\n'
+        const pairs: YamlKeyValuePair[] = []
+        for (const pair of yamlKeyValueParser(yaml)) {
+            pairs.push(pair)
         }
-
         expect(pairs).toEqual([
-            ['city', 'Wonderland'],
-            ['population', 1000],
+            ['user.name', 'Alice'],
+            ['user.scores[0]', 10],
+            ['user.scores[1]', 20],
         ])
     })
 
-    test('should parse key-value pairs from ReadableStream', async () => {
-        const jsonString = '{"country":"Narnia","area":50000}'
-        const stream = new ReadableStream<number>({
+    test('parses sequence at root', () => {
+        const yaml = '- a\n- b\n'
+        const pairs: YamlKeyValuePair[] = []
+        for (const pair of yamlKeyValueParser(yaml)) {
+            pairs.push(pair)
+        }
+        expect(pairs).toEqual([
+            ['[0]', 'a'],
+            ['[1]', 'b'],
+        ])
+    })
+})
+
+describe('yamlKeyValueParserAsync', () => {
+    test('parses from string', async () => {
+        const yaml = 'x: 1\ny: 2\n'
+        const pairs: YamlKeyValuePair[] = []
+        for await (const pair of yamlKeyValueParserAsync(yaml)) {
+            pairs.push(pair)
+        }
+        expect(pairs).toEqual([
+            ['x', 1],
+            ['y', 2],
+        ])
+    })
+
+    test('parses from ReadableStream', async () => {
+        const yaml = 'a: hello\nb: world\n'
+        const encoder = new TextEncoder()
+        const stream = new ReadableStream<Uint8Array>({
             start(controller) {
-                for (const char of jsonString) {
-                    controller.enqueue(char.charCodeAt(0))
-                }
+                // Send in chunks
+                const bytes = encoder.encode(yaml)
+                const mid = Math.floor(bytes.length / 2)
+                controller.enqueue(bytes.slice(0, mid))
+                controller.enqueue(bytes.slice(mid))
                 controller.close()
             },
         })
 
-        const pairs: JsonKeyValuePair[] = []
-
-        for await (const jsonPair of jsonKeyValueParserAsync(stream)) {
-            pairs.push(jsonPair)
+        const pairs: YamlKeyValuePair[] = []
+        for await (const pair of yamlKeyValueParserAsync(stream)) {
+            pairs.push(pair)
         }
-
         expect(pairs).toEqual([
-            ['country', 'Narnia'],
-            ['area', 50000],
+            ['a', 'hello'],
+            ['b', 'world'],
         ])
-    })
-
-    test('should parse key-value pairs via fetch stream', async () => {
-        const url = 'https://jsonplaceholder.typicode.com/todos/1'
-        const response = await fetch(url)
-
-        if (!response.body) {
-            throw new Error('No response body')
-        }
-
-        const pairs: JsonKeyValuePair[] = []
-
-        for await (const jsonPair of jsonKeyValueParserAsync(response.body)) {
-            pairs.push(jsonPair)
-        }
-
-        expect(pairs).toEqual([
-            ['userId', 1],
-            ['id', 1],
-            ['title', 'delectus aut autem'],
-            ['completed', false],
-        ])
-    })
-
-    test('should incrementally parse JSON objects', async () => {
-        const json = '{"a":1,"b":2}'
-        const expectedPairs: JsonKeyValuePair[] = [
-            ['a', 1],
-            ['b', 2],
-        ]
-        const pairs: JsonKeyValuePair[] = []
-
-        async function* byteStream() {
-            for (const byte of stringToBytes(json)) {
-                yield byte
-            }
-        }
-
-        for await (const jsonPair of jsonKeyValueParserAsync(byteStream())) {
-            pairs.push(jsonPair)
-        }
-
-        expect(pairs).toEqual(expectedPairs)
     })
 })

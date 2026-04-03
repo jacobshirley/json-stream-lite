@@ -788,6 +788,8 @@ export type YamlValueType = YamlScalar | YamlMapping | YamlSequence
 export class YamlValue<T = any> extends YamlEntity<YamlValueType> {
     private parentIndent: number
     private inFlow: boolean
+    private inline: boolean
+    private key?: YamlScalar
     private inner?: YamlValueType
     public hasReadValue: boolean = false
 
@@ -795,18 +797,57 @@ export class YamlValue<T = any> extends YamlEntity<YamlValueType> {
         buffer?: ByteBuffer | ByteStream,
         parentIndent: number = -1,
         inFlow: boolean = false,
+        inline: boolean = false,
+        key?: YamlScalar,
     ) {
         super(buffer)
         this.parentIndent = parentIndent
         this.inFlow = inFlow
+        this.inline = inline
+        this.key = key
     }
 
     protected parse(): YamlValueType {
-        if (this.inFlow) {
-            skipFlowWhitespace(this.buffer)
+        // If we have a key, consume it + the colon (like JsonValue does)
+        if (this.key) {
+            this.key.consume()
+            skipInlineWhitespace(this.buffer)
+            if (this.buffer.peek() === B.colon) {
+                this.buffer.next() // consume :
+            }
+            skipInlineWhitespace(this.buffer)
+
+            // Check if value is on next line
+            const afterColon = this.buffer.peek()
+            if (afterColon === B.hash) {
+                skipToEndOfLine(this.buffer)
+                this.inline = false
+            } else if (
+                afterColon === B.lf ||
+                afterColon === B.cr ||
+                afterColon === null
+            ) {
+                consumeNewline(this.buffer)
+                this.inline = false
+            } else {
+                // Value is inline (same line as key)
+                this.inline = true
+            }
         }
 
-        const byte = this.buffer.peek()
+        if (this.inFlow) {
+            skipFlowWhitespace(this.buffer)
+        } else if (!this.inline) {
+            skipBlanksAndComments(this.buffer)
+        }
+
+        // In block context, peek past leading indent to find content byte
+        let peekOffset = 0
+        if (!this.inFlow && !this.inline) {
+            peekOffset = measureIndent(this.buffer)
+        }
+
+        const byte = this.buffer.peek(peekOffset)
 
         // Flow collections
         if (byte === B.leftBrace) {
@@ -840,7 +881,12 @@ export class YamlValue<T = any> extends YamlEntity<YamlValueType> {
                 after === B.cr ||
                 after === null
             ) {
-                return new YamlSequence(this.buffer, this.parentIndent, 'block')
+                return new YamlSequence(
+                    this.buffer,
+                    this.parentIndent,
+                    'block',
+                    this.inline,
+                )
             }
             // could be a negative number or plain string starting with -
             return new YamlScalar(this.buffer, this.parentIndent, false)
@@ -848,7 +894,12 @@ export class YamlValue<T = any> extends YamlEntity<YamlValueType> {
 
         // Check if this is a block mapping by looking for "key:" pattern
         if (this.isBlockMappingStart()) {
-            return new YamlMapping(this.buffer, this.parentIndent, 'block')
+            return new YamlMapping(
+                this.buffer,
+                this.parentIndent,
+                'block',
+                this.inline,
+            )
         }
 
         // Plain scalar
@@ -893,7 +944,7 @@ export class YamlValue<T = any> extends YamlEntity<YamlValueType> {
                         ahead++
                         break
                     }
-                    if (b === B.backslash && quote === B.doubleQuote) ahead++ // skip escaped char
+                    if (b === B.backslash && quote === B.doubleQuote) ahead++
                     ahead++
                 }
                 continue
@@ -959,15 +1010,18 @@ export type YamlMappingMember = {
 export class YamlMapping extends YamlEntity<Record<string, unknown>> {
     private parentIndent: number
     private style: 'block' | 'flow'
+    private inline: boolean
 
     constructor(
         buffer?: ByteBuffer | ByteStream,
         parentIndent: number = -1,
         style: 'block' | 'flow' = 'block',
+        inline: boolean = false,
     ) {
         super(buffer)
         this.parentIndent = parentIndent
         this.style = style
+        this.inline = inline
     }
 
     *members(): Generator<YamlMappingMember> {
@@ -994,24 +1048,13 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
                 return
             }
 
-            // Parse key
+            // Parse key — don't read it, let YamlValue consume it
             const key = new YamlScalar(this.buffer, -1, true)
-            const keyVal = key.read()
-
-            skipFlowWhitespace(this.buffer)
-
-            // Consume :
-            if (this.buffer.peek() === B.colon) {
-                this.buffer.next()
-                skipFlowWhitespace(this.buffer)
-            }
-
-            // Parse value
-            const value = new YamlValue(this.buffer, -1, true)
+            // In flow context, YamlValue handles key consumption
+            const value = new YamlValue(this.buffer, -1, true, false, key)
 
             yield { key, value }
 
-            key.consume()
             value.consume()
 
             skipFlowWhitespace(this.buffer)
@@ -1025,8 +1068,41 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
 
     private *blockMembers(): Generator<YamlMappingMember> {
         let childIndent = -1
+        let isFirstItem = true
 
         while (true) {
+            // For inline first item (mid-line after "- "), skip indent checks
+            if (isFirstItem && this.inline) {
+                isFirstItem = false
+                // We're mid-line. Parse key directly.
+                const key = new YamlScalar(
+                    this.buffer,
+                    this.parentIndent,
+                    false,
+                )
+                const value = new YamlValue(
+                    this.buffer,
+                    this.parentIndent,
+                    false,
+                    true,
+                    key,
+                )
+
+                yield { key, value }
+                value.consume()
+
+                // Consume trailing inline comment + newline
+                skipInlineComment(this.buffer)
+                if (
+                    this.buffer.peek() === B.lf ||
+                    this.buffer.peek() === B.cr
+                ) {
+                    consumeNewline(this.buffer)
+                }
+                continue
+            }
+
+            isFirstItem = false
             skipBlanksAndComments(this.buffer)
 
             const byte = this.buffer.peek()
@@ -1034,7 +1110,7 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
 
             const currentIndent = measureIndent(this.buffer)
 
-            // Set child indent from first key
+            // Set child indent from first key (or second key if first was inline)
             if (childIndent === -1) {
                 if (currentIndent <= this.parentIndent) return
                 childIndent = currentIndent
@@ -1042,10 +1118,7 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
 
             // If we've de-indented, we're done
             if (currentIndent < childIndent) return
-            if (currentIndent !== childIndent) {
-                // Indented more than expected — error or sub-block, stop
-                return
-            }
+            if (currentIndent !== childIndent) return
 
             // Check for document markers
             if (currentIndent === 0 && isDocumentMarker(this.buffer)) return
@@ -1053,51 +1126,20 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
             // Consume indent
             for (let i = 0; i < currentIndent; i++) this.buffer.next()
 
-            // Parse key
+            // Parse key — don't read it, let YamlValue handle consumption
             const key = new YamlScalar(this.buffer, childIndent, false)
-            const keyVal = key.read()
-
-            skipInlineWhitespace(this.buffer)
-
-            // Expect and consume :
-            if (this.buffer.peek() !== B.colon) {
-                throw new Error(
-                    `Expected ':' after mapping key, got ${String.fromCharCode(this.buffer.peek() ?? 0)}`,
-                )
-            }
-            this.buffer.next() // consume :
-
-            skipInlineWhitespace(this.buffer)
-
-            // Value: could be inline or on next line
-            const afterColon = this.buffer.peek()
-
-            let value: YamlValue
-
-            if (
-                afterColon === null ||
-                afterColon === B.lf ||
-                afterColon === B.cr ||
-                afterColon === B.hash
-            ) {
-                // Value on next line (block value)
-                if (afterColon === B.hash) {
-                    skipToEndOfLine(this.buffer)
-                } else {
-                    consumeNewline(this.buffer)
-                }
-                value = new YamlValue(this.buffer, childIndent, false)
-            } else {
-                // Inline value
-                value = new YamlValue(this.buffer, childIndent, false)
-            }
+            const value = new YamlValue(
+                this.buffer,
+                childIndent,
+                false,
+                false,
+                key,
+            )
 
             yield { key, value }
-
-            key.consume()
             value.consume()
 
-            // Consume any remaining content on this line (inline comment)
+            // Consume trailing inline comment + newline
             skipInlineComment(this.buffer)
             if (this.buffer.peek() === B.lf || this.buffer.peek() === B.cr) {
                 consumeNewline(this.buffer)
@@ -1115,7 +1157,6 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
                 if (current === undefined) break
                 if (current.done) return
                 yield current.value
-                await current.value.key.consumeAsync()
                 await current.value.value.consumeAsync()
             }
 
@@ -1145,15 +1186,18 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
 export class YamlSequence extends YamlEntity<unknown[]> {
     private parentIndent: number
     private style: 'block' | 'flow'
+    private inline: boolean
 
     constructor(
         buffer?: ByteBuffer | ByteStream,
         parentIndent: number = -1,
         style: 'block' | 'flow' = 'block',
+        inline: boolean = false,
     ) {
         super(buffer)
         this.parentIndent = parentIndent
         this.style = style
+        this.inline = inline
     }
 
     *items(): Generator<YamlValue> {
@@ -1194,8 +1238,57 @@ export class YamlSequence extends YamlEntity<unknown[]> {
 
     private *blockItems(): Generator<YamlValue> {
         let childIndent = -1
+        let isFirstItem = true
 
         while (true) {
+            // For inline first item (mid-line after "- "), handle the dash directly
+            if (isFirstItem && this.inline) {
+                isFirstItem = false
+
+                // We're already past parent's "- ", now at the nested "- "
+                if (this.buffer.peek() !== B.dash) return
+
+                // Don't know childIndent yet — set it later from next line
+                this.buffer.next() // consume -
+
+                const afterDash = this.buffer.peek()
+                if (afterDash === B.space || afterDash === B.tab) {
+                    this.buffer.next()
+                }
+
+                skipInlineWhitespace(this.buffer)
+
+                // Parse inline item value
+                if (isAtNewlineOrEof(this.buffer)) {
+                    consumeNewline(this.buffer)
+                    const value = new YamlValue(
+                        this.buffer,
+                        this.parentIndent,
+                        false,
+                    )
+                    yield value
+                    value.consume()
+                } else {
+                    const value = new YamlValue(
+                        this.buffer,
+                        this.parentIndent,
+                        false,
+                        true,
+                    )
+                    yield value
+                    value.consume()
+                    skipInlineComment(this.buffer)
+                    if (
+                        this.buffer.peek() === B.lf ||
+                        this.buffer.peek() === B.cr
+                    ) {
+                        consumeNewline(this.buffer)
+                    }
+                }
+                continue
+            }
+
+            isFirstItem = false
             skipBlanksAndComments(this.buffer)
 
             const byte = this.buffer.peek()
@@ -1203,14 +1296,11 @@ export class YamlSequence extends YamlEntity<unknown[]> {
 
             const currentIndent = measureIndent(this.buffer)
 
-            // Set child indent from first dash
+            // Set child indent from first dash at a new line
             if (childIndent === -1) {
                 if (currentIndent <= this.parentIndent) return
-
-                // Check that there's a dash at this indent
                 const dashByte = this.buffer.peek(currentIndent)
                 if (dashByte !== B.dash) return
-
                 childIndent = currentIndent
             }
 
@@ -1231,23 +1321,19 @@ export class YamlSequence extends YamlEntity<unknown[]> {
             // Must be followed by space, newline, or EOF
             const afterDash = this.buffer.peek()
             if (afterDash === B.space || afterDash === B.tab) {
-                this.buffer.next() // consume space after -
+                this.buffer.next()
             } else if (
                 afterDash !== B.lf &&
                 afterDash !== B.cr &&
                 afterDash !== null
             ) {
-                // Not a valid block sequence item
                 return
             }
 
             skipInlineWhitespace(this.buffer)
 
-            // The item value — parentIndent for nested content is childIndent + 1
-            // (so content must be indented past the dash column)
             const itemParentIndent = childIndent + 1
 
-            // Check if value is on same line or next line
             if (isAtNewlineOrEof(this.buffer)) {
                 consumeNewline(this.buffer)
                 const value = new YamlValue(
@@ -1262,11 +1348,11 @@ export class YamlSequence extends YamlEntity<unknown[]> {
                     this.buffer,
                     itemParentIndent,
                     false,
+                    true,
                 )
                 yield value
                 value.consume()
 
-                // Consume remaining inline content
                 skipInlineComment(this.buffer)
                 if (
                     this.buffer.peek() === B.lf ||
@@ -1330,7 +1416,7 @@ export class YamlDocument extends YamlEntity<unknown> {
 
         skipBlanksAndComments(this.buffer)
 
-        // Check for empty document (immediately followed by ... or --- or EOF)
+        // Check for empty document
         const byte = this.buffer.peek()
         if (byte === null) return null
 

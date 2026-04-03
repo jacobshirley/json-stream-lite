@@ -1,785 +1,475 @@
 import { describe, it, expect } from 'vitest'
 import {
-    JsonArray,
-    JsonKeyValueParser,
-    JsonObject,
-    JsonString,
-    JsonValue,
+    YamlScalar,
+    YamlMapping,
+    YamlSequence,
+    YamlValue,
+    YamlDocument,
+    YamlStream,
+    YamlKeyValueParser,
 } from '../../src/index.js'
-import { stringToBytes } from '../../src/utils.js'
-import { ByteBuffer } from '../../src/byte-buffer.js'
 
-type KeyValue = { key: string; value: any }
-
-describe('JSON parsing', () => {
-    it('should break down a simple JSON object', () => {
-        const json = '{"key": "value"}'
-        const object = new JsonObject()
-
-        object.maxBufferSize = 2 // Small buffer to force chunked processing
-        object.feed(json)
-
-        const pairs: KeyValue[] = []
-
-        for (const { key: keyEntity, value: valueEntity } of object.members()) {
-            const key = keyEntity.read()
-            const value = valueEntity.readValue()
-
-            pairs.push({ key, value })
-        }
-
-        expect(pairs).toEqual([{ key: 'key', value: 'value' }])
+describe('YamlScalar', () => {
+    it('parses plain string', () => {
+        const s = new YamlScalar()
+        s.feed('hello')
+        s.eof = true
+        expect(s.read()).toBe('hello')
     })
 
-    it('should handle various primitive values', () => {
-        const json =
-            '{"str": "hello", "num": 123, "bool": true, "nullVal": null}'
-        const object = new JsonObject()
+    it('parses plain integer', () => {
+        const s = new YamlScalar()
+        s.feed('42')
+        s.eof = true
+        expect(s.read()).toBe(42)
+    })
 
-        object.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
+    it('parses plain negative integer', () => {
+        const s = new YamlScalar()
+        s.feed('-7')
+        s.eof = true
+        expect(s.read()).toBe(-7)
+    })
 
-        for (const { key: keyEntity, value: valueEntity } of object.members()) {
-            const key = keyEntity.read()
-            const value = valueEntity.read().read()
+    it('parses plain float', () => {
+        const s = new YamlScalar()
+        s.feed('3.14')
+        s.eof = true
+        expect(s.read()).toBe(3.14)
+    })
 
-            keyValuePairs.push({ key, value })
+    it('parses plain boolean true', () => {
+        const s = new YamlScalar()
+        s.feed('true')
+        s.eof = true
+        expect(s.read()).toBe(true)
+    })
+
+    it('parses plain boolean false', () => {
+        const s = new YamlScalar()
+        s.feed('false')
+        s.eof = true
+        expect(s.read()).toBe(false)
+    })
+
+    it('parses null', () => {
+        const s = new YamlScalar()
+        s.feed('null')
+        s.eof = true
+        expect(s.read()).toBe(null)
+    })
+
+    it('parses tilde as null', () => {
+        const s = new YamlScalar()
+        s.feed('~')
+        s.eof = true
+        expect(s.read()).toBe(null)
+    })
+
+    it('parses .inf', () => {
+        const s = new YamlScalar()
+        s.feed('.inf')
+        s.eof = true
+        expect(s.read()).toBe(Infinity)
+    })
+
+    it('parses -.inf', () => {
+        const s = new YamlScalar()
+        s.feed('-.inf')
+        s.eof = true
+        expect(s.read()).toBe(-Infinity)
+    })
+
+    it('parses .nan', () => {
+        const s = new YamlScalar()
+        s.feed('.nan')
+        s.eof = true
+        expect(s.read()).toBeNaN()
+    })
+
+    it('parses hex integer', () => {
+        const s = new YamlScalar()
+        s.feed('0xFF')
+        s.eof = true
+        expect(s.read()).toBe(255)
+    })
+
+    it('parses octal integer', () => {
+        const s = new YamlScalar()
+        s.feed('0o77')
+        s.eof = true
+        expect(s.read()).toBe(63)
+    })
+
+    it('parses double-quoted string', () => {
+        const s = new YamlScalar()
+        s.feed('"hello world"')
+        s.eof = true
+        expect(s.read()).toBe('hello world')
+    })
+
+    it('parses double-quoted string with escapes', () => {
+        const s = new YamlScalar()
+        s.feed('"line1\\nline2\\ttab"')
+        s.eof = true
+        expect(s.read()).toBe('line1\nline2\ttab')
+    })
+
+    it('parses double-quoted string with unicode escape', () => {
+        const s = new YamlScalar()
+        s.feed('"\\u0041"')
+        s.eof = true
+        expect(s.read()).toBe('A')
+    })
+
+    it('parses single-quoted string', () => {
+        const s = new YamlScalar()
+        s.feed("'hello world'")
+        s.eof = true
+        expect(s.read()).toBe('hello world')
+    })
+
+    it('parses single-quoted string with escaped quote', () => {
+        const s = new YamlScalar()
+        s.feed("'it''s a test'")
+        s.eof = true
+        expect(s.read()).toBe("it's a test")
+    })
+})
+
+describe('YamlMapping', () => {
+    it('parses simple block mapping', () => {
+        const m = new YamlMapping()
+        m.feed('name: John\nage: 30\n')
+        m.eof = true
+        expect(m.read()).toEqual({ name: 'John', age: 30 })
+    })
+
+    it('parses nested block mapping', () => {
+        const m = new YamlMapping()
+        m.feed('user:\n  name: Alice\n  age: 25\n')
+        m.eof = true
+        expect(m.read()).toEqual({ user: { name: 'Alice', age: 25 } })
+    })
+
+    it('parses flow mapping', () => {
+        const m = new YamlMapping(undefined, -1, 'flow')
+        m.feed('{name: John, age: 30}')
+        m.eof = true
+        expect(m.read()).toEqual({ name: 'John', age: 30 })
+    })
+
+    it('parses empty flow mapping', () => {
+        const m = new YamlMapping(undefined, -1, 'flow')
+        m.feed('{}')
+        m.eof = true
+        expect(m.read()).toEqual({})
+    })
+
+    it('parses mapping with quoted keys', () => {
+        const m = new YamlMapping()
+        m.feed('"key with spaces": value\n')
+        m.eof = true
+        expect(m.read()).toEqual({ 'key with spaces': 'value' })
+    })
+
+    it('parses mapping with boolean and null values', () => {
+        const m = new YamlMapping()
+        m.feed('active: true\ndeleted: false\ndata: null\n')
+        m.eof = true
+        expect(m.read()).toEqual({ active: true, deleted: false, data: null })
+    })
+
+    it('parses mapping with block value on next line', () => {
+        const m = new YamlMapping()
+        m.feed('items:\n  - one\n  - two\n')
+        m.eof = true
+        expect(m.read()).toEqual({ items: ['one', 'two'] })
+    })
+
+    it('iterates members lazily', () => {
+        const m = new YamlMapping()
+        m.feed('a: 1\nb: 2\nc: 3\n')
+        m.eof = true
+
+        const keys: string[] = []
+        const values: unknown[] = []
+        for (const { key, value } of m) {
+            keys.push(String(key.read()))
+            values.push(value.readValue())
         }
+        expect(keys).toEqual(['a', 'b', 'c'])
+        expect(values).toEqual([1, 2, 3])
+    })
+})
 
-        expect(keyValuePairs).toEqual([
-            {
-                key: 'str',
-                value: 'hello',
-            },
-            {
-                key: 'num',
-                value: 123,
-            },
-            {
-                key: 'bool',
-                value: true,
-            },
-            {
-                key: 'nullVal',
-                value: null,
-            },
+describe('YamlSequence', () => {
+    it('parses simple block sequence', () => {
+        const s = new YamlSequence()
+        s.feed('- one\n- two\n- three\n')
+        s.eof = true
+        expect(s.read()).toEqual(['one', 'two', 'three'])
+    })
+
+    it('parses block sequence with numbers', () => {
+        const s = new YamlSequence()
+        s.feed('- 1\n- 2\n- 3\n')
+        s.eof = true
+        expect(s.read()).toEqual([1, 2, 3])
+    })
+
+    it('parses flow sequence', () => {
+        const s = new YamlSequence(undefined, -1, 'flow')
+        s.feed('[1, 2, 3]')
+        s.eof = true
+        expect(s.read()).toEqual([1, 2, 3])
+    })
+
+    it('parses empty flow sequence', () => {
+        const s = new YamlSequence(undefined, -1, 'flow')
+        s.feed('[]')
+        s.eof = true
+        expect(s.read()).toEqual([])
+    })
+
+    it('parses nested block sequence', () => {
+        const s = new YamlSequence()
+        s.feed('- - a\n  - b\n- - c\n  - d\n')
+        s.eof = true
+        expect(s.read()).toEqual([
+            ['a', 'b'],
+            ['c', 'd'],
         ])
     })
 
-    it('should ignore whitespace between keyValuePairs', () => {
-        const json = '{   "key1"  :  "value1" ,  "key2" : 42  }'
-        const object = new JsonObject()
-
-        object.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
-
-        for (const { key: keyEntity, value: valueEntity } of object.members()) {
-            const key = keyEntity.read()
-            const value = valueEntity.read().read()
-
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'key1', value: 'value1' },
-            { key: 'key2', value: 42 },
+    it('parses sequence of mappings', () => {
+        const s = new YamlSequence()
+        s.feed('- name: Alice\n  age: 25\n- name: Bob\n  age: 30\n')
+        s.eof = true
+        expect(s.read()).toEqual([
+            { name: 'Alice', age: 25 },
+            { name: 'Bob', age: 30 },
         ])
     })
 
-    it('should handle empty JSON objects', () => {
-        const json = '{}'
-        const object = new JsonObject()
+    it('iterates items lazily', () => {
+        const s = new YamlSequence()
+        s.feed('- a\n- b\n- c\n')
+        s.eof = true
 
-        object.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
-
-        for (const { key: keyEntity, value: valueEntity } of object.members()) {
-            const key = keyEntity.read()
-            const value = valueEntity.read().read()
-
-            keyValuePairs.push({ key, value })
+        const values: unknown[] = []
+        for (const item of s) {
+            values.push(item.readValue())
         }
+        expect(values).toEqual(['a', 'b', 'c'])
+    })
+})
 
-        expect(keyValuePairs).toEqual([])
+describe('YamlValue', () => {
+    it('auto-detects flow mapping', () => {
+        const v = new YamlValue()
+        v.feed('{a: 1}')
+        v.eof = true
+        expect(v.readValue()).toEqual({ a: 1 })
     })
 
-    it('should handle arrays', () => {
-        const json = '{"arr": [1, "two", false]}'
-        const object = new JsonObject()
+    it('auto-detects flow sequence', () => {
+        const v = new YamlValue()
+        v.feed('[1, 2, 3]')
+        v.eof = true
+        expect(v.readValue()).toEqual([1, 2, 3])
+    })
 
-        object.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
+    it('auto-detects block mapping', () => {
+        const v = new YamlValue()
+        v.feed('name: John\nage: 30\n')
+        v.eof = true
+        expect(v.readValue()).toEqual({ name: 'John', age: 30 })
+    })
 
-        for (const { key: keyEntity, value: valueEntity } of object.members()) {
-            const key = keyEntity.read()
-            const value = valueEntity.read().read()
+    it('auto-detects block sequence', () => {
+        const v = new YamlValue()
+        v.feed('- one\n- two\n')
+        v.eof = true
+        expect(v.readValue()).toEqual(['one', 'two'])
+    })
 
-            keyValuePairs.push({ key, value })
+    it('auto-detects plain scalar', () => {
+        const v = new YamlValue()
+        v.feed('hello')
+        v.eof = true
+        expect(v.readValue()).toBe('hello')
+    })
+
+    it('auto-detects quoted scalar', () => {
+        const v = new YamlValue()
+        v.feed('"hello"')
+        v.eof = true
+        expect(v.readValue()).toBe('hello')
+    })
+})
+
+describe('YamlDocument', () => {
+    it('parses document without markers', () => {
+        const d = new YamlDocument()
+        d.feed('name: John\nage: 30\n')
+        d.eof = true
+        expect(d.read()).toEqual({ name: 'John', age: 30 })
+    })
+
+    it('parses document with --- marker', () => {
+        const d = new YamlDocument()
+        d.feed('---\nname: John\n')
+        d.eof = true
+        expect(d.read()).toEqual({ name: 'John' })
+    })
+
+    it('parses document with ... marker', () => {
+        const d = new YamlDocument()
+        d.feed('name: John\n...\n')
+        d.eof = true
+        expect(d.read()).toEqual({ name: 'John' })
+    })
+})
+
+describe('YamlStream', () => {
+    it('parses multiple documents', () => {
+        const s = new YamlStream()
+        s.feed('---\nname: Alice\n---\nname: Bob\n')
+        s.eof = true
+        expect(s.read()).toEqual([{ name: 'Alice' }, { name: 'Bob' }])
+    })
+
+    it('parses multiple documents with ... separator', () => {
+        const s = new YamlStream()
+        s.feed('name: Alice\n...\n---\nname: Bob\n')
+        s.eof = true
+        expect(s.read()).toEqual([{ name: 'Alice' }, { name: 'Bob' }])
+    })
+})
+
+describe('YamlKeyValueParser', () => {
+    it('flattens nested mapping', () => {
+        const p = new YamlKeyValueParser()
+        p.feed('user:\n  name: John\n  age: 30\n')
+        p.eof = true
+
+        const pairs: [string, unknown][] = []
+        for (const pair of p.parse()) {
+            pairs.push(pair)
         }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'arr', value: [1, 'two', false] },
+        expect(pairs).toEqual([
+            ['user.name', 'John'],
+            ['user.age', 30],
         ])
     })
 
-    it('should handle streaming arrays', () => {
-        const json = '{"numbers": [10, 20, 30, 40, 50]}'
-        const bytes = stringToBytes(json)
-        const jsonValue = new JsonValue()
-        const keyValuePairs: KeyValue[] = []
+    it('flattens sequence with indices', () => {
+        const p = new YamlKeyValueParser()
+        p.feed('- a\n- b\n- c\n')
+        p.eof = true
 
-        for (const byte of bytes) {
-            jsonValue.feed(byte)
-            jsonValue.tryParse((value) => {
-                keyValuePairs.length = 0
-
-                const jsonObject = value.read()
-
-                if (!(jsonObject instanceof JsonObject))
-                    throw new Error('Not a JSON object')
-
-                for (const {
-                    key: keyEntity,
-                    value: valueEntity,
-                } of jsonObject.members()) {
-                    const key = keyEntity.read()
-                    const value = valueEntity.read()
-
-                    if (!(value instanceof JsonArray)) {
-                        throw new Error('Expected a JsonArray')
-                    }
-
-                    const array: number[] = []
-
-                    for (const itemEntity of value.items()) {
-                        const itemValue = itemEntity.readValue()
-
-                        array.push(itemValue as number)
-                    }
-
-                    keyValuePairs.push({ key, value: array })
-                }
-            })
+        const pairs: [string, unknown][] = []
+        for (const pair of p.parse()) {
+            pairs.push(pair)
         }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'numbers', value: [10, 20, 30, 40, 50] },
-        ])
-    })
-
-    it('should handle streaming arrays with types', () => {
-        const json = '{"numbers": [10, 20, 30, 40, 50]}'
-        const jsonValue = new JsonValue<{
-            numbers: number[]
-        }>(json)
-
-        const keyValuePairs: KeyValue[] = []
-        const jsonObject = jsonValue.read()
-
-        for (const {
-            key: keyEntity,
-            value: valueEntity,
-        } of jsonObject.members()) {
-            const key = keyEntity.read()
-            const value = valueEntity.read()
-            const array: number[] = []
-
-            for (const itemEntity of value.items()) {
-                const itemValue = itemEntity.readValue()
-
-                array.push(itemValue)
-            }
-
-            keyValuePairs.push({ key, value: array })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'numbers', value: [10, 20, 30, 40, 50] },
-        ])
-    })
-
-    it('should handle sub objects (only top-level key-value pairs are returned)', () => {
-        const json =
-            '{"outerKey": {"innerKey": "innerValue"}, "anotherKey": 99}'
-        const object = new JsonObject<{
-            outerKey: {
-                innerKey: 'test'
-                subObjecT: {
-                    subKey: string
-                }
-            }
-            innerKey: string
-            anotherKey: number
-        }>()
-        object.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
-
-        for (const { key, value } of object) {
-            const keyString = key.read()
-            const valueObj = value.read()
-
-            if (valueObj instanceof JsonObject) {
-                for (const { key, value } of valueObj) {
-                    const read = key.read()
-                    const readValue = value.readValue()
-
-                    read === 'innerKey'
-                    readValue === 'test'
-                    //@ts-expect-error Confirm that the type narrowing works correctly
-                    read === 'something-else'
-                    //@ts-expect-error Confirm that the type narrowing works correctly
-                    readValue === 'something-else'
-
-                    keyValuePairs.push({
-                        key: read,
-                        value: readValue,
-                    })
-                }
-            }
-
-            keyValuePairs.push({
-                key: keyString,
-                value: valueObj.consumed ? {} : valueObj.read(),
-            })
-        }
-
-        expect(keyValuePairs).toEqual([
-            {
-                key: 'innerKey',
-                value: 'innerValue',
-            },
-            {
-                key: 'outerKey',
-                value: {},
-            },
-            {
-                key: 'anotherKey',
-                value: 99,
-            },
-        ])
-    })
-
-    it('should handle arrays', () => {
-        const json = '{"arrayKey": [1, 2, 3], "simpleKey": "simpleValue"}'
-        const object = new JsonObject()
-
-        object.feed(...stringToBytes(json))
-        const output = object.read()
-
-        expect(output).toEqual(JSON.parse(json))
-    })
-
-    it('should handle top-level arrays', () => {
-        const json = '[{"key1": "value1"}, {"key2": "value2"}]'
-        const object = new JsonArray()
-
-        object.feed(...stringToBytes(json))
-        const output = object.read()
-
-        expect(output).toEqual(JSON.parse(json))
-    })
-
-    it('should handle nested arrays and objects', async () => {
-        const json =
-            '{"obj": {"arr": [true, false, null, [null], {"key": "value"}]}, "num": 42, "nullable": null}'
-
-        const object = new JsonObject(
-            (async function* () {
-                for (const byte of stringToBytes(json)) {
-                    yield byte
-                }
-            })(),
-        )
-
-        object.maxBufferSize = 2 // Small buffer to force chunked processing
-
-        let output: any
-        for await (const { key, value } of object) {
-            const keyv = await key.readAsync()
-            const valuev = await value.readValueAsync()
-
-            output = output || {}
-            output[keyv] = valuev
-        }
-
-        expect(output).toEqual(JSON.parse(json))
-        expect(object.bufferLength).toBeLessThanOrEqual(2)
-    })
-
-    it('should process JSON objects in parts', () => {
-        const jsonParts = [
-            '{"part1": "value1", ',
-            '"part2": 2, ',
-            '"part3": [1, 2, 3]}',
-        ]
-        const object = new JsonObject()
-
-        let output: any
-        for (const part of jsonParts) {
-            for (const byte of stringToBytes(part)) {
-                object.feed(byte)
-                object.tryParse(() => {
-                    output = object.read()
-                })
-            }
-        }
-
-        expect(output).toEqual({
-            part1: 'value1',
-            part2: 2,
-            part3: [1, 2, 3],
-        })
-    })
-
-    it('should process JSON objects in async mode', async () => {
-        const jsonParts = ['{"country": "Narnia", ', '"area": 50000}']
-
-        const stream = (async function* () {
-            for (const part of jsonParts) {
-                for (const byte of stringToBytes(part)) {
-                    yield byte
-                }
-                // Simulate async delay
-                await new Promise((resolve) => setTimeout(resolve, 10))
-            }
-        })()
-
-        const object = new JsonObject(stream)
-        object.maxBufferSize = 2 // Small buffer to force chunked processing
-        let output: any
-
-        for await (const { key, value } of object) {
-            const keyv = await key.readAsync()
-            const valuev = await (await value.readAsync()).readAsync()
-
-            output = output || {}
-            output[keyv] = valuev
-        }
-
-        expect(output).toEqual({
-            country: 'Narnia',
-            area: 50000,
-        })
-    })
-
-    it('should process JSON arrays in async mode', async () => {
-        const jsonParts = [
-            '{"country": "Narnia", ',
-            '"arr": [{"key": "value"}, 2]}',
-        ]
-
-        const stream = (async function* () {
-            for (const part of jsonParts) {
-                for (const byte of stringToBytes(part)) {
-                    yield byte
-                }
-                // Simulate async delay
-                await new Promise((resolve) => setTimeout(resolve, 10))
-            }
-        })()
-
-        const object = new JsonObject<{
-            country: string
-            arr: { key: string } | number
-        }>(stream)
-        object.maxBufferSize = 2 // Small buffer to force chunked processing
-        let output: any = []
-
-        for await (const { key, value } of object) {
-            const keyv = await key.readAsync()
-
-            //@ts-expect-error Confirm that the type narrowing works correctly
-            keyv === 'something_else'
-
-            if (keyv === 'arr') {
-                const valuev = await value.readAsync()
-                if (valuev instanceof JsonArray) {
-                    for await (const item of valuev) {
-                        output.push(await item.readValueAsync())
-                    }
-                }
-            }
-        }
-
-        expect(output).toEqual([
-            {
-                key: 'value',
-            },
-            2,
-        ])
-    })
-
-    it('should allow efficient memory usage for large JSON objects', () => {
-        const json = JSON.stringify({
-            a: 1,
-            b: {
-                nested: { c: [1, 2, 3, 4, 5] },
-            },
-            c: 3,
-        })
-
-        const buffer = new ByteBuffer()
-        buffer.maxBufferSize = 10 // Small buffer to force chunked processing
-        let object = new JsonObject(buffer)
-        let output: any
-
-        for (const byte of stringToBytes(json)) {
-            if (output) {
-                break
-            }
-
-            object.feed(byte)
-            object.tryParse(() => {
-                for (const { key: keyEntity, value: valueEntity } of object) {
-                    const key = keyEntity.read()
-                    const value = valueEntity.read()
-
-                    if (key === 'b' && value instanceof JsonObject) {
-                        output = value.read()
-                        break
-                    }
-                }
-            })
-        }
-
-        // expect(buffer.length).toBeLessThan(10) // Ensure buffer size is controlled
-        expect(output).toEqual({ nested: { c: [1, 2, 3, 4, 5] } })
-    })
-
-    it('should be able to feed in strings', () => {
-        const json = '"Hello, World!"'
-        const jsonValue = new JsonValue()
-        jsonValue.feed(json)
-        const value = jsonValue.read().read()
-
-        expect(value).toBe('Hello, World!')
-    })
-
-    it('should be able to feed in strings in async mode', async () => {
-        const json = (async function* () {
-            yield '"Hello, World!"'
-        })()
-
-        const jsonValue = new JsonValue(json)
-        const value = await jsonValue.readValueAsync()
-
-        expect(value).toBe('Hello, World!')
-    })
-
-    it('should support a standard Iterable as a byte stream', () => {
-        function* byteStream() {
-            const json = '{"key": "value"}'
-            for (const byte of stringToBytes(json)) {
-                yield byte
-            }
-        }
-
-        const object = new JsonObject(byteStream())
-        object.maxBufferSize = 2 // Small buffer to force chunked processing
-        const keyValuePairs: KeyValue[] = []
-
-        for (const { key: keyEntity, value: valueEntity } of object) {
-            const key = keyEntity.read()
-            const value = valueEntity.read().read()
-
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([{ key: 'key', value: 'value' }])
-    })
-
-    it('should support ReadableStream as a byte stream', async () => {
-        const json = '{"key": "value"}'
-        const byteStream = new ReadableStream({
-            start(controller) {
-                for (const byte of stringToBytes(json)) {
-                    controller.enqueue(new Uint8Array([byte]))
-                }
-                controller.close()
-            },
-        })
-
-        const object = new JsonObject(byteStream)
-        object.maxBufferSize = 2 // Small buffer to force chunked processing
-        const keyValuePairs: KeyValue[] = []
-
-        for await (const { key: keyEntity, value: valueEntity } of object) {
-            const key = await keyEntity.readAsync()
-            const value = await (await valueEntity.readAsync()).readAsync()
-
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([{ key: 'key', value: 'value' }])
-    })
-
-    it('should not be allowed to exceed buffer size when configured', () => {
-        const json = '{"key": "value"}'
-        const object = new JsonObject()
-        object.maxBufferSize = 5 // Small buffer to force buffer size exceeded
-        object.allowBufferToBeExceeded = false // Disable exceeding buffer
-
-        expect(() => {
-            object.feed(...stringToBytes(json))
-        }).toThrow('Buffer size exceeded maximum limit')
-    })
-
-    it('should handle whitespace in strings', async () => {
-        const json =
-            '{" key with spaces ": "   value with spaces   ", "array": [ " spaced item ", "another spaced item" ]}'
-        const object = new JsonObject(
-            (async function* () {
-                for (const byte of stringToBytes(json)) {
-                    yield byte
-                }
-            })(),
-        )
-        object.maxBufferSize = 2
-        const keyValuePairs: KeyValue[] = []
-
-        for await (const { key: keyEntity, value: valueEntity } of object) {
-            const key = await keyEntity.readAsync()
-            const value = await valueEntity.readValueAsync()
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: ' key with spaces ', value: '   value with spaces   ' },
-            { key: 'array', value: [' spaced item ', 'another spaced item'] },
-        ])
-    })
-
-    it('should be able to parse escaped characters in strings', () => {
-        const json = '"\\"Line1\\nLine2\\tTabbed\\\\\\"\\b"'
-        const jsonValue = new JsonValue<string>()
-        jsonValue.feed(...stringToBytes(json))
-        const value = jsonValue.readValue()
-
-        expect(value).toBe('"Line1\nLine2\tTabbed\\"\b')
-    })
-
-    it('should be able to parse unicode escape sequences', () => {
-        const json = '{"company":"\\u0010"}'
-        const object = new JsonObject()
-        object.feed(...stringToBytes(json))
-
-        const pairs: KeyValue[] = []
-        for (const { key: keyEntity, value: valueEntity } of object.members()) {
-            const key = keyEntity.read()
-            const value = valueEntity.readValue()
-            pairs.push({ key, value })
-        }
-
-        expect(pairs).toEqual([{ key: 'company', value: '\x10' }])
-    })
-
-    it('should be able to stream strings', () => {
-        const jsonValue = new JsonString('"Streaming String Example"')
-        const parts: string[] = []
-
-        for (const chunk of jsonValue.stream(1)) {
-            parts.push(chunk)
-        }
-
-        expect(parts.join('')).toBe('Streaming String Example')
-    })
-
-    it('should be able to stream strings in async mode', async () => {
-        const jsonValue = new JsonString(
-            (async function* () {
-                const str = '"Async Streaming String Example"'
-                for (const char of str) {
-                    yield char
-                }
-            })(),
-        )
-        jsonValue.maxBufferSize = 2
-        const parts: string[] = []
-
-        for await (const chunk of jsonValue.streamAsync(2)) {
-            parts.push(chunk)
-        }
-
-        expect(parts.join('')).toBe('Async Streaming String Example')
-        expect(parts).toEqual([
-            'As',
-            'yn',
-            'c ',
-            'St',
-            're',
-            'am',
-            'in',
-            'g ',
-            'St',
-            'ri',
-            'ng',
-            ' E',
-            'xa',
-            'mp',
-            'le',
+        expect(pairs).toEqual([
+            ['[0]', 'a'],
+            ['[1]', 'b'],
+            ['[2]', 'c'],
         ])
     })
 })
 
-describe('JSON key value parser', () => {
-    it('should parse key value pairs from a JsonObject', () => {
-        const json = '{"name": "Alice", "age": 30, "isMember": true}'
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
-
-        for (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'name', value: 'Alice' },
-            { key: 'age', value: 30 },
-            { key: 'isMember', value: true },
-        ])
+describe('block scalars', () => {
+    it('parses literal block scalar', () => {
+        const v = new YamlValue()
+        v.feed('key: |\n  line1\n  line2\n')
+        v.eof = true
+        const result = v.readValue() as Record<string, string>
+        expect(result.key).toBe('line1\nline2\n')
     })
 
-    it('should parse key value pairs from a JsonObject', async () => {
-        const json = '{"name": "Alice", "age": 30, "isMember": true}'
-        async function* byteStream() {
-            for (const byte of stringToBytes(json)) {
-                yield byte
-            }
-            await new Promise((resolve) => setTimeout(resolve, 10))
-        }
-
-        const parser = new JsonKeyValueParser(byteStream())
-        parser.maxBufferSize = 2 // Small buffer to force chunked processing
-        const keyValuePairs: KeyValue[] = []
-
-        for await (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'name', value: 'Alice' },
-            { key: 'age', value: 30 },
-            { key: 'isMember', value: true },
-        ])
-
-        expect(parser.bufferLength).toBeLessThanOrEqual(2)
+    it('parses literal block scalar with strip chomping', () => {
+        const v = new YamlValue()
+        v.feed('key: |-\n  line1\n  line2\n')
+        v.eof = true
+        const result = v.readValue() as Record<string, string>
+        expect(result.key).toBe('line1\nline2')
     })
 
-    it('should parse key value pairs from a nested JsonObject', () => {
-        const json =
-            '{"user": {"id": 1, "details": {"name": "Bob", "email": "test@test.com"}}}'
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
-
-        for (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'user.id', value: 1 },
-            { key: 'user.details.name', value: 'Bob' },
-            { key: 'user.details.email', value: 'test@test.com' },
-        ])
+    it('parses folded block scalar', () => {
+        const v = new YamlValue()
+        v.feed('key: >\n  line1\n  line2\n')
+        v.eof = true
+        const result = v.readValue() as Record<string, string>
+        expect(result.key).toBe('line1 line2\n')
     })
 
-    it('should parse key value pairs from a JsonArray', () => {
-        const json = '[{"item": "A"}, {"item": "B"}, {"item": "C"}]'
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
+    it('parses folded block scalar with strip chomping', () => {
+        const v = new YamlValue()
+        v.feed('key: >-\n  line1\n  line2\n')
+        v.eof = true
+        const result = v.readValue() as Record<string, string>
+        expect(result.key).toBe('line1 line2')
+    })
+})
 
-        const keyValuePairs: KeyValue[] = []
-
-        for (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: '[0].item', value: 'A' },
-            { key: '[1].item', value: 'B' },
-            { key: '[2].item', value: 'C' },
-        ])
+describe('comments', () => {
+    it('ignores inline comments', () => {
+        const m = new YamlMapping()
+        m.feed('name: John # a comment\nage: 30\n')
+        m.eof = true
+        expect(m.read()).toEqual({ name: 'John', age: 30 })
     })
 
-    it('should parse key value pairs from a nested JsonArray', () => {
-        const json = '[{"data": [1, 2]}, {"data": [3, 4]}]'
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
+    it('ignores full-line comments', () => {
+        const m = new YamlMapping()
+        m.feed('# This is a comment\nname: John\n# Another comment\nage: 30\n')
+        m.eof = true
+        expect(m.read()).toEqual({ name: 'John', age: 30 })
+    })
+})
 
-        for (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: '[0].data[0]', value: 1 },
-            { key: '[0].data[1]', value: 2 },
-            { key: '[1].data[0]', value: 3 },
-            { key: '[1].data[1]', value: 4 },
-        ])
+describe('mixed block/flow', () => {
+    it('parses block mapping with flow sequence value', () => {
+        const m = new YamlMapping()
+        m.feed('colors: [red, green, blue]\ncount: 3\n')
+        m.eof = true
+        expect(m.read()).toEqual({ colors: ['red', 'green', 'blue'], count: 3 })
     })
 
-    it('should handle empty JsonObject', () => {
-        const json = '{}'
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
-
-        const keyValuePairs: KeyValue[] = []
-
-        for (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([])
+    it('parses block mapping with flow mapping value', () => {
+        const m = new YamlMapping()
+        m.feed('point: {x: 1, y: 2}\n')
+        m.eof = true
+        expect(m.read()).toEqual({ point: { x: 1, y: 2 } })
     })
 
-    it('should handle empty JsonArray', () => {
-        const json = '[]'
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
+    it('parses complex nested structure', () => {
+        const yaml = [
+            'name: Project',
+            'version: 1.0',
+            'authors:',
+            '  - name: Alice',
+            '    email: alice@example.com',
+            '  - name: Bob',
+            '    email: bob@example.com',
+            'tags: [open-source, typescript]',
+            '',
+        ].join('\n')
 
-        const keyValuePairs: KeyValue[] = []
-
-        for (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([])
-    })
-
-    it('should handle mixed nested structures', () => {
-        const json =
-            '{"users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}], "count": 2}'
-
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
-
-        for (const [key, value] of parser) {
-            keyValuePairs.push({ key, value })
-        }
-
-        expect(keyValuePairs).toEqual([
-            { key: 'users[0].id', value: 1 },
-            { key: 'users[0].name', value: 'Alice' },
-            { key: 'users[1].id', value: 2 },
-            { key: 'users[1].name', value: 'Bob' },
-            { key: 'count', value: 2 },
-        ])
-    })
-
-    it('should error if JsonValue does not contain composite type', () => {
-        const json = '"Just a string"'
-        const parser = new JsonKeyValueParser()
-        parser.feed(...stringToBytes(json))
-        const keyValuePairs: KeyValue[] = []
-
-        expect(() => {
-            for (const [key, value] of parser) {
-                keyValuePairs.push({ key, value })
-            }
-        }).toThrow(
-            'JsonValue does not contain a composite type. JsonString found.',
-        )
+        const m = new YamlMapping()
+        m.feed(yaml)
+        m.eof = true
+        expect(m.read()).toEqual({
+            name: 'Project',
+            version: 1.0,
+            authors: [
+                { name: 'Alice', email: 'alice@example.com' },
+                { name: 'Bob', email: 'bob@example.com' },
+            ],
+            tags: ['open-source', 'typescript'],
+        })
     })
 })
