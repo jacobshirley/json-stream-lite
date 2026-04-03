@@ -2,48 +2,72 @@ import { describe, it, expect } from 'vitest'
 import {
     JsonArray,
     JsonObject,
-    JsoncArray,
     JsoncComment,
-    JsoncObject,
     jsonStreamStringify,
 } from '../../src/index.js'
 import { stringToBytes } from '../../src/utils.js'
 
 describe('JSONC comment parsing', () => {
     it('should parse single-line comment before value', () => {
-        const json = '// header comment\n{"key": "value"}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const json = '// header comment\n{"key": "value"} // trailing comment'
+        const object = new JsonObject()
         object.feed(json)
+        const comments: string[] = []
+        for (const comment of object.preComments) {
+            comments.push(comment.read())
+        }
 
         const result = object.read()
+        const trailingComments: string[] = []
+        for (const comment of object.postComments) {
+            trailingComments.push(comment.read())
+        }
+
+        expect(comments).toEqual(['header comment'])
+        expect(trailingComments).toEqual(['trailing comment'])
         expect(result).toEqual({ key: 'value' })
     })
 
     it('should parse block comment before value', () => {
         const json = '/* block comment */ {"key": "value"}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
+        const comments: string[] = []
+        for (const comment of object.preComments) {
+            comments.push(comment.read())
+        }
         const result = object.read()
+        expect(comments).toEqual(['block comment'])
         expect(result).toEqual({ key: 'value' })
     })
 
     it('should parse single-line comment between members', () => {
         const json = '{"a": 1, // comment\n "b": 2}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
         expect(result).toEqual({ a: 1, b: 2 })
+
+        const object2 = new JsonObject()
+        object2.feed(json)
+
+        const members = object2.members()
+        members.next() // skip a
+        const b = members.next()
+        const comment = b.value.key.preComments.next()
+        expect(comment).toBeDefined()
+        expect(comment.value.read()).toBe('comment')
+        const key = b.value.key.read()
+        const value = b.value.value.readValue()
+        expect(key).toBe('b')
+        expect(value).toBe(2)
     })
 
     it('should parse block comment between tokens', () => {
         const json = '{"key": /* comment */ "value"}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
@@ -52,8 +76,7 @@ describe('JSONC comment parsing', () => {
 
     it('should parse multi-line block comment', () => {
         const json = '{"key": /* line1\nline2\nline3 */ "value"}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
@@ -62,8 +85,7 @@ describe('JSONC comment parsing', () => {
 
     it('should parse multiple consecutive comments', () => {
         const json = '// comment 1\n// comment 2\n/* block */ {"key": "value"}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
@@ -72,8 +94,7 @@ describe('JSONC comment parsing', () => {
 
     it('should parse comments in arrays', () => {
         const json = '[1, // comment\n 2, /* inline */ 3]'
-        const array = new JsoncArray<number>()
-        array.jsonc = true
+        const array = new JsonArray<number>()
         array.feed(json)
 
         const result = array.read()
@@ -82,8 +103,7 @@ describe('JSONC comment parsing', () => {
 
     it('should preserve comments inside strings', () => {
         const json = '{"key": "value // not a comment"}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
@@ -92,8 +112,7 @@ describe('JSONC comment parsing', () => {
 
     it('should preserve block comments inside strings', () => {
         const json = '{"key": "value /* not a comment */"}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
@@ -102,8 +121,7 @@ describe('JSONC comment parsing', () => {
 
     it('should parse empty single-line comment', () => {
         const json = '//\n{"key": 1}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
@@ -112,27 +130,17 @@ describe('JSONC comment parsing', () => {
 
     it('should parse empty block comment', () => {
         const json = '/**/{"key": 1}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
         expect(result).toEqual({ key: 1 })
     })
 
-    it('should error on comments when jsonc is false (default)', () => {
-        const json = '// comment\n{"key": "value"}'
-        const object = new JsonObject()
-        object.feed(json)
-
-        expect(() => object.read()).toThrow()
-    })
-
-    it('should parse standard JSON correctly with jsonc enabled', () => {
+    it('should parse standard JSON correctly', () => {
         const json =
             '{"str": "hello", "num": 123, "bool": true, "null": null, "arr": [1, 2], "obj": {"a": 1}}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const result = object.read()
@@ -145,13 +153,10 @@ describe('JSONC comment parsing', () => {
             obj: { a: 1 },
         })
     })
-})
 
-describe('JSONC comment yielding', () => {
-    it('should yield comments from object members()', () => {
+    it('should get comments from object members()', () => {
         const json = '{ // comment on a\n "a": 1, // comment on b\n "b": 2}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const items: (
@@ -160,16 +165,14 @@ describe('JSONC comment yielding', () => {
         )[] = []
 
         for (const item of object.members()) {
-            if (item instanceof JsoncComment) {
-                items.push({
-                    type: 'comment',
-                    text: item.text,
-                    style: item.style,
-                })
-            } else {
-                items.push({ type: 'member', key: item.key.read() })
-                item.value.readValue()
-            }
+            const comment = item.key.preComments.next().value
+            items.push({
+                type: 'comment',
+                text: comment.read(),
+                style: comment.style,
+            })
+            items.push({ type: 'member', key: item.key.read() })
+            item.value.readValue()
         }
 
         expect(items[0]).toEqual({
@@ -187,57 +190,45 @@ describe('JSONC comment yielding', () => {
         expect(items[3]).toEqual({ type: 'member', key: 'b' })
     })
 
-    it('should yield inline comments after values', () => {
+    it('should get inline comments after values', () => {
         const json = '{"a": 1 // inline comment\n}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const items: string[] = []
         for (const item of object.members()) {
-            if (item instanceof JsoncComment) {
-                items.push(`comment:${item.text}`)
-            } else {
-                items.push(`member:${item.key.read()}`)
-                item.value.readValue()
-            }
+            items.push(`member:${item.key.read()}`)
+            item.value.consume()
+            items.push(`comment:${item.value.singlePostCommentString}`)
         }
 
         expect(items).toEqual(['member:a', 'comment:inline comment'])
     })
 
-    it('should yield trailing comments on containers', () => {
+    it('should get trailing comments on containers', () => {
         const json = '{"a": 1} // trailing'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
         const items: string[] = []
         for (const item of object.members()) {
-            if (item instanceof JsoncComment) {
-                items.push(`comment:${item.text}`)
-            } else {
-                items.push(`member:${item.key.read()}`)
-                item.value.readValue()
-            }
+            items.push(`member:${item.key.read()}`)
+            item.value.readValue()
         }
+        items.push(`comment:${object.singlePostCommentString}`)
 
         expect(items).toContain('comment:trailing')
     })
 
-    it('should yield comments from array items()', () => {
+    it('should get comments from array items()', () => {
         const json = '[// before first\n 1, /* between */ 2]'
-        const array = new JsoncArray()
-        array.jsonc = true
+        const array = new JsonArray()
         array.feed(json)
 
         const items: string[] = []
         for (const item of array.items()) {
-            if (item instanceof JsoncComment) {
-                items.push(`comment:${item.text}`)
-            } else {
-                items.push(`value:${item.read()}`)
-            }
+            items.push(`comment:${item.singlePreCommentString}`)
+            items.push(`value:${item.readValue()}`)
         }
 
         expect(items).toContain('comment:before first')
@@ -246,74 +237,20 @@ describe('JSONC comment yielding', () => {
         expect(items).toContain('value:2')
     })
 
-    it('should yield block comments', () => {
+    it('should get block comments', () => {
         const json = '{ /* block */ "a": 1}'
-        const object = new JsoncObject()
-        object.jsonc = true
+        const object = new JsonObject()
         object.feed(json)
 
-        const comments: JsoncComment[] = []
+        const comments: string[] = []
         for (const item of object.members()) {
-            if (item instanceof JsoncComment) {
-                comments.push(item)
-            } else {
-                item.key.read()
-                item.value.readValue()
-            }
+            comments.push(item.key.singlePreCommentString || '')
+            item.key.read()
+            item.value.readValue()
         }
 
         expect(comments).toHaveLength(1)
-        expect(comments[0].style).toBe('block')
-        expect(comments[0].text).toBe('block')
-    })
-})
-
-describe('Trailing comma support', () => {
-    it('should parse object with trailing comma when strict is false', () => {
-        const json = '{"a": 1, "b": 2,}'
-        const object = new JsoncObject()
-        object.strict = false
-        object.feed(json)
-
-        const result = object.read()
-        expect(result).toEqual({ a: 1, b: 2 })
-    })
-
-    it('should parse array with trailing comma when strict is false', () => {
-        const json = '[1, 2, 3,]'
-        const array = new JsoncArray()
-        array.strict = false
-        array.feed(json)
-
-        const result = array.read()
-        expect(result).toEqual([1, 2, 3])
-    })
-
-    it('should error on trailing comma when strict is true (default)', () => {
-        const json = '{"a": 1,}'
-        const object = new JsoncObject()
-        object.feed(json)
-
-        expect(() => object.read()).toThrow()
-    })
-
-    it('should error on array trailing comma when strict is true', () => {
-        const json = '[1, 2,]'
-        const array = new JsoncArray()
-        array.feed(json)
-
-        expect(() => array.read()).toThrow()
-    })
-
-    it('should handle trailing comma with comments', () => {
-        const json = '{"a": 1, // comment\n}'
-        const object = new JsoncObject()
-        object.jsonc = true
-        object.strict = false
-        object.feed(json)
-
-        const result = object.read()
-        expect(result).toEqual({ a: 1 })
+        expect(comments[0]).toBe('block')
     })
 })
 
@@ -324,8 +261,7 @@ describe('JSONC streaming (async)', () => {
             yield stringToBytes('/ comment\n"value"}')
         }
 
-        const object = new JsoncObject(chunks())
-        object.jsonc = true
+        const object = new JsonObject(chunks())
 
         const result = await object.readAsync()
         expect(result).toEqual({ key: 'value' })
@@ -338,8 +274,7 @@ describe('JSONC streaming (async)', () => {
             yield stringToBytes('*/ "value"}')
         }
 
-        const object = new JsoncObject(chunks())
-        object.jsonc = true
+        const object = new JsonObject(chunks())
 
         const result = await object.readAsync()
         expect(result).toEqual({ key: 'value' })
@@ -348,11 +283,11 @@ describe('JSONC streaming (async)', () => {
     it('should handle block comment end split across chunks', async () => {
         async function* chunks() {
             yield stringToBytes('{"key": /* comment *')
-            yield stringToBytes('/ "value"}')
+            yield stringToBytes('/ /* ano')
+            yield stringToBytes('ther comment */ "value"}')
         }
 
-        const object = new JsoncObject(chunks())
-        object.jsonc = true
+        const object = new JsonObject(chunks())
 
         const result = await object.readAsync()
         expect(result).toEqual({ key: 'value' })

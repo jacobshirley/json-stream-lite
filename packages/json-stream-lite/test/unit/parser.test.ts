@@ -152,7 +152,7 @@ describe('JSON parsing', () => {
                     const array: number[] = []
 
                     for (const itemEntity of value.items()) {
-                        const itemValue = itemEntity.read()
+                        const itemValue = itemEntity.readValue()
 
                         array.push(itemValue as number)
                     }
@@ -185,7 +185,7 @@ describe('JSON parsing', () => {
             const array: number[] = []
 
             for (const itemEntity of value.items()) {
-                const itemValue = itemEntity.read()
+                const itemValue = itemEntity.readValue()
 
                 array.push(itemValue)
             }
@@ -395,7 +395,7 @@ describe('JSON parsing', () => {
                 const valuev = await value.readAsync()
                 if (valuev instanceof JsonArray) {
                     for await (const item of valuev) {
-                        output.push(await item.readAsync())
+                        output.push(await item.readValueAsync())
                     }
                 }
             }

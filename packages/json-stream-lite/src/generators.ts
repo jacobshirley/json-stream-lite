@@ -1,4 +1,4 @@
-import { JsonKeyValuePair, JsonParserOptions } from './types.js'
+import { JsonKeyValuePair } from './types.js'
 import { JsonKeyValueParser } from './parser.js'
 import { stringToBytes } from './utils.js'
 
@@ -21,7 +21,6 @@ import { stringToBytes } from './utils.js'
  */
 export function* jsonKeyValueParser(
     bytes: Iterable<number> | string,
-    options?: JsonParserOptions,
 ): Generator<JsonKeyValuePair> {
     if (typeof bytes === 'string') {
         bytes = stringToBytes(bytes)
@@ -59,7 +58,6 @@ export async function* jsonKeyValueParserAsync(
         | ReadableStream<number>
         | ReadableStream<Uint8Array>
         | ReadableStream<string>,
-    options?: JsonParserOptions,
 ): AsyncGenerator<JsonKeyValuePair> {
     if (typeof bytes === 'string') {
         bytes = stringToBytes(bytes)

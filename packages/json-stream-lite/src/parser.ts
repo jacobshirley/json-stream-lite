@@ -125,6 +125,77 @@ export abstract class JsonEntity<T> {
     }
 
     /**
+     * Skips whitespace and yields any comments encountered.
+     */
+    private *getComments(): Generator<JsoncComment> {
+        while (true) {
+            if (this.safePeek() === null) {
+                return
+            }
+            this.skipWhitespace()
+            if (this.buffer.peek() === BYTE_MAP.colon) {
+                this.buffer.next() // consume :
+            }
+            this.skipWhitespace()
+
+            const byte = this.safePeek()
+            if (byte === BYTE_MAP.slash) {
+                const next = this.safePeek(1)
+                if (next === BYTE_MAP.slash || next === BYTE_MAP.asterisk) {
+                    const comment = new JsoncComment(this.buffer)
+                    yield comment
+                    comment.consume()
+                    continue
+                }
+            }
+            break
+        }
+    }
+
+    get preComments(): Generator<JsoncComment> {
+        return this.getComments()
+    }
+
+    get postComments(): Generator<JsoncComment> {
+        return this.getComments()
+    }
+
+    get preCommentStrings(): string[] {
+        const strings: string[] = []
+        for (const comment of this.preComments) {
+            strings.push(comment.read())
+        }
+        return strings
+    }
+
+    get postCommentStrings(): string[] {
+        const strings: string[] = []
+        for (const comment of this.postComments) {
+            strings.push(comment.read())
+        }
+        return strings
+    }
+
+    get singlePreCommentString(): string | null {
+        const preComments = this.preComments
+        const first = preComments.next()
+        if (first.done) {
+            return null
+        }
+
+        return first.value.read()
+    }
+
+    get singlePostCommentString(): string | null {
+        const postComments = this.postComments
+        const first = postComments.next()
+        if (first.done) {
+            return null
+        }
+        return first.value.read()
+    }
+
+    /**
      * Gets the type name of this entity.
      *
      * @returns The constructor name of this entity
@@ -211,7 +282,11 @@ export abstract class JsonEntity<T> {
             throw new Error('JSON entity has already been consumed.')
         }
 
+        for (const _ of this.preComments) {
+        }
         const read = this.parse()
+        //for (const _ of this.postComments) {}
+
         this.consumed = true
 
         if (this.buffer.canCompact()) this.buffer.compact()
@@ -361,23 +436,27 @@ export class JsoncComment extends JsonEntity<string> {
     style: 'line' | 'block' = 'line'
 
     protected parse(): string {
-        // Skip horizontal whitespace before the comment
-        while (
-            this.buffer.peek() === BYTE_MAP.space ||
-            this.buffer.peek() === BYTE_MAP.tab
-        ) {
-            this.buffer.next()
+        this.skipWhitespace()
+
+        if (this.buffer.peek() === BYTE_MAP.colon) {
+            this.buffer.next() // consume :
+        }
+
+        this.skipWhitespace()
+
+        if (this.buffer.peek() !== BYTE_MAP.slash) {
+            return ''
         }
 
         // Consume opening //  or /*
         this.buffer.next() // consume /
         const second = this.buffer.next()
+        const bytes: number[] = []
 
         if (second === BYTE_MAP.slash) {
             this.style = 'line'
-            const bytes: number[] = []
             while (true) {
-                const byte = this.buffer.peek()
+                const byte = this.safePeek()
                 if (
                     byte === null ||
                     byte === BYTE_MAP.lineFeed ||
@@ -395,11 +474,9 @@ export class JsoncComment extends JsonEntity<string> {
                 }
                 bytes.push(this.buffer.next())
             }
-            return bytesToString(new Uint8Array(bytes)).trim()
         } else {
             // asterisk — block comment
             this.style = 'block'
-            const bytes: number[] = []
             while (true) {
                 const byte = this.buffer.peek()
                 if (byte === null) break
@@ -413,13 +490,19 @@ export class JsoncComment extends JsonEntity<string> {
                 }
                 bytes.push(this.buffer.next())
             }
-            return bytesToString(new Uint8Array(bytes)).trim()
         }
+
+        const commentString = bytesToString(new Uint8Array(bytes)).trim()
+
+        return commentString
     }
 
-    /** The comment text (without delimiters). Triggers parsing if not yet consumed. */
-    get text(): string {
-        return this.read()
+    override get preComments(): Generator<JsoncComment> {
+        return (function* () {})()
+    }
+
+    override get postComments(): Generator<JsoncComment> {
+        return (function* () {})()
     }
 }
 
@@ -723,6 +806,7 @@ export class JsonValue<T = any, K extends string = string> extends JsonEntity<
 > {
     private key?: JsonString<K>
     private value?: JsonValueType<T>
+    public hasReadValue: boolean = false
 
     /**
      * Creates a new JsonValue entity.
@@ -790,6 +874,7 @@ export class JsonValue<T = any, K extends string = string> extends JsonEntity<
 
         this.value = super.read()
         this.consumed = false
+        this.hasReadValue = true
         return this.value
     }
 
@@ -999,7 +1084,7 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
      *
      * @yields Each item entity in the array
      */
-    *items(): Generator<JsonValueType<T>> {
+    *items(): Generator<JsonValue<T>> {
         this.skipWhitespace()
         if (this.buffer.peek() === BYTE_MAP.leftSquare) {
             this.buffer.next() // consume [
@@ -1018,10 +1103,10 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
                 this.skipWhitespace()
             }
 
-            const value = new JsonValue<T>(this.buffer).read()
-            yield value
+            const valueObject = new JsonValue<T>(this.buffer)
+            yield valueObject
 
-            if (!value.consumed) value.read()
+            valueObject.consume()
             this.skipWhitespace()
         }
 
@@ -1035,10 +1120,10 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
      *
      * @yields Each item entity in the array
      */
-    async *itemsAsync(): AsyncGenerator<JsonValueType<T>> {
+    async *itemsAsync(): AsyncGenerator<JsonValue<T>> {
         while (!this.buffer.atEof()) {
             const itemGen = this.items()
-            let currentItem: IteratorResult<JsonValueType<T>> | undefined =
+            let currentItem: IteratorResult<JsonValue<T>> | undefined =
                 undefined
 
             while (true) {
@@ -1084,326 +1169,7 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
         const values: T[] = []
 
         for (const value of this) {
-            values.push(value.read() as T)
-        }
-
-        return values
-    }
-}
-
-abstract class JsoncEntity<T> extends JsonEntity<T> {
-    /** Whether to parse comments (default true for Jsonc classes) */
-    jsonc: boolean = true
-    /** Whether to enforce strict JSON (no trailing commas). Default true. */
-    strict: boolean = true
-}
-
-/**
- * JSONC-aware object parser that yields comments alongside members.
- * Supports trailing commas when strict mode is disabled.
- *
- * @typeParam T - The expected type of the object
- */
-export class JsoncObject<T extends object = any> extends JsoncEntity<T> {
-    /**
-     * Skips whitespace and yields any comments encountered.
-     */
-    private *skipWhitespaceAndComments(): Generator<JsoncComment> {
-        while (true) {
-            this.skipWhitespace()
-            const byte = this.safePeek()
-            if (byte === BYTE_MAP.slash && this.jsonc) {
-                const next = this.safePeek(1)
-                if (next === BYTE_MAP.slash || next === BYTE_MAP.asterisk) {
-                    yield new JsoncComment(this.buffer)
-                    continue
-                }
-            }
-            break
-        }
-    }
-
-    /**
-     * Yields an inline comment (same line after a value) if present.
-     */
-    private *parseInlineComment(): Generator<JsoncComment> {
-        if (!this.jsonc) return
-
-        // Skip only horizontal whitespace
-        while (
-            this.safePeek() === BYTE_MAP.space ||
-            this.safePeek() === BYTE_MAP.tab
-        ) {
-            this.buffer.next()
-        }
-
-        const current = this.safePeek()
-        if (current !== BYTE_MAP.slash) return
-
-        const next = this.safePeek(1)
-        if (next === BYTE_MAP.slash || next === BYTE_MAP.asterisk) {
-            yield new JsoncComment(this.buffer)
-        }
-    }
-
-    /**
-     * Generator that yields object members and comments.
-     * Comments are yielded as JsoncComment entities interleaved with members.
-     */
-    *members(): Generator<JsonObjectMember<T> | JsoncComment> {
-        yield* this.skipWhitespaceAndComments()
-
-        if (this.buffer.peek() === BYTE_MAP.leftBrace) {
-            this.buffer.next() // consume {
-        }
-
-        yield* this.skipWhitespaceAndComments()
-
-        if (this.buffer.peek() === BYTE_MAP.rightBrace) {
-            this.buffer.next() // consume }
-            return
-        }
-
-        let first = true
-        while (this.buffer.peek() !== BYTE_MAP.rightBrace) {
-            if (!first) {
-                if (this.buffer.peek() === BYTE_MAP.comma) {
-                    this.buffer.next() // consume ,
-                }
-                yield* this.skipWhitespaceAndComments()
-
-                // Check for trailing comma
-                if (this.buffer.peek() === BYTE_MAP.rightBrace) {
-                    if (this.strict) {
-                        throw new Error(
-                            'Trailing commas are not allowed in strict mode',
-                        )
-                    }
-                    break
-                }
-            }
-            first = false
-
-            yield* this.skipWhitespaceAndComments()
-
-            const key = new JsonString<any>(this.buffer)
-            const value = new JsonValue<any>(this.buffer, key)
-
-            yield { key, value } as JsonObjectMember<T>
-
-            key.consume()
-            value.consume()
-
-            // Check for inline comment after value
-            yield* this.parseInlineComment()
-
-            yield* this.skipWhitespaceAndComments()
-        }
-
-        this.buffer.expect(BYTE_MAP.rightBrace)
-        // Check for trailing comment after }
-        yield* this.parseInlineComment()
-        this.consumed = true
-    }
-
-    async *membersAsync(): AsyncGenerator<JsonObjectMember<T> | JsoncComment> {
-        while (!this.buffer.atEof()) {
-            const memberGen = this.members()
-            let current:
-                | IteratorResult<JsonObjectMember<T> | JsoncComment>
-                | undefined = undefined
-
-            while (true) {
-                current = this.tryParse(() => memberGen.next())
-                if (current === undefined) {
-                    break // Need more data
-                }
-                if (current.done) {
-                    return // No more members
-                }
-                yield current.value
-
-                // Consume key/value if it's a member (not a comment)
-                if (
-                    current.value &&
-                    !(current.value instanceof JsoncComment) &&
-                    'key' in current.value
-                ) {
-                    await current.value.key.consumeAsync()
-                    await current.value.value.consumeAsync()
-                }
-            }
-
-            await this.buffer.readStreamAsync()
-        }
-    }
-
-    [Symbol.iterator]() {
-        return this.members()
-    }
-
-    [Symbol.asyncIterator]() {
-        return this.membersAsync()
-    }
-
-    protected parse(): T {
-        const obj: any = {}
-
-        for (const item of this.members()) {
-            if (item instanceof JsoncComment) continue
-            const keyString = item.key.read()
-            obj[keyString] = item.value.readValue()
-        }
-
-        return obj
-    }
-}
-/**
- * JSONC-aware array parser that yields comments alongside items.
- * Supports trailing commas when strict mode is disabled.
- *
- * @typeParam T - The expected type of array elements
- */
-export class JsoncArray<T = any> extends JsoncEntity<T[]> {
-    /**
-     * Skips whitespace and yields any comments encountered.
-     */
-    private *skipWhitespaceAndComments(): Generator<JsoncComment> {
-        while (true) {
-            this.skipWhitespace()
-            const byte = this.safePeek()
-            if (byte === BYTE_MAP.slash && this.jsonc) {
-                const next = this.safePeek(1)
-                if (next === BYTE_MAP.slash || next === BYTE_MAP.asterisk) {
-                    yield new JsoncComment(this.buffer)
-                    continue
-                }
-            }
-            break
-        }
-    }
-
-    /**
-     * Yields an inline comment (same line after a value) if present.
-     */
-    private *parseInlineComment(): Generator<JsoncComment> {
-        if (!this.jsonc) return
-
-        // Skip only horizontal whitespace
-        while (
-            this.safePeek() === BYTE_MAP.space ||
-            this.safePeek() === BYTE_MAP.tab
-        ) {
-            this.buffer.next()
-        }
-
-        const current = this.safePeek()
-        if (current !== BYTE_MAP.slash) return
-
-        const next = this.safePeek(1)
-        if (next === BYTE_MAP.slash || next === BYTE_MAP.asterisk) {
-            yield new JsoncComment(this.buffer)
-        }
-    }
-
-    /**
-     * Generator that yields array items and comments.
-     * Comments are yielded as JsoncComment entities interleaved with items.
-     */
-    *items(): Generator<JsonValueType<T> | JsoncComment> {
-        yield* this.skipWhitespaceAndComments()
-
-        if (this.buffer.peek() === BYTE_MAP.leftSquare) {
-            this.buffer.next() // consume [
-        }
-
-        yield* this.skipWhitespaceAndComments()
-
-        if (this.buffer.peek() === BYTE_MAP.rightSquare) {
-            this.buffer.next() // consume ]
-            return
-        }
-
-        let first = true
-        while (this.buffer.peek() !== BYTE_MAP.rightSquare) {
-            if (!first) {
-                if (this.buffer.peek() === BYTE_MAP.comma) {
-                    this.buffer.next() // consume ,
-                }
-                yield* this.skipWhitespaceAndComments()
-
-                // Check for trailing comma
-                if (this.buffer.peek() === BYTE_MAP.rightSquare) {
-                    if (this.strict) {
-                        throw new Error(
-                            'Trailing commas are not allowed in strict mode',
-                        )
-                    }
-                    break
-                }
-            }
-            first = false
-
-            yield* this.skipWhitespaceAndComments()
-
-            const value = new JsonValue<T>(this.buffer).read()
-            yield value
-
-            if (!value.consumed) value.read()
-
-            // Check for inline comment after value
-            yield* this.parseInlineComment()
-
-            yield* this.skipWhitespaceAndComments()
-        }
-
-        this.buffer.expect(BYTE_MAP.rightSquare)
-        // Check for trailing comment after ]
-        yield* this.parseInlineComment()
-        this.consumed = true
-    }
-
-    async *itemsAsync(): AsyncGenerator<JsonValueType<T> | JsoncComment> {
-        while (!this.buffer.atEof()) {
-            const itemGen = this.items()
-            let current:
-                | IteratorResult<JsonValueType<T> | JsoncComment>
-                | undefined = undefined
-
-            while (true) {
-                current = this.tryParse(() => itemGen.next())
-
-                if (current === undefined) {
-                    break // Need more data
-                }
-                if (current.done) {
-                    return // No more items
-                }
-                yield current.value
-
-                if (current.value && !(current.value instanceof JsoncComment)) {
-                    await current.value.consumeAsync()
-                }
-            }
-
-            await this.buffer.readStreamAsync()
-        }
-    }
-
-    [Symbol.iterator]() {
-        return this.items()
-    }
-
-    [Symbol.asyncIterator]() {
-        return this.itemsAsync()
-    }
-
-    protected parse(): T[] {
-        const values: T[] = []
-
-        for (const item of this.items()) {
-            if (item instanceof JsoncComment) continue
-            values.push(item.read() as T)
+            values.push(value.readValue() as T)
         }
 
         return values
@@ -1468,7 +1234,7 @@ export class JsonKeyValueParser extends JsonEntity<
             let index = 0
 
             for (const valueEntity of this.container) {
-                const value = valueEntity
+                const value = valueEntity.read()
                 const finalKey = this.parentKey
                     ? `${this.parentKey}[${index}]`
                     : `[${index}]`
