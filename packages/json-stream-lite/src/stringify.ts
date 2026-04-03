@@ -1,11 +1,22 @@
 import { stringToBytes } from './utils.js'
 
 /**
+ * Comment entry for JSONC stringification.
+ */
+export type JsoncStringifyComment =
+    | string
+    | { text: string; style?: 'line' | 'block' }
+
+/**
  * Options for JSON streaming stringification.
  */
 export type JsonStreamStringifyOptions = {
     /** Maximum size of string chunks when yielding formatted strings */
     stringChunkSize?: number
+    /** Enable JSONC output (trailing commas after last items) */
+    jsonc?: boolean
+    /** Comments to emit, keyed by dot-notation path. Only emitted when indent > 0. */
+    comments?: Record<string, JsoncStringifyComment | JsoncStringifyComment[]>
 }
 
 /**
@@ -114,6 +125,29 @@ function hasCustomToStringFunction(
 }
 
 /**
+ * Yields comment string(s) for a given path from the comments map.
+ */
+function* emitComments(
+    path: string,
+    options: JsonStreamStringifyOptions | undefined,
+    indentStr: string,
+): Generator<string> {
+    if (!options?.comments || !options.comments[path]) return
+    const entries = options.comments[path]
+    const list = Array.isArray(entries) ? entries : [entries]
+    for (const entry of list) {
+        const text = typeof entry === 'string' ? entry : entry.text
+        const style =
+            typeof entry === 'string' ? 'line' : (entry.style ?? 'line')
+        if (style === 'line') {
+            yield `${indentStr}// ${text}\n`
+        } else {
+            yield `${indentStr}/* ${text} */\n`
+        }
+    }
+}
+
+/**
  * Internal recursive function that stringifies a value with depth tracking.
  * Handles all JSON types including primitives, arrays, and objects.
  *
@@ -123,6 +157,7 @@ function hasCustomToStringFunction(
  * @param currentDepth - Current nesting depth for indentation
  * @param start - Indicates if this is the start of the stringification
  * @param options - Stringification options
+ * @param currentPath - Current dot-notation path for comment matching
  * @yields String chunks representing the JSON output
  */
 function* jsonStreamStringifyWithDepth(
@@ -132,6 +167,7 @@ function* jsonStreamStringifyWithDepth(
     currentDepth: number = 0,
     start: boolean = true,
     options?: JsonStreamStringifyOptions,
+    currentPath: string = '',
 ): Generator<string> {
     if (replacer) {
         value = replacer('', value)
@@ -161,11 +197,14 @@ function* jsonStreamStringifyWithDepth(
     } else if (Array.isArray(value)) {
         const len = value.length
         const valueIndent = indent * (currentDepth + 1)
+        const valueIndentStr = indent > 0 ? ' '.repeat(valueIndent) : ''
+        const isJsonc = options?.jsonc === true
 
         yield '['
 
         for (let i = 0; i < len; i++) {
             const next = value[i]
+            const isLast = i === len - 1
 
             if (i > 0) {
                 yield ','
@@ -173,14 +212,18 @@ function* jsonStreamStringifyWithDepth(
 
             if (indent > 0) {
                 yield '\n'
-                yield ' '.repeat(valueIndent)
+                const itemPath = currentPath ? `${currentPath}[${i}]` : `[${i}]`
+                yield* emitComments(itemPath, options, valueIndentStr)
+                yield valueIndentStr
             }
 
             if (shouldIgnore(next)) {
                 yield 'null'
+                if (isLast && isJsonc) yield ','
                 continue
             }
 
+            const itemPath = currentPath ? `${currentPath}[${i}]` : `[${i}]`
             yield* jsonStreamStringifyWithDepth(
                 next,
                 replacer,
@@ -188,7 +231,10 @@ function* jsonStreamStringifyWithDepth(
                 currentDepth + 1,
                 false,
                 options,
+                itemPath,
             )
+
+            if (isLast && isJsonc) yield ','
         }
 
         if (indent > 0 && len > 0) {
@@ -200,7 +246,14 @@ function* jsonStreamStringifyWithDepth(
         const keys = Object.keys(value as Record<string, unknown>)
         const len = keys.length
         const valueIndent = indent * (currentDepth + 1)
+        const valueIndentStr = indent > 0 ? ' '.repeat(valueIndent) : ''
+        const isJsonc = options?.jsonc === true
         let count = 0
+        // Count non-ignored keys for trailing comma logic
+        const validKeys = keys.filter(
+            (k) => !shouldIgnore((value as Record<string, unknown>)[k]),
+        )
+        const totalValid = validKeys.length
 
         yield '{'
 
@@ -217,9 +270,12 @@ function* jsonStreamStringifyWithDepth(
                 yield ','
             }
 
+            const memberPath = currentPath ? `${currentPath}.${key}` : key
+
             if (indent > 0) {
                 yield '\n'
-                yield ' '.repeat(valueIndent)
+                yield* emitComments(memberPath, options, valueIndentStr)
+                yield valueIndentStr
             }
 
             yield* formatString(key, options?.stringChunkSize)
@@ -231,9 +287,12 @@ function* jsonStreamStringifyWithDepth(
                 currentDepth + 1,
                 false,
                 options,
+                memberPath,
             )
 
             count++
+
+            if (count === totalValid && isJsonc) yield ','
         }
 
         if (indent > 0 && len > 0) {

@@ -5,9 +5,10 @@
     "type": "module",
     "description": "",
     "scripts": {
-        "compile": "pnpm -r run compile && pnpm run compile:test && pnpm run compile:examples",
+        "compile": "pnpm -r run compile && pnpm run compile:test && pnpm run compile:examples && pnpm run compile:readme",
         "compile:examples": "tsx ./scripts/build-examples.ts && prettier --write EXAMPLES.md",
         "compile:test": "tsc --noEmit",
+        "compile:readme": "tsx ./scripts/validate-readme.ts",
         "prepublish": "pnpm -r run compile",
         "test": "pnpm -r --no-sort run test",
         "prepare": "husky || true",

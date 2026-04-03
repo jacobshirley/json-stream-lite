@@ -1,4 +1,4 @@
-import { JsonKeyValuePair } from './types.js'
+import { JsonKeyValuePair, JsonParserOptions } from './types.js'
 import { JsonKeyValueParser } from './parser.js'
 import { stringToBytes } from './utils.js'
 
@@ -7,6 +7,7 @@ import { stringToBytes } from './utils.js'
  * Flattens nested structures using dot notation and array indices.
  *
  * @param bytes - The JSON input as bytes or string
+ * @param options - Optional parser options (jsonc, strict)
  * @yields Key-value pairs as [key, value] tuples
  *
  * @example
@@ -20,6 +21,7 @@ import { stringToBytes } from './utils.js'
  */
 export function* jsonKeyValueParser(
     bytes: Iterable<number> | string,
+    options?: JsonParserOptions,
 ): Generator<JsonKeyValuePair> {
     if (typeof bytes === 'string') {
         bytes = stringToBytes(bytes)
@@ -57,6 +59,7 @@ export async function* jsonKeyValueParserAsync(
         | ReadableStream<number>
         | ReadableStream<Uint8Array>
         | ReadableStream<string>,
+    options?: JsonParserOptions,
 ): AsyncGenerator<JsonKeyValuePair> {
     if (typeof bytes === 'string') {
         bytes = stringToBytes(bytes)
