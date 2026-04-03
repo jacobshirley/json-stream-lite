@@ -26,7 +26,7 @@ describe('JSON stream end-to-end tests', () => {
         const items: unknown[] = []
 
         for await (const item of reader) {
-            items.push(await item.readAsync())
+            items.push(await item.readValueAsync())
         }
 
         expect(items[0]).toEqual({
