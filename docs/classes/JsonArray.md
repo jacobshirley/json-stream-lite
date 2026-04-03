@@ -133,6 +133,30 @@ The constructor name of this entity
 
 ---
 
+### eof
+
+#### Set Signature
+
+> **set** **eof**(`value`): `void`
+
+Sets the end-of-file (EOF) state of the buffer, indicating whether no more data will be added.
+
+##### Parameters
+
+###### value
+
+`boolean`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`eof`](JsonEntity.md#eof)
+
+---
+
 ### maxBufferSize
 
 #### Set Signature
@@ -159,31 +183,175 @@ The maximum buffer size in bytes
 
 [`JsonEntity`](JsonEntity.md).[`maxBufferSize`](JsonEntity.md#maxbuffersize)
 
+---
+
+### postComments
+
+#### Get Signature
+
+> **get** **postComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+
+Generators for post-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`Generator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`postComments`](JsonEntity.md#postcomments)
+
+---
+
+### postCommentsAsync
+
+#### Get Signature
+
+> **get** **postCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+Async generators for post-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`postCommentsAsync`](JsonEntity.md#postcommentsasync)
+
+---
+
+### postCommentStrings
+
+#### Get Signature
+
+> **get** **postCommentStrings**(): `string`[]
+
+Convenience getters to read all post comments as strings. Consumes the comments in the process.
+
+##### Returns
+
+`string`[]
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`postCommentStrings`](JsonEntity.md#postcommentstrings)
+
+---
+
+### preComments
+
+#### Get Signature
+
+> **get** **preComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+
+Generators for pre-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`Generator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`preComments`](JsonEntity.md#precomments)
+
+---
+
+### preCommentsAsync
+
+#### Get Signature
+
+> **get** **preCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+Async generators for pre-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`preCommentsAsync`](JsonEntity.md#precommentsasync)
+
+---
+
+### preCommentStrings
+
+#### Get Signature
+
+> **get** **preCommentStrings**(): `string`[]
+
+Convenience getters to read all pre comments as strings. Consumes the comments in the process.
+
+##### Returns
+
+`string`[]
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`preCommentStrings`](JsonEntity.md#precommentstrings)
+
+---
+
+### singlePostCommentString
+
+#### Get Signature
+
+> **get** **singlePostCommentString**(): `string` \| `null`
+
+Convenience getter to read a single post comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+
+##### Returns
+
+`string` \| `null`
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`singlePostCommentString`](JsonEntity.md#singlepostcommentstring)
+
+---
+
+### singlePreCommentString
+
+#### Get Signature
+
+> **get** **singlePreCommentString**(): `string` \| `null`
+
+Convenience getter to read a single pre comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+
+##### Returns
+
+`string` \| `null`
+
+#### Inherited from
+
+[`JsonEntity`](JsonEntity.md).[`singlePreCommentString`](JsonEntity.md#singleprecommentstring)
+
 ## Methods
 
 ### \[asyncIterator\]()
 
-> **\[asyncIterator\]**(): `AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
+> **\[asyncIterator\]**(): `AsyncGenerator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>, `any`, `any`\>
 
 Returns an async iterator for array items.
 Enables use of for await...of loops on JsonArray.
 
 #### Returns
 
-`AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
+`AsyncGenerator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>, `any`, `any`\>
 
 ---
 
 ### \[iterator\]()
 
-> **\[iterator\]**(): `Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
+> **\[iterator\]**(): `Generator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>, `any`, `any`\>
 
 Returns an iterator for array items.
 Enables use of for...of loops on JsonArray.
 
 #### Returns
 
-`Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>, `any`, `any`\>
+`Generator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>, `any`, `any`\>
 
 ---
 
@@ -245,14 +413,14 @@ One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the bu
 
 ### items()
 
-> **items**(): `Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
+> **items**(): `Generator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>\>
 
 Generator that yields array items.
 Allows for streaming/incremental processing of large arrays.
 
 #### Returns
 
-`Generator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
+`Generator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>\>
 
 #### Yields
 
@@ -262,14 +430,14 @@ Each item entity in the array
 
 ### itemsAsync()
 
-> **itemsAsync**(): `AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
+> **itemsAsync**(): `AsyncGenerator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>\>
 
 Async generator that yields array items from a stream.
 Allows for asynchronous streaming/incremental processing.
 
 #### Returns
 
-`AsyncGenerator`\<[`JsonValueType`](../type-aliases/JsonValueType.md)\<`T`\>\>
+`AsyncGenerator`\<[`JsonValue`](JsonValue.md)\<`T`, `string`\>\>
 
 #### Yields
 
@@ -343,7 +511,7 @@ Error if the entity has already been consumed
 
 > `protected` **skipWhitespace**(): `void`
 
-Skips whitespace characters in the buffer.
+Skips whitespace characters (and comments when JSONC is enabled) in the buffer.
 
 #### Returns
 

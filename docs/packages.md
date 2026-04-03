@@ -10,6 +10,7 @@
 - [EofReachedError](classes/EofReachedError.md)
 - [JsonArray](classes/JsonArray.md)
 - [JsonBoolean](classes/JsonBoolean.md)
+- [JsonComment](classes/JsonComment.md)
 - [JsonEntity](classes/JsonEntity.md)
 - [JsonKeyValueParser](classes/JsonKeyValueParser.md)
 - [JsonNull](classes/JsonNull.md)
@@ -23,8 +24,10 @@
 ## Type Aliases
 
 - [ByteStream](type-aliases/ByteStream.md)
+- [JsoncStringifyComment](type-aliases/JsoncStringifyComment.md)
 - [JsonKeyValuePair](type-aliases/JsonKeyValuePair.md)
 - [JsonObjectMember](type-aliases/JsonObjectMember.md)
+- [JsonParserOptions](type-aliases/JsonParserOptions.md)
 - [JsonPrimitive](type-aliases/JsonPrimitive.md)
 - [JsonPrimitiveType](type-aliases/JsonPrimitiveType.md)
 - [JsonStreamStringifyOptions](type-aliases/JsonStreamStringifyOptions.md)

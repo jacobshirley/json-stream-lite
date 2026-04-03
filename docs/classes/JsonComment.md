@@ -2,21 +2,22 @@
 
 ---
 
-[json-stream-lite](../packages.md) / JsonNull
+[json-stream-lite](../packages.md) / JsonComment
 
-# Class: JsonNull
+# Class: JsonComment
 
-Represents a JSON null value.
+Represents a JSONC comment (single-line or block).
+Parses lazily from the buffer — the comment text is only decoded when read().
 
 ## Extends
 
-- [`JsonEntity`](JsonEntity.md)\<`null`\>
+- [`JsonEntity`](JsonEntity.md)\<`string`\>
 
 ## Constructors
 
 ### Constructor
 
-> **new JsonNull**(`buffer?`): `JsonNull`
+> **new JsonComment**(`buffer?`): `JsonComment`
 
 Creates a new JSON entity.
 
@@ -30,7 +31,7 @@ Optional ByteBuffer or ByteStream to read from
 
 #### Returns
 
-`JsonNull`
+`JsonComment`
 
 #### Inherited from
 
@@ -55,6 +56,14 @@ Optional ByteBuffer or ByteStream to read from
 #### Inherited from
 
 [`JsonEntity`](JsonEntity.md).[`consumed`](JsonEntity.md#consumed)
+
+---
+
+### style
+
+> **style**: `"line"` \| `"block"` = `'line'`
+
+The comment style: 'line' for //, 'block' for /\* \* /
 
 ## Accessors
 
@@ -180,15 +189,15 @@ The maximum buffer size in bytes
 
 #### Get Signature
 
-> **get** **postComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+> **get** **postComments**(): `Generator`\<`JsonComment`\>
 
 Generators for post-comments. In JSONC, comments can appear before or after any value.
 
 ##### Returns
 
-`Generator`\<[`JsonComment`](JsonComment.md)\>
+`Generator`\<`JsonComment`\>
 
-#### Inherited from
+#### Overrides
 
 [`JsonEntity`](JsonEntity.md).[`postComments`](JsonEntity.md#postcomments)
 
@@ -198,13 +207,13 @@ Generators for post-comments. In JSONC, comments can appear before or after any 
 
 #### Get Signature
 
-> **get** **postCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+> **get** **postCommentsAsync**(): `AsyncGenerator`\<`JsonComment`\>
 
 Async generators for post-comments. In JSONC, comments can appear before or after any value.
 
 ##### Returns
 
-`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+`AsyncGenerator`\<`JsonComment`\>
 
 #### Inherited from
 
@@ -234,15 +243,15 @@ Convenience getters to read all post comments as strings. Consumes the comments 
 
 #### Get Signature
 
-> **get** **preComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+> **get** **preComments**(): `Generator`\<`JsonComment`\>
 
 Generators for pre-comments. In JSONC, comments can appear before or after any value.
 
 ##### Returns
 
-`Generator`\<[`JsonComment`](JsonComment.md)\>
+`Generator`\<`JsonComment`\>
 
-#### Inherited from
+#### Overrides
 
 [`JsonEntity`](JsonEntity.md).[`preComments`](JsonEntity.md#precomments)
 
@@ -252,13 +261,13 @@ Generators for pre-comments. In JSONC, comments can appear before or after any v
 
 #### Get Signature
 
-> **get** **preCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+> **get** **preCommentsAsync**(): `AsyncGenerator`\<`JsonComment`\>
 
 Async generators for pre-comments. In JSONC, comments can appear before or after any value.
 
 ##### Returns
 
-`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+`AsyncGenerator`\<`JsonComment`\>
 
 #### Inherited from
 
@@ -378,15 +387,15 @@ One or more strings, numbers, arrays of numbers, or Uint8Arrays to add to the bu
 
 ### parse()
 
-> `protected` **parse**(): `null`
+> `protected` **parse**(): `string`
 
-Parses a JSON null from the buffer.
+Abstract method that subclasses must implement to parse their specific type.
 
 #### Returns
 
-`null`
+`string`
 
-null
+The parsed value of type T
 
 #### Overrides
 
@@ -396,13 +405,13 @@ null
 
 ### read()
 
-> **read**(): `null`
+> **read**(): `string`
 
 Reads and parses the entity, consuming it in the process.
 
 #### Returns
 
-`null`
+`string`
 
 The parsed value
 
@@ -418,13 +427,13 @@ Error if the entity has already been consumed
 
 ### readAsync()
 
-> **readAsync**(): `Promise`\<`null`\>
+> **readAsync**(): `Promise`\<`string`\>
 
 Asynchronously reads and parses the entity from a stream.
 
 #### Returns
 
-`Promise`\<`null`\>
+`Promise`\<`string`\>
 
 A promise that resolves to the parsed value
 
@@ -464,7 +473,7 @@ Attempts to parse by executing a callback, reverting buffer state on failure.
 
 ##### T
 
-`T` = `JsonNull`
+`T` = `JsonComment`
 
 The return type of the callback
 

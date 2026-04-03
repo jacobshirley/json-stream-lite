@@ -11,6 +11,7 @@ Provides common functionality for parsing, reading, and consuming JSON values.
 
 ## Extended by
 
+- [`JsonComment`](JsonComment.md)
 - [`JsonString`](JsonString.md)
 - [`JsonNumber`](JsonNumber.md)
 - [`JsonBoolean`](JsonBoolean.md)
@@ -116,6 +117,26 @@ The constructor name of this entity
 
 ---
 
+### eof
+
+#### Set Signature
+
+> **set** **eof**(`value`): `void`
+
+Sets the end-of-file (EOF) state of the buffer, indicating whether no more data will be added.
+
+##### Parameters
+
+###### value
+
+`boolean`
+
+##### Returns
+
+`void`
+
+---
+
 ### maxBufferSize
 
 #### Set Signature
@@ -137,6 +158,118 @@ The maximum buffer size in bytes
 ##### Returns
 
 `void`
+
+---
+
+### postComments
+
+#### Get Signature
+
+> **get** **postComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+
+Generators for post-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`Generator`\<[`JsonComment`](JsonComment.md)\>
+
+---
+
+### postCommentsAsync
+
+#### Get Signature
+
+> **get** **postCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+Async generators for post-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+---
+
+### postCommentStrings
+
+#### Get Signature
+
+> **get** **postCommentStrings**(): `string`[]
+
+Convenience getters to read all post comments as strings. Consumes the comments in the process.
+
+##### Returns
+
+`string`[]
+
+---
+
+### preComments
+
+#### Get Signature
+
+> **get** **preComments**(): `Generator`\<[`JsonComment`](JsonComment.md)\>
+
+Generators for pre-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`Generator`\<[`JsonComment`](JsonComment.md)\>
+
+---
+
+### preCommentsAsync
+
+#### Get Signature
+
+> **get** **preCommentsAsync**(): `AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+Async generators for pre-comments. In JSONC, comments can appear before or after any value.
+
+##### Returns
+
+`AsyncGenerator`\<[`JsonComment`](JsonComment.md)\>
+
+---
+
+### preCommentStrings
+
+#### Get Signature
+
+> **get** **preCommentStrings**(): `string`[]
+
+Convenience getters to read all pre comments as strings. Consumes the comments in the process.
+
+##### Returns
+
+`string`[]
+
+---
+
+### singlePostCommentString
+
+#### Get Signature
+
+> **get** **singlePostCommentString**(): `string` \| `null`
+
+Convenience getter to read a single post comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+
+##### Returns
+
+`string` \| `null`
+
+---
+
+### singlePreCommentString
+
+#### Get Signature
+
+> **get** **singlePreCommentString**(): `string` \| `null`
+
+Convenience getter to read a single pre comment as a string. Returns null if no comments are present. Consumes the comment in the process.
+
+##### Returns
+
+`string` \| `null`
 
 ## Methods
 
@@ -238,7 +371,7 @@ Error if the entity has already been consumed
 
 > `protected` **skipWhitespace**(): `void`
 
-Skips whitespace characters in the buffer.
+Skips whitespace characters (and comments when JSONC is enabled) in the buffer.
 
 #### Returns
 
