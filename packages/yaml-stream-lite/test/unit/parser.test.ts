@@ -446,6 +446,24 @@ describe('mixed block/flow', () => {
         expect(m.read()).toEqual({ point: { x: 1, y: 2 } })
     })
 
+    it('parses multi-line flow mapping value', () => {
+        const yaml = 'obj: {\nfield: {\ntest: true\n}\n}\n'
+        const m = new YamlMapping()
+        m.feed(yaml)
+        m.eof = true
+        expect(m.read()).toEqual({
+            obj: { field: { test: true } },
+        })
+    })
+
+    it('parses multi-line flow sequence value', () => {
+        const yaml = 'items: [\n1,\n2,\n3\n]\n'
+        const m = new YamlMapping()
+        m.feed(yaml)
+        m.eof = true
+        expect(m.read()).toEqual({ items: [1, 2, 3] })
+    })
+
     it('parses complex nested structure', () => {
         const yaml = [
             'name: Project',
