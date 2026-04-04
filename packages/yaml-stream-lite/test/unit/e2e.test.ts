@@ -127,6 +127,57 @@ describe('end-to-end', () => {
         expect(values).toEqual(['a', 'b', 'c'])
     })
 
+    test('async iteration over sequence of mappings', async () => {
+        const yaml = '- name: Alice\n  age: 25\n- name: Bob\n  age: 30\n'
+        const encoder = new TextEncoder()
+        const stream = new ReadableStream<Uint8Array>({
+            start(controller) {
+                const bytes = encoder.encode(yaml)
+                for (let i = 0; i < bytes.length; i += 10) {
+                    controller.enqueue(bytes.slice(i, i + 10))
+                }
+                controller.close()
+            },
+        })
+
+        const s = new YamlSequence(stream, -1, 'block')
+        const values: unknown[] = []
+        for await (const item of s) {
+            values.push(await item.readValueAsync())
+        }
+        expect(values).toEqual([
+            { name: 'Alice', age: 25 },
+            { name: 'Bob', age: 30 },
+        ])
+    })
+
+    test('async iteration over nested mapping', async () => {
+        const yaml =
+            'name: Project\nauthors:\n  - name: Alice\n  - name: Bob\ntags: [a, b]\n'
+        const encoder = new TextEncoder()
+        const stream = new ReadableStream<Uint8Array>({
+            start(controller) {
+                const bytes = encoder.encode(yaml)
+                for (let i = 0; i < bytes.length; i += 8) {
+                    controller.enqueue(bytes.slice(i, i + 8))
+                }
+                controller.close()
+            },
+        })
+
+        const m = new YamlMapping(stream, -1, 'block')
+        const result: Record<string, unknown> = {}
+        for await (const { key, value } of m) {
+            const k = String(await key.readAsync())
+            result[k] = await value.readValueAsync()
+        }
+        expect(result).toEqual({
+            name: 'Project',
+            authors: [{ name: 'Alice' }, { name: 'Bob' }],
+            tags: ['a', 'b'],
+        })
+    })
+
     test('parses mixed types in sequence', () => {
         const yaml = [
             '- hello',

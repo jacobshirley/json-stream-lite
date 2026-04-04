@@ -30,6 +30,7 @@ export function* yamlKeyValueParser(
     for (const byte of bytes) {
         parser.feed(byte)
     }
+    parser.eof = true
 
     yield* parser.parse()
 }

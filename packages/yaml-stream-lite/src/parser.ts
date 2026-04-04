@@ -160,6 +160,27 @@ function consumeNewline(buffer: ByteBuffer): void {
 }
 
 /**
+ * Consume any remaining content on the current line (including inline comments)
+ * and the trailing newline, WITHOUT consuming leading whitespace of the next line.
+ */
+function consumeRestOfLine(buffer: ByteBuffer): void {
+    while (true) {
+        const byte = buffer.peek()
+        if (byte === null) return
+        if (byte === B.lf) {
+            buffer.next()
+            return
+        }
+        if (byte === B.cr) {
+            buffer.next()
+            if (buffer.peek() === B.lf) buffer.next()
+            return
+        }
+        buffer.next()
+    }
+}
+
+/**
  * Check if we're at a `---` or `...` document marker at column 0.
  */
 function isDocumentMarker(buffer: ByteBuffer): 'start' | 'end' | false {
@@ -1090,15 +1111,6 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
 
                 yield { key, value }
                 value.consume()
-
-                // Consume trailing inline comment + newline
-                skipInlineComment(this.buffer)
-                if (
-                    this.buffer.peek() === B.lf ||
-                    this.buffer.peek() === B.cr
-                ) {
-                    consumeNewline(this.buffer)
-                }
                 continue
             }
 
@@ -1138,12 +1150,6 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
 
             yield { key, value }
             value.consume()
-
-            // Consume trailing inline comment + newline
-            skipInlineComment(this.buffer)
-            if (this.buffer.peek() === B.lf || this.buffer.peek() === B.cr) {
-                consumeNewline(this.buffer)
-            }
         }
     }
 
@@ -1277,13 +1283,6 @@ export class YamlSequence extends YamlEntity<unknown[]> {
                     )
                     yield value
                     value.consume()
-                    skipInlineComment(this.buffer)
-                    if (
-                        this.buffer.peek() === B.lf ||
-                        this.buffer.peek() === B.cr
-                    ) {
-                        consumeNewline(this.buffer)
-                    }
                 }
                 continue
             }
@@ -1352,14 +1351,6 @@ export class YamlSequence extends YamlEntity<unknown[]> {
                 )
                 yield value
                 value.consume()
-
-                skipInlineComment(this.buffer)
-                if (
-                    this.buffer.peek() === B.lf ||
-                    this.buffer.peek() === B.cr
-                ) {
-                    consumeNewline(this.buffer)
-                }
             }
         }
     }
@@ -1408,10 +1399,8 @@ export class YamlDocument extends YamlEntity<unknown> {
             this.buffer.next()
             this.buffer.next()
             this.buffer.next() // consume ---
-            skipInlineComment(this.buffer)
-            if (this.buffer.peek() === B.lf || this.buffer.peek() === B.cr) {
-                consumeNewline(this.buffer)
-            }
+            if (!isAtNewlineOrEof(this.buffer)) consumeRestOfLine(this.buffer)
+            else consumeNewline(this.buffer)
         }
 
         skipBlanksAndComments(this.buffer)
@@ -1432,10 +1421,8 @@ export class YamlDocument extends YamlEntity<unknown> {
             this.buffer.next()
             this.buffer.next()
             this.buffer.next()
-            skipInlineComment(this.buffer)
-            if (this.buffer.peek() === B.lf || this.buffer.peek() === B.cr) {
-                consumeNewline(this.buffer)
-            }
+            if (!isAtNewlineOrEof(this.buffer)) consumeRestOfLine(this.buffer)
+            else consumeNewline(this.buffer)
         }
 
         return result
