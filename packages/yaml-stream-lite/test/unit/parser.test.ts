@@ -491,3 +491,41 @@ describe('mixed block/flow', () => {
         })
     })
 })
+
+describe('invalid/inconsistent indentation', () => {
+    it('stops parsing mapping on unexpected de-indent', () => {
+        const m = new YamlMapping()
+        m.feed('  a: 1\nb: 2\n')
+        m.eof = true
+        expect(m.read()).toEqual({ a: 1 })
+    })
+
+    it('stops parsing sequence on unexpected de-indent', () => {
+        const s = new YamlSequence()
+        s.feed('  - 1\n  - 2\n- 3\n')
+        s.eof = true
+        expect(s.read()).toEqual([1, 2])
+    })
+
+    it('handles over-indented value gracefully', () => {
+        const m = new YamlMapping()
+        m.feed('a:\n      deep: 1\n')
+        m.eof = true
+        expect(m.read()).toEqual({ a: { deep: 1 } })
+    })
+
+    it('does not crash on empty lines with varying whitespace', () => {
+        const m = new YamlMapping()
+        m.feed('a: 1\n   \n  \n\nb: 2\n')
+        m.eof = true
+        expect(m.read()).toEqual({ a: 1, b: 2 })
+    })
+
+    it('handles mixed indent levels in sequence items', () => {
+        const s = new YamlSequence()
+        s.feed('- a\n  - b\n')
+        s.eof = true
+        const result = s.read()
+        expect(result.length).toBe(1)
+    })
+})
