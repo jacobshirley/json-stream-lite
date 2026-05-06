@@ -54,6 +54,10 @@ export class ByteBuffer {
     protected buffer: number[] = []
     /** Optional async iterable input source */
     protected asyncIterable?: ByteStream
+    /** Cached sync iterator */
+    private syncIterator?: Iterator<StreamInput>
+    /** Cached async iterator */
+    private asyncIterator?: AsyncIterator<StreamInput>
 
     /**
      * Creates a new ByteBuffer instance.
@@ -80,11 +84,13 @@ export class ByteBuffer {
             return false
         }
 
-        const iterator = this.asyncIterable[Symbol.iterator]()
+        if (!this.syncIterator) {
+            this.syncIterator = this.asyncIterable[Symbol.iterator]()
+        }
 
         let processed = false
         while (this.length < this.maxBufferSize || !processed) {
-            const next = iterator.next()
+            const next = this.syncIterator.next()
             processed = true
 
             if (next.done) {
@@ -113,12 +119,15 @@ export class ByteBuffer {
         ) {
             return
         }
-        const iterator = this.asyncIterable[Symbol.asyncIterator]()
+
+        if (!this.asyncIterator) {
+            this.asyncIterator = this.asyncIterable[Symbol.asyncIterator]()
+        }
 
         let processed = false
         while (this.length < this.maxBufferSize || !processed) {
             processed = true
-            const next = await iterator.next()
+            const next = await this.asyncIterator.next()
 
             if (next.done) {
                 this.eof = true
