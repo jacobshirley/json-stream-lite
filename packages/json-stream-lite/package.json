@@ -56,12 +56,12 @@
     "license": "MIT",
     "packageManager": "pnpm@10.33.2",
     "devDependencies": {
-        "typescript": "^6.0.2",
-        "vitest": "^4.0.14",
         "@vitest/browser": "^4.0.14",
         "@vitest/browser-playwright": "^4.0.14",
         "@vitest/coverage-v8": "^4.0.14",
-        "playwright": "^1.57.0"
+        "playwright": "^1.60.0",
+        "typescript": "^6.0.2",
+        "vitest": "^4.0.14"
     },
     "files": [
         "dist",
