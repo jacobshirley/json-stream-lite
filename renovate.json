@@ -29,6 +29,12 @@
             "groupName": "Typedoc",
             "matchUpdateTypes": ["patch", "minor", "major"],
             "matchPackageNames": ["/typedoc/"]
+        },
+        {
+            "matchPackageNames": ["typescript"],
+            "matchFileNames": ["package.json"],
+            "allowedVersions": "<7",
+            "description": "Root typescript is used by typedoc which does not yet support TS7"
         }
     ]
 }
