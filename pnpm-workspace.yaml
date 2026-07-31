@@ -1,2 +1,10 @@
 packages:
     - 'packages/*'
+
+packageExtensions:
+    '@vitest/browser':
+        peerDependencies:
+            '@vitest/runner': '*'
+
+allowBuilds:
+    esbuild: true
