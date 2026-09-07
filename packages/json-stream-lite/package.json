@@ -54,7 +54,7 @@
     ],
     "author": "Jacob Shirley",
     "license": "MIT",
-    "packageManager": "pnpm@12.3.3",
+    "packageManager": "pnpm@12.3.4",
     "devDependencies": {
         "@vitest/browser": "^4.0.14",
         "@vitest/browser-playwright": "^4.0.14",
