@@ -529,3 +529,28 @@ describe('invalid/inconsistent indentation', () => {
         expect(result.length).toBe(1)
     })
 })
+
+describe('block mapping detection', () => {
+    function parseDoc(yaml: string): unknown {
+        const doc = new YamlDocument()
+        doc.feed(yaml)
+        doc.eof = true
+        return doc.read()
+    }
+
+    it('mapping whose first key is double-quoted', () => {
+        expect(parseDoc('"a: b": 1\nc: 2\n')).toEqual({ 'a: b': 1, c: 2 })
+    })
+
+    it('mapping whose first key is single-quoted', () => {
+        expect(parseDoc("'123': x\n")).toEqual({ '123': 'x' })
+    })
+
+    it('quoted scalar alone is not a mapping', () => {
+        expect(parseDoc('"a: b"\n')).toBe('a: b')
+    })
+
+    it('colon inside a comment does not make a mapping', () => {
+        expect(parseDoc('plain # note: here\n')).toBe('plain')
+    })
+})

@@ -91,6 +91,33 @@ function formatSingleQuoted(str: string): string {
     return "'" + str.replace(/'/g, "''") + "'"
 }
 
+// Characters that have meaning inside flow collections
+const FLOW_INDICATORS = /[,\[\]{}]/
+
+type ResolvedOptions = {
+    indent: number
+    defaultScalarStyle: 'plain' | 'single-quoted' | 'double-quoted'
+    flowLevel: number
+    sortKeys: boolean
+    stringChunkSize: number
+}
+
+/**
+ * Whether a multi-line string can be written as a literal block scalar
+ * and read back unchanged.
+ */
+function canUseLiteralBlock(str: string): boolean {
+    if (hasControlChars(str) || str.includes('\r')) return false
+    // Block indentation is detected from the first line, so it must not
+    // be empty or start with whitespace
+    if (/^[\s]/.test(str)) return false
+    // `|` keeps exactly one trailing newline; more would need `|+`
+    if (str.endsWith('\n\n')) return false
+    // Trailing whitespace on a line is easily mangled; quote instead
+    if (/[ \t]\n|[ \t]$/.test(str)) return false
+    return true
+}
+
 /**
  * Choose the best representation for a string scalar.
  */
@@ -99,36 +126,34 @@ function* formatScalar(
     depth: number,
     indentSize: number,
     defaultStyle: 'plain' | 'single-quoted' | 'double-quoted',
+    inFlow: boolean,
 ): Generator<string> {
-    // Multi-line strings: use literal block style if no control chars
-    if (str.includes('\n') && !hasControlChars(str) && depth >= 0) {
-        const indentStr = ' '.repeat(indentSize * (depth + 1))
-        const lines = str.split('\n')
+    // Multi-line strings: use literal block style where it round-trips
+    if (str.includes('\n')) {
+        if (!inFlow && canUseLiteralBlock(str)) {
+            const indentStr = ' '.repeat(indentSize * (depth + 1))
+            const endsWithNewline = str.endsWith('\n')
+            const lines = (endsWithNewline ? str.slice(0, -1) : str).split('\n')
 
-        // Check if it ends with a newline
-        const endsWithNewline = str.endsWith('\n')
-        const contentLines = endsWithNewline ? lines.slice(0, -1) : lines
+            yield endsWithNewline ? '|\n' : '|-\n'
 
-        if (endsWithNewline) {
-            yield '|\n'
-        } else {
-            yield '|-\n'
+            for (const line of lines) {
+                yield (line === '' ? '' : indentStr + line) + '\n'
+            }
+            return
         }
-
-        for (const line of contentLines) {
-            yield indentStr + line + '\n'
-        }
+        yield formatDoubleQuoted(str)
         return
     }
 
     // Control characters require double-quoting
-    if (hasControlChars(str)) {
+    if (hasControlChars(str) || str.includes('\r')) {
         yield formatDoubleQuoted(str)
         return
     }
 
     // Plain scalar if safe
-    if (!needsQuoting(str)) {
+    if (!needsQuoting(str) && !(inFlow && FLOW_INDICATORS.test(str))) {
         yield str
         return
     }
@@ -141,8 +166,17 @@ function* formatScalar(
     }
 }
 
+function formatKey(key: string, inFlow: boolean): string {
+    return needsQuoting(key) ||
+        hasControlChars(key) ||
+        /[\n\r]/.test(key) ||
+        (inFlow && FLOW_INDICATORS.test(key))
+        ? formatDoubleQuoted(key)
+        : key
+}
+
 function shouldIgnore(value: unknown): boolean {
-    return typeof value === 'function'
+    return typeof value === 'function' || typeof value === 'symbol'
 }
 
 function hasCustomToJSON(value: object): value is { toJSON: () => unknown } {
@@ -159,38 +193,99 @@ function hasCustomToString(value: object): value is { toString: () => string } {
 }
 
 /**
- * Internal recursive stringifier.
+ * Applies toJSON / toString conversions so the result is a primitive,
+ * a plain array or a plain object.
+ */
+function resolveValue(value: unknown): unknown {
+    while (value !== null && typeof value === 'object') {
+        if (hasCustomToJSON(value)) {
+            value = value.toJSON()
+            continue
+        }
+        if (!Array.isArray(value) && hasCustomToString(value)) {
+            return value.toString()
+        }
+        break
+    }
+    if (typeof value === 'bigint') return value.toString()
+    return value
+}
+
+function objectKeys(
+    obj: Record<string, unknown>,
+    options: ResolvedOptions,
+): string[] {
+    let keys = Object.keys(obj)
+    if (options.sortKeys) keys = keys.sort()
+    return keys.filter((k) => obj[k] !== undefined && !shouldIgnore(obj[k]))
+}
+
+/**
+ * Whether a (resolved) value is written as an indented block on the
+ * following lines, rather than inline after `key: ` or `- `.
+ */
+function isBlockCollection(
+    value: unknown,
+    depth: number,
+    options: ResolvedOptions,
+): boolean {
+    if (value === null || typeof value !== 'object') return false
+    if (options.flowLevel >= 0 && depth >= options.flowLevel) return false
+    if (Array.isArray(value)) return value.length > 0
+    return objectKeys(value as Record<string, unknown>, options).length > 0
+}
+
+/**
+ * Yields an inline value followed by exactly one newline.
+ */
+function* inlineLine(
+    value: unknown,
+    depth: number,
+    options: ResolvedOptions,
+): Generator<string> {
+    let last = ''
+    for (const chunk of yamlStringifyValue(value, depth, options, false)) {
+        last = chunk
+        yield chunk
+    }
+    if (!last.endsWith('\n')) yield '\n'
+}
+
+/**
+ * Yields a block mapping entry or sequence item: `prefix` is everything
+ * before the value (e.g. `  key:` or `- `).
+ */
+function* entry(
+    prefix: string,
+    value: unknown,
+    childDepth: number,
+    options: ResolvedOptions,
+): Generator<string> {
+    if (isBlockCollection(value, childDepth, options)) {
+        yield prefix.trimEnd() + '\n'
+        yield* yamlStringifyValue(value, childDepth, options, false)
+    } else {
+        yield prefix.endsWith(' ') ? prefix : prefix + ' '
+        yield* inlineLine(value, childDepth, options)
+    }
+}
+
+/**
+ * Internal recursive stringifier. Block collections are written starting
+ * at the indentation for `depth`, one line per entry, each ending in a
+ * newline. Scalars and flow collections are written inline.
  */
 function* yamlStringifyValue(
     value: unknown,
     depth: number,
-    options: Required<{
-        indent: number
-        defaultScalarStyle: 'plain' | 'single-quoted' | 'double-quoted'
-        flowLevel: number
-        sortKeys: boolean
-        stringChunkSize: number
-    }>,
-    inline: boolean = false,
+    options: ResolvedOptions,
+    inFlow: boolean,
 ): Generator<string> {
-    const useFlow = options.flowLevel >= 0 && depth >= options.flowLevel
-    const indentStr = ' '.repeat(options.indent * depth)
-    const childIndentStr = ' '.repeat(options.indent * (depth + 1))
+    value = resolveValue(value)
 
-    if (value === undefined || value === null) {
+    if (value === undefined || value === null || shouldIgnore(value)) {
         yield 'null'
         return
-    }
-
-    if (typeof value === 'object') {
-        if (hasCustomToJSON(value)) {
-            value = value.toJSON()
-            yield* yamlStringifyValue(value, depth, options, inline)
-            return
-        }
-        if (hasCustomToString(value)) {
-            value = value.toString()
-        }
     }
 
     if (typeof value === 'boolean') {
@@ -201,17 +296,13 @@ function* yamlStringifyValue(
     if (typeof value === 'number') {
         if (value !== value) {
             yield '.nan'
-            return
-        } // NaN
-        if (value === Infinity) {
+        } else if (value === Infinity) {
             yield '.inf'
-            return
-        }
-        if (value === -Infinity) {
+        } else if (value === -Infinity) {
             yield '-.inf'
-            return
+        } else {
+            yield value.toString()
         }
-        yield value.toString()
         return
     }
 
@@ -221,16 +312,26 @@ function* yamlStringifyValue(
             depth,
             options.indent,
             options.defaultScalarStyle,
+            inFlow,
         )
         return
     }
 
-    if (Array.isArray(value)) {
-        if (value.length === 0) {
-            yield '[]'
-            return
-        }
+    if (typeof value !== 'object') {
+        yield* formatScalar(
+            String(value),
+            depth,
+            options.indent,
+            options.defaultScalarStyle,
+            inFlow,
+        )
+        return
+    }
 
+    const useFlow = inFlow || !isBlockCollection(value, depth, options)
+    const indentStr = ' '.repeat(options.indent * depth)
+
+    if (Array.isArray(value)) {
         if (useFlow) {
             yield '['
             for (let i = 0; i < value.length; i++) {
@@ -241,109 +342,63 @@ function* yamlStringifyValue(
             return
         }
 
-        // Block sequence
-        for (let i = 0; i < value.length; i++) {
-            const item = value[i]
-            if (shouldIgnore(item)) continue
-
-            if (!inline && i > 0) {
-                // items already get newlines from the recursion
-            }
-
-            const prefix = inline && i === 0 ? '- ' : indentStr + '- '
-
+        for (const item of value) {
+            const resolved = resolveValue(item)
             if (
-                item !== null &&
-                typeof item === 'object' &&
-                !Array.isArray(item)
+                resolved !== null &&
+                typeof resolved === 'object' &&
+                !Array.isArray(resolved) &&
+                isBlockCollection(resolved, depth + 1, options)
             ) {
-                // Mapping as sequence item: first key goes on same line as dash
-                const obj = item as Record<string, unknown>
-                let keys = Object.keys(obj)
-                if (options.sortKeys) keys = keys.sort()
-                const validKeys = keys.filter((k) => !shouldIgnore(obj[k]))
+                // Mapping as sequence item: first key goes on the same line
+                // as the dash, the rest align with it
+                const obj = resolved as Record<string, unknown>
+                const keys = objectKeys(obj, options)
+                const keyIndent = indentStr + '  '
+                // Children of these keys must be indented past the key column
+                const childDepth = Math.ceil(
+                    (keyIndent.length + 1) / options.indent,
+                )
 
-                if (validKeys.length === 0) {
-                    yield prefix + '{}\n'
-                    continue
+                for (let j = 0; j < keys.length; j++) {
+                    const k = keys[j]
+                    yield* entry(
+                        (j === 0 ? indentStr + '- ' : keyIndent) +
+                            formatKey(k, false) +
+                            ':',
+                        obj[k],
+                        childDepth,
+                        options,
+                    )
                 }
-
-                for (let j = 0; j < validKeys.length; j++) {
-                    const k = validKeys[j]
-                    const v = obj[k]
-                    const keyStr = needsQuoting(k) ? formatDoubleQuoted(k) : k
-
-                    if (j === 0) {
-                        yield prefix + keyStr + ':'
-                    } else {
-                        yield indentStr + '  ' + keyStr + ':'
-                    }
-
-                    if (v !== null && typeof v === 'object') {
-                        yield '\n'
-                        yield* yamlStringifyValue(v, depth + 2, options, false)
-                    } else {
-                        yield ' '
-                        yield* yamlStringifyValue(v, depth + 2, options, true)
-                        yield '\n'
-                    }
-                }
-            } else if (Array.isArray(item)) {
-                yield prefix + '\n'
-                yield* yamlStringifyValue(item, depth + 1, options, false)
             } else {
-                yield prefix
-                yield* yamlStringifyValue(item, depth + 1, options, true)
-                yield '\n'
+                yield* entry(indentStr + '- ', resolved, depth + 1, options)
             }
         }
         return
     }
 
-    if (typeof value === 'object') {
-        const obj = value as Record<string, unknown>
-        let keys = Object.keys(obj)
-        if (options.sortKeys) keys = keys.sort()
-        const validKeys = keys.filter((k) => !shouldIgnore(obj[k]))
+    const obj = value as Record<string, unknown>
+    const keys = objectKeys(obj, options)
 
-        if (validKeys.length === 0) {
-            yield '{}'
-            return
+    if (useFlow) {
+        yield '{'
+        for (let i = 0; i < keys.length; i++) {
+            if (i > 0) yield ', '
+            yield formatKey(keys[i], true) + ': '
+            yield* yamlStringifyValue(obj[keys[i]], depth + 1, options, true)
         }
-
-        if (useFlow) {
-            yield '{'
-            let first = true
-            for (const k of validKeys) {
-                if (!first) yield ', '
-                first = false
-                const keyStr = needsQuoting(k) ? formatDoubleQuoted(k) : k
-                yield keyStr + ': '
-                yield* yamlStringifyValue(obj[k], depth + 1, options, true)
-            }
-            yield '}'
-            return
-        }
-
-        // Block mapping
-        for (let i = 0; i < validKeys.length; i++) {
-            const k = validKeys[i]
-            const v = obj[k]
-            const keyStr = needsQuoting(k) ? formatDoubleQuoted(k) : k
-            const prefix = inline && i === 0 ? '' : indentStr
-
-            yield prefix + keyStr + ':'
-
-            if (v !== null && typeof v === 'object') {
-                yield '\n'
-                yield* yamlStringifyValue(v, depth + 1, options, false)
-            } else {
-                yield ' '
-                yield* yamlStringifyValue(v, depth + 1, options, true)
-                yield '\n'
-            }
-        }
+        yield '}'
         return
+    }
+
+    for (const k of keys) {
+        yield* entry(
+            indentStr + formatKey(k, false) + ':',
+            obj[k],
+            depth + 1,
+            options,
+        )
     }
 }
 
@@ -362,7 +417,7 @@ export function* yamlStreamStringify(
         stringChunkSize: options?.stringChunkSize ?? 1024,
     }
 
-    yield* yamlStringifyValue(value, 0, opts, false)
+    yield* inlineLine(value, 0, opts)
 }
 
 /**

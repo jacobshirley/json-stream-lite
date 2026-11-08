@@ -883,8 +883,16 @@ export class YamlValue<T = any> extends YamlEntity<YamlValueType> {
             return new YamlScalar(this.buffer, this.parentIndent, false)
         }
 
-        // Quoted scalars
+        // Quoted scalars (in block context, a quoted scalar may be a mapping key)
         if (byte === B.doubleQuote || byte === B.singleQuote) {
+            if (!this.inFlow && this.isBlockMappingStart()) {
+                return new YamlMapping(
+                    this.buffer,
+                    this.parentIndent,
+                    'block',
+                    this.inline,
+                )
+            }
             return new YamlScalar(this.buffer, this.parentIndent, this.inFlow)
         }
 
@@ -933,6 +941,16 @@ export class YamlValue<T = any> extends YamlEntity<YamlValueType> {
         while (true) {
             const byte = this.buffer.peek(ahead)
             if (byte === null || byte === B.lf || byte === B.cr) return false
+
+            // A comment ends the line
+            if (
+                byte === B.hash &&
+                (ahead === 0 ||
+                    this.buffer.peek(ahead - 1) === B.space ||
+                    this.buffer.peek(ahead - 1) === B.tab)
+            ) {
+                return false
+            }
 
             if (byte === B.colon) {
                 const after = this.buffer.peek(ahead + 1)

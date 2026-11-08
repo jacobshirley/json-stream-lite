@@ -15,43 +15,43 @@ function stringify(
 describe('yamlStreamStringify', () => {
     describe('scalars', () => {
         it('stringifies null', () => {
-            expect(stringify(null)).toBe('null')
+            expect(stringify(null)).toBe('null\n')
         })
 
         it('stringifies undefined as null', () => {
-            expect(stringify(undefined)).toBe('null')
+            expect(stringify(undefined)).toBe('null\n')
         })
 
         it('stringifies true', () => {
-            expect(stringify(true)).toBe('true')
+            expect(stringify(true)).toBe('true\n')
         })
 
         it('stringifies false', () => {
-            expect(stringify(false)).toBe('false')
+            expect(stringify(false)).toBe('false\n')
         })
 
         it('stringifies integer', () => {
-            expect(stringify(42)).toBe('42')
+            expect(stringify(42)).toBe('42\n')
         })
 
         it('stringifies float', () => {
-            expect(stringify(3.14)).toBe('3.14')
+            expect(stringify(3.14)).toBe('3.14\n')
         })
 
         it('stringifies NaN', () => {
-            expect(stringify(NaN)).toBe('.nan')
+            expect(stringify(NaN)).toBe('.nan\n')
         })
 
         it('stringifies Infinity', () => {
-            expect(stringify(Infinity)).toBe('.inf')
+            expect(stringify(Infinity)).toBe('.inf\n')
         })
 
         it('stringifies -Infinity', () => {
-            expect(stringify(-Infinity)).toBe('-.inf')
+            expect(stringify(-Infinity)).toBe('-.inf\n')
         })
 
         it('stringifies plain string', () => {
-            expect(stringify('hello')).toBe('hello')
+            expect(stringify('hello')).toBe('hello\n')
         })
 
         it('quotes string that looks like boolean', () => {
@@ -84,7 +84,7 @@ describe('yamlStreamStringify', () => {
 
     describe('arrays', () => {
         it('stringifies empty array', () => {
-            expect(stringify([])).toBe('[]')
+            expect(stringify([])).toBe('[]\n')
         })
 
         it('stringifies simple array in block style', () => {
@@ -96,13 +96,13 @@ describe('yamlStreamStringify', () => {
 
         it('stringifies array in flow style', () => {
             const result = stringify([1, 2, 3], { flowLevel: 0 })
-            expect(result).toBe('[1, 2, 3]')
+            expect(result).toBe('[1, 2, 3]\n')
         })
     })
 
     describe('objects', () => {
         it('stringifies empty object', () => {
-            expect(stringify({})).toBe('{}')
+            expect(stringify({})).toBe('{}\n')
         })
 
         it('stringifies simple object in block style', () => {
@@ -113,7 +113,7 @@ describe('yamlStreamStringify', () => {
 
         it('stringifies object in flow style', () => {
             const result = stringify({ a: 1, b: 2 }, { flowLevel: 0 })
-            expect(result).toBe('{a: 1, b: 2}')
+            expect(result).toBe('{a: 1, b: 2}\n')
         })
 
         it('stringifies nested object', () => {
