@@ -395,6 +395,10 @@ import type {
 } from 'json-stream-lite'
 ```
 
+## YAML
+
+This repo also contains [`yaml-stream-lite`](./packages/yaml-stream-lite), a zero-dependency streaming YAML parser and stringifier built on the same design. See [its README](./packages/yaml-stream-lite/README.md) for usage.
+
 ## License
 
 MIT
