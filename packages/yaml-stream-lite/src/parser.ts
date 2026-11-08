@@ -1,4 +1,5 @@
 import { ByteBuffer } from './byte-buffer.js'
+import { YamlStreamLiteError } from './errors.js'
 import {
     yamlStreamStringify,
     yamlStreamStringifyAsync,
@@ -1069,6 +1070,8 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
         } else {
             yield* this.blockMembers()
         }
+        // Iterating reads the collection's bytes, so it can't be read again
+        this.consumed = true
     }
 
     private *flowMembers(): Generator<YamlMappingMember> {
@@ -1085,6 +1088,9 @@ export class YamlMapping extends YamlEntity<Record<string, unknown>> {
             if (this.buffer.peek() === B.rightBrace) {
                 this.buffer.next()
                 return
+            }
+            if (this.buffer.peek() === null) {
+                throw new YamlStreamLiteError('Unterminated flow mapping')
             }
 
             // Parse key — don't read it, let YamlValue consume it
@@ -1230,6 +1236,8 @@ export class YamlSequence extends YamlEntity<unknown[]> {
         } else {
             yield* this.blockItems()
         }
+        // Iterating reads the collection's bytes, so it can't be read again
+        this.consumed = true
     }
 
     private *flowItems(): Generator<YamlValue> {
@@ -1246,6 +1254,9 @@ export class YamlSequence extends YamlEntity<unknown[]> {
             if (this.buffer.peek() === B.rightSquare) {
                 this.buffer.next()
                 return
+            }
+            if (this.buffer.peek() === null) {
+                throw new YamlStreamLiteError('Unterminated flow sequence')
             }
 
             const value = new YamlValue(this.buffer, -1, true)

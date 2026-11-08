@@ -29,8 +29,7 @@
         "compile": "pnpm compile:validate && tsc -p tsconfig.prod.json",
         "compile:validate": "tsc -p tsconfig.json --noEmit",
         "watch": "tsc -watch -p tsconfig.prod.json",
-        "watch:all": "tsc -watch -p tsconfig.json",
-        "prepack": "cp ../../README.md . && cp ../../EXAMPLES.md ."
+        "watch:all": "tsc -watch -p tsconfig.json"
     },
     "keywords": [
         "yaml",
@@ -66,7 +65,6 @@
     },
     "files": [
         "dist",
-        "!**/*.tsbuildinfo",
-        "EXAMPLES.md"
+        "!**/*.tsbuildinfo"
     ]
 }

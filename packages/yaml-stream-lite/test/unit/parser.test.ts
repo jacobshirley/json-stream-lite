@@ -7,6 +7,7 @@ import {
     YamlDocument,
     YamlStream,
     YamlKeyValueParser,
+    yamlKeyValueParser,
 } from '../../src/index.js'
 
 describe('YamlScalar', () => {
@@ -552,5 +553,34 @@ describe('block mapping detection', () => {
 
     it('colon inside a comment does not make a mapping', () => {
         expect(parseDoc('plain # note: here\n')).toBe('plain')
+    })
+})
+
+describe('flow collections', () => {
+    it('key-value parser handles flow collections inside a mapping', () => {
+        expect([
+            ...yamlKeyValueParser(
+                'user:\n  roles: [admin, dev]\n  meta: {a: 1}\nok: true\n',
+            ),
+        ]).toEqual([
+            ['user.roles[0]', 'admin'],
+            ['user.roles[1]', 'dev'],
+            ['user.meta.a', 1],
+            ['ok', true],
+        ])
+    })
+
+    it('throws on an unterminated flow sequence', () => {
+        const doc = new YamlDocument()
+        doc.feed('a: [1, 2\n')
+        doc.eof = true
+        expect(() => doc.read()).toThrow('Unterminated flow sequence')
+    })
+
+    it('throws on an unterminated flow mapping', () => {
+        const doc = new YamlDocument()
+        doc.feed('a: {b: 1\n')
+        doc.eof = true
+        expect(() => doc.read()).toThrow('Unterminated flow mapping')
     })
 })

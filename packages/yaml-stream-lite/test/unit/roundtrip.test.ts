@@ -176,3 +176,23 @@ describe('stringify → parse round-trip', () => {
         expect(stream.read()).toEqual(docs)
     })
 })
+
+describe('stringify layout', () => {
+    test('block literal is indented one level under its key', () => {
+        expect(stringify({ a: { bio: 'one\ntwo\n' } })).toBe(
+            'a:\n  bio: |\n    one\n    two\n',
+        )
+        expect(stringify(['one\ntwo'])).toBe('- |-\n  one\n  two\n')
+        expect(stringify('one\ntwo')).toBe('|-\n  one\n  two\n')
+    })
+
+    test('flow and empty collections stay on the key line', () => {
+        expect(
+            stringify({ a: [], b: {}, c: { d: [1] } }, { flowLevel: 1 }),
+        ).toBe('a: []\nb: {}\nc: {d: [1]}\n')
+    })
+
+    test('nested sequences', () => {
+        expect(stringify([[1, 2], [3]])).toBe('-\n  - 1\n  - 2\n-\n  - 3\n')
+    })
+})

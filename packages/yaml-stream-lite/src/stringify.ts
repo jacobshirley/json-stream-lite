@@ -131,7 +131,7 @@ function* formatScalar(
     // Multi-line strings: use literal block style where it round-trips
     if (str.includes('\n')) {
         if (!inFlow && canUseLiteralBlock(str)) {
-            const indentStr = ' '.repeat(indentSize * (depth + 1))
+            const indentStr = ' '.repeat(indentSize * Math.max(depth, 1))
             const endsWithNewline = str.endsWith('\n')
             const lines = (endsWithNewline ? str.slice(0, -1) : str).split('\n')
 
