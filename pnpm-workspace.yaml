@@ -11,3 +11,6 @@ allowBuilds:
 
 linkWorkspacePackages: true
 preferWorkspacePackages: true
+
+hoist: false
+saveWorkspaceProtocol: false
