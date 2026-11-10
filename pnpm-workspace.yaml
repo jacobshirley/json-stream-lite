@@ -8,3 +8,9 @@ packageExtensions:
 
 allowBuilds:
     esbuild: true
+
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+
+hoist: false
+saveWorkspaceProtocol: false
