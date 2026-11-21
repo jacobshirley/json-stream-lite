@@ -424,3 +424,70 @@ export async function* jsonStreamStringifyBytesAsync(
         yield stringToBytes(chunk)
     }
 }
+
+/**
+ * Serializes values as JSON Lines (JSONL / NDJSON): one compact JSON value per
+ * line, each terminated by a newline.
+ *
+ * @param values - The values to serialize, one per line
+ * @param replacer - Optional replacer function or array
+ * @param options - Additional stringification options
+ * @returns Generator yielding string chunks
+ */
+export function* jsonLinesStringify(
+    values: Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): Generator<string> {
+    for (const value of values) {
+        yield* jsonStreamStringify(value, replacer, 0, options)
+        yield '\n'
+    }
+}
+
+/**
+ * Serializes values as JSON Lines, yielding Uint8Array chunks.
+ * See {@link jsonLinesStringify}.
+ */
+export function* jsonLinesStringifyBytes(
+    values: Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): Generator<Uint8Array> {
+    for (const chunk of jsonLinesStringify(values, replacer, options)) {
+        yield stringToBytes(chunk)
+    }
+}
+
+/**
+ * Asynchronously serializes values (sync or async iterable) as JSON Lines.
+ * See {@link jsonLinesStringify}.
+ */
+export async function* jsonLinesStringifyAsync(
+    values: AsyncIterable<unknown> | Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): AsyncGenerator<string> {
+    for await (const value of values) {
+        yield* jsonStreamStringify(value, replacer, 0, options)
+        yield '\n'
+    }
+}
+
+/**
+ * Asynchronously serializes values as JSON Lines, yielding Uint8Array chunks.
+ * See {@link jsonLinesStringify}.
+ */
+export async function* jsonLinesStringifyBytesAsync(
+    values: AsyncIterable<unknown> | Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): AsyncGenerator<Uint8Array> {
+    for await (const chunk of jsonLinesStringifyAsync(
+        values,
+        replacer,
+        options,
+    )) {
+        yield stringToBytes(chunk)
+    }
+}

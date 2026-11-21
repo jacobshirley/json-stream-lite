@@ -1215,6 +1215,90 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
 }
 
 /**
+ * Represents a JSON Lines (JSONL / NDJSON) document: a sequence of JSON values
+ * separated by newlines. Provides streaming access to each line's value.
+ *
+ * @typeParam T - The expected type of each line's value
+ */
+export class JsonLines<T = any> extends JsonEntity<T[]> {
+    /**
+     * Generator that yields one JsonValue per line. Blank lines are skipped.
+     *
+     * @yields Each value entity in the document
+     */
+    *items(): Generator<JsonValue<T>> {
+        while (true) {
+            this.skipWhitespace()
+            if (this.buffer.peek() === null) {
+                this.consumed = true
+                return
+            }
+
+            const valueObject = new JsonValue<T>(this.buffer)
+            yield valueObject
+
+            valueObject.consume()
+        }
+    }
+
+    /**
+     * Async generator that yields one JsonValue per line from a stream.
+     *
+     * @yields Each value entity in the document
+     */
+    async *itemsAsync(): AsyncGenerator<JsonValue<T>> {
+        while (!this.buffer.atEof()) {
+            const itemGen = this.items()
+
+            while (true) {
+                const current = this.tryParse(() => itemGen.next())
+
+                if (current === undefined) {
+                    break // Need more data
+                }
+                if (current.done) {
+                    return // No more lines
+                }
+                yield current.value
+
+                await current.value.consumeAsync()
+            }
+
+            await this.buffer.readStreamAsync()
+        }
+    }
+
+    /**
+     * Enables use of for...of loops on JsonLines.
+     */
+    [Symbol.iterator]() {
+        return this.items()
+    }
+
+    /**
+     * Enables use of for await...of loops on JsonLines.
+     */
+    [Symbol.asyncIterator]() {
+        return this.itemsAsync()
+    }
+
+    /**
+     * Parses the entire document into an array of values.
+     *
+     * @returns The parsed values, one per line
+     */
+    protected parse(): T[] {
+        const values: T[] = []
+
+        for (const value of this) {
+            values.push(value.readValue() as T)
+        }
+
+        return values
+    }
+}
+
+/**
  * Parser that flattens nested JSON structures into key-value pairs.
  * Useful for extracting specific values from complex JSON without parsing the entire structure.
  */
