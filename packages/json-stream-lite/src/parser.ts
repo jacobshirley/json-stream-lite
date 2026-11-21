@@ -652,6 +652,10 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
             this.buffer.next() // consume quotes
         }
 
+        // The whole string (including the closing quote) has been read, so
+        // containers must not try to consume it a second time.
+        this.consumed = true
+
         if (bytes.length > 0) {
             const result = new Uint8Array(bytes)
             yield result
