@@ -224,11 +224,13 @@ for (const line of new JsonLines('{"a":1}\n{"a":2}\n')) {
 }
 
 // Async streaming from any byte/string stream
-for await (const line of new JsonLines(stream)) {
+const response = await fetch('https://api.example.com/data.jsonl')
+for await (const line of new JsonLines(response.body!)) {
     console.log(await line.readValueAsync())
 }
 
 // Stringify: one compact value per line, newline-terminated
+// (values with no JSON representation, e.g. undefined, are written as null)
 for (const chunk of jsonLinesStringify([{ a: 1 }, { a: 2 }])) {
     process.stdout.write(chunk)
 }

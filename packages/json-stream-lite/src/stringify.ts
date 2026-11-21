@@ -426,8 +426,27 @@ export async function* jsonStreamStringifyBytesAsync(
 }
 
 /**
+ * Serializes a single JSON Lines record. Values with no JSON representation
+ * (undefined, functions) are written as `null` so every input value produces
+ * exactly one line.
+ */
+function* jsonLinesStringifyLine(
+    value: unknown,
+    replacer: any,
+    options: JsonStreamStringifyOptions | undefined,
+): Generator<string> {
+    let empty = true
+    for (const chunk of jsonStreamStringify(value, replacer, 0, options)) {
+        empty = false
+        yield chunk
+    }
+    yield empty ? 'null\n' : '\n'
+}
+
+/**
  * Serializes values as JSON Lines (JSONL / NDJSON): one compact JSON value per
- * line, each terminated by a newline.
+ * line, each terminated by a newline. Values with no JSON representation
+ * (undefined, functions) are written as `null`.
  *
  * @param values - The values to serialize, one per line
  * @param replacer - Optional replacer function or array
@@ -440,8 +459,7 @@ export function* jsonLinesStringify(
     options?: JsonStreamStringifyOptions,
 ): Generator<string> {
     for (const value of values) {
-        yield* jsonStreamStringify(value, replacer, 0, options)
-        yield '\n'
+        yield* jsonLinesStringifyLine(value, replacer, options)
     }
 }
 
@@ -469,8 +487,7 @@ export async function* jsonLinesStringifyAsync(
     options?: JsonStreamStringifyOptions,
 ): AsyncGenerator<string> {
     for await (const value of values) {
-        yield* jsonStreamStringify(value, replacer, 0, options)
-        yield '\n'
+        yield* jsonLinesStringifyLine(value, replacer, options)
     }
 }
 

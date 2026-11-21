@@ -49,6 +49,21 @@ describe('JsonLines', () => {
         expect([...jsonLinesStringifyBytes([1])][0]).toBeInstanceOf(Uint8Array)
     })
 
+    it('writes one line per value, even for non-JSON values', () => {
+        const out = [...jsonLinesStringify([1, undefined, () => 1, 'a\nb'])]
+        expect(out.join('')).toBe('1\nnull\nnull\n"a\\nb"\n')
+    })
+
+    it('rejects malformed lines', async () => {
+        expect(() => new JsonLines('{"a":1}\nxyz\n').read()).toThrow()
+        expect(() => new JsonLines('{"a":1}\n{"a":').read()).toThrow()
+        async function* chunks() {
+            yield '{"a":1}\n{"a"'
+            yield ':'
+        }
+        await expect(new JsonLines(chunks()).readAsync()).rejects.toThrow()
+    })
+
     it('round-trips', () => {
         expect(new JsonLines(text).read()).toEqual(expected)
     })
