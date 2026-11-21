@@ -436,7 +436,9 @@ function* jsonLinesStringifyLine(
     options: JsonStreamStringifyOptions | undefined,
 ): Generator<string> {
     let empty = true
-    for (const chunk of jsonStreamStringify(value, replacer, 0, options)) {
+    // Every line must be a plain JSON value, so JSONC output is never used.
+    const lineOptions = options?.jsonc ? { ...options, jsonc: false } : options
+    for (const chunk of jsonStreamStringify(value, replacer, 0, lineOptions)) {
         empty = false
         yield chunk
     }
@@ -446,7 +448,7 @@ function* jsonLinesStringifyLine(
 /**
  * Serializes values as JSON Lines (JSONL / NDJSON): one compact JSON value per
  * line, each terminated by a newline. Values with no JSON representation
- * (undefined, functions) are written as `null`.
+ * (undefined, functions) are written as `null`. The `jsonc` option is ignored.
  *
  * @param values - The values to serialize, one per line
  * @param replacer - Optional replacer function or array

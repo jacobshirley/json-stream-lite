@@ -1221,15 +1221,48 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
  * @typeParam T - The expected type of each line's value
  */
 export class JsonLines<T = any> extends JsonEntity<T[]> {
+    private valuesRead: number = 0
+
     /**
-     * Generator that yields one JsonValue per line. Blank lines are skipped.
+     * When false (default), blank lines are silently ignored and several
+     * values may share a line. When true, the input must follow the JSON Lines
+     * format exactly: one value per line, no blank lines, and nothing after the
+     * final line terminator. Violations throw an Error.
+     */
+    strict: boolean = false;
+
+    /**
+     * Generator that yields one JsonValue per line. Blank lines are skipped
+     * unless `strict` is set.
      *
      * @yields Each value entity in the document
      */
     *items(): Generator<JsonValue<T>> {
         while (true) {
-            this.skipWhitespace()
-            if (this.buffer.peek() === null) {
+            let newlines = 0
+            while (isWhitespace(this.buffer.peek())) {
+                if (this.buffer.next() === BYTE_MAP.lineFeed) newlines++
+            }
+
+            const atEnd = this.buffer.peek() === null
+
+            if (this.strict) {
+                // Exactly one terminator between values, none before the
+                // first, and at most one after the last.
+                const expected = this.valuesRead === 0 ? 0 : 1
+                if (newlines > expected) {
+                    throw new Error(
+                        `Blank line in JSON Lines input after value ${this.valuesRead}.`,
+                    )
+                }
+                if (!atEnd && newlines < expected) {
+                    throw new Error(
+                        `Multiple values on one line in JSON Lines input after value ${this.valuesRead}.`,
+                    )
+                }
+            }
+
+            if (atEnd) {
                 this.consumed = true
                 return
             }
@@ -1238,6 +1271,7 @@ export class JsonLines<T = any> extends JsonEntity<T[]> {
             yield valueObject
 
             valueObject.consume()
+            this.valuesRead++
         }
     }
 
@@ -1295,6 +1329,30 @@ export class JsonLines<T = any> extends JsonEntity<T[]> {
         }
 
         return values
+    }
+
+    /**
+     * Reads the entire document into an array of values.
+     *
+     * @returns The parsed values, one per line
+     */
+    read(): T[] {
+        if (this.strict && this.valuesRead === 0) {
+            // The base read() skips leading whitespace, which would hide a
+            // blank first line from items().
+            let ahead = 0
+            let byte = this.buffer.peek(ahead)
+            while (isWhitespace(byte)) {
+                if (byte === BYTE_MAP.lineFeed) {
+                    throw new Error(
+                        'Blank line in JSON Lines input after value 0.',
+                    )
+                }
+                byte = this.buffer.peek(++ahead)
+            }
+        }
+
+        return super.read()
     }
 }
 

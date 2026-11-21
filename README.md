@@ -236,6 +236,8 @@ for (const chunk of jsonLinesStringify([{ a: 1 }, { a: 2 }])) {
 }
 ```
 
+By default the parser is lenient: blank lines are ignored and several values may share a line. Set `lines.strict = true` on a `JsonLines` instance to reject both, as the [JSON Lines](https://jsonlines.org/) format requires.
+
 Also available: `jsonLinesStringifyBytes`, `jsonLinesStringifyAsync`, `jsonLinesStringifyBytesAsync`.
 
 ## Advanced Usage

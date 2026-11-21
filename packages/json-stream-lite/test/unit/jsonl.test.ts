@@ -64,6 +64,41 @@ describe('JsonLines', () => {
         await expect(new JsonLines(chunks()).readAsync()).rejects.toThrow()
     })
 
+    it('strict mode enforces the JSON Lines format', async () => {
+        const strict = (input: string) => {
+            const lines = new JsonLines(input)
+            lines.strict = true
+            return lines.read()
+        }
+        expect(strict('1\n{"a":2}\n')).toEqual([1, { a: 2 }])
+        expect(strict('1\r\n {"a":2} ')).toEqual([1, { a: 2 }])
+        expect(strict('')).toEqual([])
+        expect(strict(text)).toEqual(expected)
+        expect(() => strict('1\n\n2\n')).toThrow(/Blank line/)
+        expect(() => strict('\n1\n')).toThrow(/Blank line/)
+        expect(() => strict('1\n\n')).toThrow(/Blank line/)
+        expect(() => strict('1\n \n2')).toThrow(/Blank line/)
+        expect(() => strict('{"a":1}{"a":2}')).toThrow(/Multiple values/)
+        expect(() => strict('1 2')).toThrow(/Multiple values/)
+
+        const stream = (input: string) => {
+            async function* chunks() {
+                yield* input
+            }
+            const lines = new JsonLines(chunks())
+            lines.strict = true
+            return lines.readAsync()
+        }
+        expect(await stream(text)).toEqual(expected)
+        await expect(stream('1\n\n2\n')).rejects.toThrow(/Blank line/)
+        await expect(stream('[1] [2]')).rejects.toThrow(/Multiple values/)
+    })
+
+    it('never writes JSONC, so each line stays valid JSON', () => {
+        const out = [...jsonLinesStringify([{ a: [1] }], null, { jsonc: true })]
+        expect(out.join('')).toBe('{"a":[1]}\n')
+    })
+
     it('round-trips', () => {
         expect(new JsonLines(text).read()).toEqual(expected)
     })
