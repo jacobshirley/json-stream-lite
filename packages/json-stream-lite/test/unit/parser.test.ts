@@ -805,3 +805,61 @@ describe('JsonString.stream with multi-byte characters', () => {
         })
     }
 })
+
+describe('streaming strings inside containers', () => {
+    const chunked = (str: string, size = 3) =>
+        (async function* () {
+            for (let i = 0; i < str.length; i += size) {
+                yield str.slice(i, i + size)
+            }
+        })()
+
+    it('streams string items in an array (sync)', () => {
+        const out: string[] = []
+        for (const value of new JsonArray('["hello","ab"]')) {
+            out.push([...(value.read() as JsonString).stream(2)].join(''))
+        }
+        expect(out).toEqual(['hello', 'ab'])
+    })
+
+    it('streams string values in an object (sync)', () => {
+        const out: Record<string, string> = {}
+        for (const { key, value } of new JsonObject('{"k":"hello","z":"ab"}')) {
+            out[key.read() as string] = [
+                ...(value.read() as JsonString).stream(2),
+            ].join('')
+        }
+        expect(out).toEqual({ k: 'hello', z: 'ab' })
+    })
+
+    it('streams string items in an array (async)', async () => {
+        const out: string[] = []
+        for await (const value of new JsonArray(chunked('["hello","ab"]'))) {
+            const parts: string[] = []
+            for await (const c of (
+                (await value.readAsync()) as JsonString
+            ).streamAsync(2)) {
+                parts.push(c)
+            }
+            out.push(parts.join(''))
+        }
+        expect(out).toEqual(['hello', 'ab'])
+    })
+
+    it('streams string values in an object (async)', async () => {
+        const out: Record<string, string> = {}
+        for await (const { key, value } of new JsonObject(
+            chunked('{"k":"hello","z":"ab"}'),
+        )) {
+            const k = (await key.readAsync()) as string
+            const parts: string[] = []
+            for await (const c of (
+                (await value.readAsync()) as JsonString
+            ).streamAsync(2)) {
+                parts.push(c)
+            }
+            out[k] = parts.join('')
+        }
+        expect(out).toEqual({ k: 'hello', z: 'ab' })
+    })
+})
