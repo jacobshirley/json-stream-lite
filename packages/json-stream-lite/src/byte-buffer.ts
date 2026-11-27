@@ -275,7 +275,7 @@ export class ByteBuffer {
     next(): number {
         if (!this.bomChecked) this.skipByteOrderMark()
         if (this.bufferIndex >= this.buffer.length) {
-            if (this.readStream()) {
+            if (!this.eof && this.readStream()) {
                 return this.next()
             }
 
