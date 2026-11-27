@@ -1,5 +1,6 @@
 const textEncoder = new TextEncoder()
-const textDecoder = new TextDecoder()
+// ignoreBOM keeps a leading U+FEFF in decoded text instead of dropping it.
+const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true })
 
 /**
  * Converts a string to a Uint8Array of UTF-8 encoded bytes.

@@ -545,6 +545,8 @@ export class JsonComment extends JsonEntity<string> {
 }
 
 export class JsonString<T extends string = string> extends JsonEntity<T> {
+    private midString: boolean = false
+
     /**
      * Parses a JSON string from the buffer.
      *
@@ -564,7 +566,9 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
      * @yields Uint8Array chunks containing the unescaped string bytes
      */
     *streamBytes(chunkSize: number = 1024): Generator<Uint8Array> {
-        if (this.buffer.peek() === BYTE_MAP.quotes) {
+        // streamBytesAsync restarts this generator mid-string once a chunk has
+        // been yielded; from then on a quote is the closing one.
+        if (!this.midString && this.buffer.peek() === BYTE_MAP.quotes) {
             this.buffer.next() // consume quotes
         }
 
@@ -648,9 +652,10 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
             }
         }
 
-        if (this.buffer.peek() === BYTE_MAP.quotes) {
-            this.buffer.next() // consume quotes
+        if (this.buffer.peek() !== BYTE_MAP.quotes) {
+            throw new Error('Unterminated string in JSON input.')
         }
+        this.buffer.next() // consume quotes
 
         // The whole string (including the closing quote) has been read, so
         // containers must not try to consume it a second time.
@@ -688,6 +693,7 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
                     return
                 }
 
+                this.midString = true
                 yield next.value
             }
         }
@@ -1027,6 +1033,10 @@ export class JsonObject<T extends object = any> extends JsonEntity<T> {
             if (this.buffer.peek() === BYTE_MAP.comma) {
                 this.buffer.next() // consume ,
                 this.skipWhitespace()
+            }
+
+            if (this.buffer.peek() === null) {
+                throw new Error('Unterminated object in JSON input.')
             }
 
             const key = new JsonString<any>(this.buffer)
