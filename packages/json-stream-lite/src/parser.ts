@@ -1225,6 +1225,148 @@ export class JsonArray<T = any> extends JsonEntity<T[]> {
 }
 
 /**
+ * Represents a JSON Lines (JSONL / NDJSON) document: a sequence of JSON values
+ * separated by newlines. Provides streaming access to each line's value.
+ *
+ * @typeParam T - The expected type of each line's value
+ */
+export class JsonLines<T = any> extends JsonEntity<T[]> {
+    private valuesRead: number = 0
+
+    /**
+     * When false (default), blank lines are silently ignored and several
+     * values may share a line. When true, the input must follow the JSON Lines
+     * format exactly: one value per line, no blank lines, and nothing after the
+     * final line terminator. Violations throw an Error.
+     */
+    strict: boolean = false;
+
+    /**
+     * Generator that yields one JsonValue per line. Blank lines are skipped
+     * unless `strict` is set.
+     *
+     * @yields Each value entity in the document
+     */
+    *items(): Generator<JsonValue<T>> {
+        while (true) {
+            let newlines = 0
+            while (isWhitespace(this.buffer.peek())) {
+                if (this.buffer.next() === BYTE_MAP.lineFeed) newlines++
+            }
+
+            const atEnd = this.buffer.peek() === null
+
+            if (this.strict) {
+                // Exactly one terminator between values, none before the
+                // first, and at most one after the last.
+                const expected = this.valuesRead === 0 ? 0 : 1
+                if (newlines > expected) {
+                    throw new Error(
+                        `Blank line in JSON Lines input after value ${this.valuesRead}.`,
+                    )
+                }
+                if (!atEnd && newlines < expected) {
+                    throw new Error(
+                        `Multiple values on one line in JSON Lines input after value ${this.valuesRead}.`,
+                    )
+                }
+            }
+
+            if (atEnd) {
+                this.consumed = true
+                return
+            }
+
+            const valueObject = new JsonValue<T>(this.buffer)
+            yield valueObject
+
+            valueObject.consume()
+            this.valuesRead++
+        }
+    }
+
+    /**
+     * Async generator that yields one JsonValue per line from a stream.
+     *
+     * @yields Each value entity in the document
+     */
+    async *itemsAsync(): AsyncGenerator<JsonValue<T>> {
+        while (!this.buffer.atEof()) {
+            const itemGen = this.items()
+
+            while (true) {
+                const current = this.tryParse(() => itemGen.next())
+
+                if (current === undefined) {
+                    break // Need more data
+                }
+                if (current.done) {
+                    return // No more lines
+                }
+                yield current.value
+
+                await current.value.consumeAsync()
+            }
+
+            await this.buffer.readStreamAsync()
+        }
+    }
+
+    /**
+     * Enables use of for...of loops on JsonLines.
+     */
+    [Symbol.iterator]() {
+        return this.items()
+    }
+
+    /**
+     * Enables use of for await...of loops on JsonLines.
+     */
+    [Symbol.asyncIterator]() {
+        return this.itemsAsync()
+    }
+
+    /**
+     * Parses the entire document into an array of values.
+     *
+     * @returns The parsed values, one per line
+     */
+    protected parse(): T[] {
+        const values: T[] = []
+
+        for (const value of this) {
+            values.push(value.readValue() as T)
+        }
+
+        return values
+    }
+
+    /**
+     * Reads the entire document into an array of values.
+     *
+     * @returns The parsed values, one per line
+     */
+    read(): T[] {
+        if (this.strict && this.valuesRead === 0) {
+            // The base read() skips leading whitespace, which would hide a
+            // blank first line from items().
+            let ahead = 0
+            let byte = this.buffer.peek(ahead)
+            while (isWhitespace(byte)) {
+                if (byte === BYTE_MAP.lineFeed) {
+                    throw new Error(
+                        'Blank line in JSON Lines input after value 0.',
+                    )
+                }
+                byte = this.buffer.peek(++ahead)
+            }
+        }
+
+        return super.read()
+    }
+}
+
+/**
  * Parser that flattens nested JSON structures into key-value pairs.
  * Useful for extracting specific values from complex JSON without parsing the entire structure.
  */

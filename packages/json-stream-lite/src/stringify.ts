@@ -424,3 +424,89 @@ export async function* jsonStreamStringifyBytesAsync(
         yield stringToBytes(chunk)
     }
 }
+
+/**
+ * Serializes a single JSON Lines record. Values with no JSON representation
+ * (undefined, functions) are written as `null` so every input value produces
+ * exactly one line.
+ */
+function* jsonLinesStringifyLine(
+    value: unknown,
+    replacer: any,
+    options: JsonStreamStringifyOptions | undefined,
+): Generator<string> {
+    let empty = true
+    // Every line must be a plain JSON value, so JSONC output is never used.
+    const lineOptions = options?.jsonc ? { ...options, jsonc: false } : options
+    for (const chunk of jsonStreamStringify(value, replacer, 0, lineOptions)) {
+        empty = false
+        yield chunk
+    }
+    yield empty ? 'null\n' : '\n'
+}
+
+/**
+ * Serializes values as JSON Lines (JSONL / NDJSON): one compact JSON value per
+ * line, each terminated by a newline. Values with no JSON representation
+ * (undefined, functions) are written as `null`. The `jsonc` option is ignored.
+ *
+ * @param values - The values to serialize, one per line
+ * @param replacer - Optional replacer function or array
+ * @param options - Additional stringification options
+ * @returns Generator yielding string chunks
+ */
+export function* jsonLinesStringify(
+    values: Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): Generator<string> {
+    for (const value of values) {
+        yield* jsonLinesStringifyLine(value, replacer, options)
+    }
+}
+
+/**
+ * Serializes values as JSON Lines, yielding Uint8Array chunks.
+ * See {@link jsonLinesStringify}.
+ */
+export function* jsonLinesStringifyBytes(
+    values: Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): Generator<Uint8Array> {
+    for (const chunk of jsonLinesStringify(values, replacer, options)) {
+        yield stringToBytes(chunk)
+    }
+}
+
+/**
+ * Asynchronously serializes values (sync or async iterable) as JSON Lines.
+ * See {@link jsonLinesStringify}.
+ */
+export async function* jsonLinesStringifyAsync(
+    values: AsyncIterable<unknown> | Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): AsyncGenerator<string> {
+    for await (const value of values) {
+        yield* jsonLinesStringifyLine(value, replacer, options)
+    }
+}
+
+/**
+ * Asynchronously serializes values as JSON Lines, yielding Uint8Array chunks.
+ * See {@link jsonLinesStringify}.
+ */
+export async function* jsonLinesStringifyBytesAsync(
+    values: AsyncIterable<unknown> | Iterable<unknown>,
+    replacer?: any,
+    options?: JsonStreamStringifyOptions,
+): AsyncGenerator<Uint8Array> {
+    for await (const chunk of jsonLinesStringifyAsync(
+        values,
+        replacer,
+        options,
+    )) {
+        yield stringToBytes(chunk)
+    }
+}

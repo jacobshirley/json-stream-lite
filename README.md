@@ -213,6 +213,33 @@ for (const chunk of jsonStreamStringify(data, null, 0, {
 
 See [docs](https://jacobshirley.github.io/json-stream-lite/v1).
 
+### JSON Lines (JSONL / NDJSON)
+
+```typescript
+import { JsonLines, jsonLinesStringify } from 'json-stream-lite'
+
+// Parse lazily, one value per line (blank lines are skipped)
+for (const line of new JsonLines('{"a":1}\n{"a":2}\n')) {
+    console.log(line.readValue())
+}
+
+// Async streaming from any byte/string stream
+const response = await fetch('https://api.example.com/data.jsonl')
+for await (const line of new JsonLines(response.body!)) {
+    console.log(await line.readValueAsync())
+}
+
+// Stringify: one compact value per line, newline-terminated
+// (values with no JSON representation, e.g. undefined, are written as null)
+for (const chunk of jsonLinesStringify([{ a: 1 }, { a: 2 }])) {
+    process.stdout.write(chunk)
+}
+```
+
+By default the parser is lenient: blank lines are ignored and several values may share a line. Set `lines.strict = true` on a `JsonLines` instance to reject both, as the [JSON Lines](https://jsonlines.org/) format requires.
+
+Also available: `jsonLinesStringifyBytes`, `jsonLinesStringifyAsync`, `jsonLinesStringifyBytesAsync`.
+
 ## Advanced Usage
 
 ### Processing Large Files
