@@ -52,6 +52,8 @@ export class ByteBuffer {
     protected outputOffset: number = 0
     /** Buffer holding input items */
     protected buffer: number[] = []
+    /** Whether the start of the input has been checked for a byte order mark */
+    private bomChecked: boolean = false
     /** Optional async iterable input source */
     protected asyncIterable?: ByteStream
     /** Cached sync iterator */
@@ -210,6 +212,37 @@ export class ByteBuffer {
     }
 
     /**
+     * Drops a UTF-8 byte order mark (EF BB BF) from the very start of the
+     * input. RFC 8259 section 8.1 lets parsers ignore one.
+     *
+     * @throws NoMoreTokensError if the input might start with a byte order mark
+     * but too few bytes have arrived to tell
+     */
+    private skipByteOrderMark(): void {
+        const BOM = [0xef, 0xbb, 0xbf]
+
+        while (this.buffer.length < BOM.length && !this.eof) {
+            if (!this.readStream()) break
+        }
+
+        for (let i = 0; i < BOM.length; i++) {
+            if (i >= this.buffer.length) {
+                if (this.eof) break
+                throw new NoMoreTokensError('No more items available')
+            }
+            if (this.buffer[i] !== BOM[i]) {
+                this.bomChecked = true
+                return
+            }
+        }
+
+        if (this.buffer.length >= BOM.length) {
+            this.buffer.splice(0, BOM.length)
+        }
+        this.bomChecked = true
+    }
+
+    /**
      * Peeks at an item in the buffer without consuming it.
      *
      * @param ahead - Number of positions to look ahead (default: 0)
@@ -217,6 +250,7 @@ export class ByteBuffer {
      * @throws NoMoreTokensError if more input is needed and EOF not signaled
      */
     peek(ahead: number = 0): number | null {
+        if (!this.bomChecked) this.skipByteOrderMark()
         const index = this.bufferIndex + ahead
         if (index >= this.buffer.length) {
             if (!this.eof) {
@@ -239,6 +273,7 @@ export class ByteBuffer {
      * @throws EofReachedError if at EOF and no more items available
      */
     next(): number {
+        if (!this.bomChecked) this.skipByteOrderMark()
         if (this.bufferIndex >= this.buffer.length) {
             if (!this.eof && this.readStream()) {
                 return this.next()
