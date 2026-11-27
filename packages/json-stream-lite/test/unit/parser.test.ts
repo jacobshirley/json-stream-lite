@@ -784,6 +784,28 @@ describe('JSON key value parser', () => {
     })
 })
 
+describe('JsonString.stream with multi-byte characters', () => {
+    const text = 'aé☃😀z'
+    const json = JSON.stringify(text)
+
+    for (const size of [1, 2, 3, 4, 5, 7]) {
+        it(`stream(${size}) preserves multi-byte characters`, () => {
+            expect([...new JsonString(json).stream(size)].join('')).toBe(text)
+        })
+
+        it(`streamAsync(${size}) preserves multi-byte characters`, async () => {
+            const source = (async function* () {
+                for (const ch of json) yield ch
+            })()
+            const parts: string[] = []
+            for await (const c of new JsonString(source).streamAsync(size)) {
+                parts.push(c)
+            }
+            expect(parts.join('')).toBe(text)
+        })
+    }
+})
+
 describe('streaming strings inside containers', () => {
     const chunked = (str: string, size = 3) =>
         (async function* () {

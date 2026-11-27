@@ -706,9 +706,15 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
      * @yields Chunks of the string content
      */
     *stream(chunkSize: number = 1024): Generator<string> {
+        // A streaming decoder buffers incomplete multi-byte sequences between
+        // chunks, so characters split across chunk boundaries decode correctly.
+        const decoder = new TextDecoder()
         for (const chunk of this.streamBytes(chunkSize)) {
-            yield bytesToString(chunk)
+            const text = decoder.decode(chunk, { stream: true })
+            if (text) yield text
         }
+        const rest = decoder.decode()
+        if (rest) yield rest
     }
 
     /**
@@ -717,9 +723,13 @@ export class JsonString<T extends string = string> extends JsonEntity<T> {
      * @yields Chunks of the string content
      */
     async *streamAsync(chunkSize: number = 1024): AsyncGenerator<string> {
+        const decoder = new TextDecoder()
         for await (const chunk of this.streamBytesAsync(chunkSize)) {
-            yield bytesToString(chunk)
+            const text = decoder.decode(chunk, { stream: true })
+            if (text) yield text
         }
+        const rest = decoder.decode()
+        if (rest) yield rest
     }
 
     /**
